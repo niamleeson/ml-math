@@ -2,6 +2,324 @@
 > **Source:** CS 229 · **Category:** Model · **Type:** ⚖️ Both · [↑ Full reference](../../ai-ml-cheatsheets.md)
 > 📓 The coded examples form a runnable notebook section; an `.ipynb` will be generated. [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](#)
 
+## 0. Step-by-Step Worked Example — Start Here (Beginner Friendly)
+
+> 🧑‍🎓 **New to this topic? Start here.** This is a gentle, fully runnable walkthrough that
+> builds up *every* idea in this lesson one tiny step at a time. Each step **prints** the
+> numbers it computes and **draws a picture** so you can *see* what is happening. Run the
+> cells in order from top to bottom. Nothing here needs the internet or any downloaded data.
+
+**What we will build, step by step:**
+1. **Linear decision rule and sign convention** — classify by the sign of $w^Tx-b$.
+2. **Functional margin** — measure correctness with $y(w^Tx-b)$.
+3. **Geometric margin and margin width** — turn scores into distances by dividing by $\|w\|$.
+4. **Hard-margin SVM optimization** — see why maximizing the margin means minimizing $\frac12\|w\|^2$.
+5. **Soft margins, slack, hinge loss, and $C$** — allow violations and charge them with hinge loss.
+6. **Kernels and the RBF kernel** — convert distance into similarity for nonlinear boundaries.
+7. **Lagrange multipliers and support-vector sparsity** — see why only margin points define the separator.
+
+### Step 0 — Set up our tools
+
+We import NumPy (vectors, dot products, norms) and Matplotlib (boundary and loss pictures). We
+fix a random **seed** so every run is reproducible, and define a tiny `log()` helper so printed
+quantities are easy to read.
+
+```python
+import numpy as np                       # NumPy: arrays, dot products, norms, exponentials, and grids.
+import matplotlib.pyplot as plt          # Matplotlib: draw SVM boundaries, margins, losses, and kernels.
+
+np.random.seed(0)                         # Fix the seed so every run prints the SAME numbers.
+plt.rcParams["figure.figsize"] = (7, 4)   # A comfortable default plot size.
+
+def log(label, value):                    # A tiny logger so each printed line explains itself.
+    print(f"[{label}] {value}")           # Format is: [what this is] the value.
+
+log("setup", "tools ready — NumPy + Matplotlib imported, seed fixed to 0")
+```
+▶ What you'll see: one line confirming the tools are ready.
+
+### Step 1 — Linear decision rule and sign convention
+
+An SVM starts with one signed score: $w^Tx-b$. Positive scores predict class $+1$, negative
+scores predict class $-1$, and the boundary is the set of points where the score is exactly
+zero.
+
+```python
+X_rule_demo = np.array([[-2.0, -1.0], [-1.0, -2.0], [-1.0, -1.0], [1.0, 1.0], [2.0, 1.0], [1.0, 2.0]])  # Six separable 2-D points.
+y_rule_demo = np.array([-1, -1, -1, 1, 1, 1])                     # Labels use the SVM convention {-1, +1}.
+w_rule_demo = np.array([0.5, 0.5])                                # A normal vector perpendicular to the boundary.
+b_rule_demo = 0.0                                                  # The lesson's offset in w^T x - b.
+scores_rule_demo = X_rule_demo @ w_rule_demo - b_rule_demo        # Compute each signed SVM score.
+pred_rule_demo = np.where(scores_rule_demo >= 0.0, 1, -1)         # Convert score signs into predicted labels.
+
+log("w", w_rule_demo)                                             # Show the separating direction.
+log("b", b_rule_demo)                                             # Show the boundary offset.
+log("scores w^T x - b", np.round(scores_rule_demo, 3))            # Show raw signed scores.
+log("predicted signs", pred_rule_demo)                            # Show the sign-based predictions.
+log("all predictions correct?", bool(np.all(pred_rule_demo == y_rule_demo)))  # Verify the sign rule.
+
+x_grid_rule_demo = np.linspace(-3.0, 3.0, 200)                    # Create x-values for drawing the boundary.
+y_boundary_rule_demo = (b_rule_demo - w_rule_demo[0] * x_grid_rule_demo) / w_rule_demo[1]  # Solve w1*x+w2*y-b=0.
+plt.scatter(X_rule_demo[y_rule_demo == -1, 0], X_rule_demo[y_rule_demo == -1, 1], c="tab:blue", edgecolor="k", s=75, label="class -1")  # Draw negative points.
+plt.scatter(X_rule_demo[y_rule_demo == 1, 0], X_rule_demo[y_rule_demo == 1, 1], c="tab:orange", edgecolor="k", s=75, label="class +1")  # Draw positive points.
+plt.plot(x_grid_rule_demo, y_boundary_rule_demo, color="black", lw=2, label=r"$w^Tx-b=0$")  # Draw the zero-score boundary.
+plt.xlim(-3, 3)                                                    # Keep the horizontal range focused.
+plt.ylim(-3, 3)                                                    # Keep the vertical range focused.
+plt.xlabel("feature 1")                                           # Label the first coordinate.
+plt.ylabel("feature 2")                                           # Label the second coordinate.
+plt.title("SVM decision rule: classify by the sign of the score") # Add a teaching title.
+plt.legend()                                                      # Show class and boundary labels.
+plt.show()                                                        # Render the plot.
+```
+▶ What you'll see: a straight boundary where one side has negative scores and the other side has positive scores.
+
+### Step 2 — Functional margin: correctness in score units
+
+The functional margin for one labeled point is $y(w^Tx-b)$. It is positive when the point is
+classified correctly, but it changes if we multiply both $w$ and $b$ by the same positive
+constant.
+
+```python
+functional_demo = y_rule_demo * scores_rule_demo                         # Compute y(w^T x-b) for each point.
+scale_demo = 3.0                                                          # Choose a positive rescaling that leaves the boundary unchanged.
+w_scaled_demo = scale_demo * w_rule_demo                                  # Scale the normal vector.
+b_scaled_demo = scale_demo * b_rule_demo                                  # Scale the offset by the same amount.
+scores_scaled_demo = X_rule_demo @ w_scaled_demo - b_scaled_demo          # Recompute scores after rescaling.
+functional_scaled_demo = y_rule_demo * scores_scaled_demo                 # Recompute functional margins after rescaling.
+
+log("functional margins", np.round(functional_demo, 3))                  # Show original scale-dependent margins.
+log("scaled functional margins", np.round(functional_scaled_demo, 3))     # Show margins multiplied by the scale.
+log("same predicted signs?", bool(np.all(np.sign(scores_rule_demo) == np.sign(scores_scaled_demo))))  # Check boundary signs.
+
+positions_demo = np.arange(len(functional_demo))                          # Create bar positions for each data point.
+plt.bar(positions_demo - 0.18, functional_demo, width=0.36, label="original", color="tab:blue")  # Plot original margins.
+plt.bar(positions_demo + 0.18, functional_scaled_demo, width=0.36, label="scaled by 3", color="tab:orange")  # Plot scaled margins.
+plt.axhline(1.0, color="black", linestyle="--", label="canonical target 1")  # Mark the SVM canonical margin level.
+plt.xlabel("training point index")                                         # Label point index axis.
+plt.ylabel(r"functional margin $y(w^Tx-b)$")                               # Label the margin axis.
+plt.title("Functional margins depend on the scale of w and b")             # Add a teaching title.
+plt.legend()                                                               # Show margin-bar labels.
+plt.show()                                                                 # Render the plot.
+```
+▶ What you'll see: scaling $w,b$ multiplies the functional margins even though the predicted signs stay the same.
+
+### Step 3 — Geometric margin and margin width
+
+To get an actual distance to the boundary, divide the functional margin by $\|w\|$. Under
+canonical scaling, the closest points have margin $1/\|w\|$, and the full margin strip has
+width $2/\|w\|$.
+
+```python
+norm_rule_demo = np.linalg.norm(w_rule_demo)                              # Compute ||w|| for converting scores to distances.
+geometric_demo = functional_demo / norm_rule_demo                         # Convert functional margins into geometric distances.
+min_geometric_demo = np.min(geometric_demo)                               # Find the closest correct-side distance.
+width_demo = 2.0 / norm_rule_demo                                         # Compute the distance between f=+1 and f=-1 lines.
+
+log("||w||", round(float(norm_rule_demo), 4))                              # Show the separator norm.
+log("geometric margins", np.round(geometric_demo, 3))                      # Show true point-to-boundary distances.
+log("minimum geometric margin", round(float(min_geometric_demo), 4))       # Show the closest distance.
+log("margin width 2/||w||", round(float(width_demo), 4))                   # Show the full strip width.
+
+y_plus_demo = (b_rule_demo + 1.0 - w_rule_demo[0] * x_grid_rule_demo) / w_rule_demo[1]   # Solve w^T x-b=+1.
+y_minus_demo = (b_rule_demo - 1.0 - w_rule_demo[0] * x_grid_rule_demo) / w_rule_demo[1]  # Solve w^T x-b=-1.
+plt.scatter(X_rule_demo[y_rule_demo == -1, 0], X_rule_demo[y_rule_demo == -1, 1], c="tab:blue", edgecolor="k", s=75, label="class -1")  # Draw negative points.
+plt.scatter(X_rule_demo[y_rule_demo == 1, 0], X_rule_demo[y_rule_demo == 1, 1], c="tab:orange", edgecolor="k", s=75, label="class +1")  # Draw positive points.
+plt.plot(x_grid_rule_demo, y_boundary_rule_demo, color="black", lw=2, label="boundary")  # Draw the decision boundary.
+plt.plot(x_grid_rule_demo, y_plus_demo, color="black", linestyle="--", label="margins")  # Draw the positive margin line.
+plt.plot(x_grid_rule_demo, y_minus_demo, color="black", linestyle="--")      # Draw the negative margin line.
+plt.annotate(f"width = {width_demo:.2f}", xy=(0.2, 1.8), xytext=(1.0, 2.5), arrowprops={"arrowstyle": "->"})  # Annotate the strip width.
+plt.xlim(-3, 3)                                                             # Keep the horizontal range focused.
+plt.ylim(-3, 3)                                                             # Keep the vertical range focused.
+plt.xlabel("feature 1")                                                     # Label the first coordinate.
+plt.ylabel("feature 2")                                                     # Label the second coordinate.
+plt.title("Geometric margin turns scores into distances")                   # Add a teaching title.
+plt.legend()                                                                # Show boundary and margin labels.
+plt.show()                                                                  # Render the plot.
+```
+▶ What you'll see: two dashed margin lines around the boundary, with the closest points touching those lines.
+
+### Step 4 — Hard-margin SVM optimization
+
+For separable data, a hard-margin SVM asks for $y_i(w^Tx_i-b)\ge1$ for every point, then chooses
+the feasible separator with the smallest $\frac12\|w\|^2$. On the same boundary direction,
+over-scaling is feasible but wastes margin width and increases the objective.
+
+```python
+scale_values_demo = np.array([0.6, 1.0, 1.5, 2.0, 3.0])                   # Try several scalings of the same boundary.
+min_constraints_demo = []                                                  # Store min_i y_i f_i for each scale.
+objectives_demo = []                                                        # Store 1/2||w||^2 for each scale.
+widths_demo = []                                                            # Store 2/||w|| for each scale.
+
+for scale_value_demo in scale_values_demo:                                  # Loop over candidate scalings.
+    w_candidate_demo = scale_value_demo * w_rule_demo                       # Scale w without rotating the boundary.
+    b_candidate_demo = scale_value_demo * b_rule_demo                       # Scale b consistently.
+    score_candidate_demo = X_rule_demo @ w_candidate_demo - b_candidate_demo  # Compute candidate scores.
+    min_constraints_demo.append(np.min(y_rule_demo * score_candidate_demo)) # Record the tightest constraint.
+    objectives_demo.append(0.5 * np.sum(w_candidate_demo ** 2))             # Record the hard-margin objective.
+    widths_demo.append(2.0 / np.linalg.norm(w_candidate_demo))              # Record canonical margin-strip width.
+
+min_constraints_demo = np.array(min_constraints_demo)                       # Convert constraints to an array.
+objectives_demo = np.array(objectives_demo)                                 # Convert objectives to an array.
+widths_demo = np.array(widths_demo)                                         # Convert widths to an array.
+feasible_demo = min_constraints_demo >= 1.0                                 # Mark which scalings satisfy all constraints.
+
+log("scale values", scale_values_demo)                                      # Show candidate scalings.
+log("minimum constraints", np.round(min_constraints_demo, 3))               # Show feasibility numbers.
+log("feasible?", feasible_demo)                                             # Show which scalings satisfy y_i f_i >= 1.
+log("objectives 1/2||w||^2", np.round(objectives_demo, 3))                  # Show the norm penalty being minimized.
+log("margin widths", np.round(widths_demo, 3))                              # Show how width changes with norm.
+
+plt.subplot(1, 2, 1)                                                        # Left panel: hard-margin objective.
+plt.plot(scale_values_demo, objectives_demo, marker="o", color="crimson")   # Draw objective versus scale.
+plt.axvline(1.0, color="black", linestyle="--", label="smallest feasible scale")  # Mark the canonical feasible scale.
+plt.xlabel("scale applied to w,b")                                          # Label the scale axis.
+plt.ylabel(r"$\frac{1}{2}\|w\|^2$")                                         # Label the objective axis.
+plt.title("Objective grows with scale")                                     # Title the objective panel.
+plt.legend()                                                                # Show the canonical-scale label.
+plt.subplot(1, 2, 2)                                                        # Right panel: margin width.
+plt.plot(scale_values_demo, widths_demo, marker="s", color="tab:blue")      # Draw width versus scale.
+plt.axvline(1.0, color="black", linestyle="--")                             # Mark the smallest feasible scale again.
+plt.xlabel("scale applied to w,b")                                          # Label the scale axis.
+plt.ylabel(r"width $2/\|w\|$")                                              # Label the margin-width axis.
+plt.title("Width shrinks as ||w|| grows")                                   # Title the width panel.
+plt.tight_layout()                                                          # Keep the two panels readable.
+plt.show()                                                                  # Render both panels.
+```
+▶ What you'll see: the first feasible scale is the one with the smallest objective and the widest canonical margin strip.
+
+### Step 5 — Soft margins, slack, hinge loss, and $C$
+
+Real data can overlap, so soft-margin SVMs allow violations. The smallest slack for a point is
+the hinge loss $\max(0,1-yf(x))$, and $C$ tells the model how expensive those violations are.
+
+```python
+X_soft_demo = np.array([[-2.0, -1.0], [-1.0, -2.0], [-0.2, 0.8], [0.3, -0.4], [1.0, 1.2], [2.0, 1.0]])  # Mostly separable points with two awkward cases.
+y_soft_demo = np.array([-1, -1, -1, 1, 1, 1])                         # SVM labels for the soft-margin example.
+w_soft_demo = np.array([0.7, 0.6])                                     # A plausible separator direction.
+b_soft_demo = 0.05                                                     # A small offset in w^T x - b.
+scores_soft_demo = X_soft_demo @ w_soft_demo - b_soft_demo             # Compute raw SVM scores.
+signed_soft_demo = y_soft_demo * scores_soft_demo                      # Compute signed margins y f(x).
+hinge_soft_demo = np.maximum(0.0, 1.0 - signed_soft_demo)              # Compute hinge loss, which equals minimum slack.
+status_soft_demo = np.where(signed_soft_demo >= 1.0, "safe", np.where(signed_soft_demo > 0.0, "inside margin", "misclassified"))  # Label violation types.
+C_values_demo = np.array([0.1, 1.0, 10.0])                             # Try weak, medium, and strong violation penalties.
+regularizer_demo = 0.5 * np.sum(w_soft_demo ** 2)                      # Compute the 1/2||w||^2 part of the objective.
+objectives_soft_demo = regularizer_demo + C_values_demo * np.sum(hinge_soft_demo)  # Compute soft-margin objectives.
+
+log("signed margins y f(x)", np.round(signed_soft_demo, 3))            # Show correctness plus margin clearance.
+log("hinge/slack values", np.round(hinge_soft_demo, 3))                # Show violation sizes.
+log("statuses", status_soft_demo)                                      # Show each point's category.
+log("regularizer", round(float(regularizer_demo), 3))                  # Show margin-size cost.
+log("objectives for C=0.1,1,10", np.round(objectives_soft_demo, 3))    # Show how C changes violation cost.
+
+margin_grid_demo = np.linspace(-1.5, 2.5, 200)                         # Create possible signed-margin values.
+hinge_grid_demo = np.maximum(0.0, 1.0 - margin_grid_demo)              # Evaluate hinge loss on the grid.
+plt.plot(margin_grid_demo, hinge_grid_demo, color="crimson", lw=2, label=r"$\max(0,1-yf)$")  # Draw the hinge-loss curve.
+plt.scatter(signed_soft_demo, hinge_soft_demo, color="black", s=60, zorder=3, label="toy points")  # Place examples on the loss curve.
+plt.axvline(1.0, color="gray", linestyle="--", label="margin satisfied")  # Mark the zero-loss threshold.
+plt.axvline(0.0, color="gray", linestyle=":", label="decision boundary")  # Mark the sign-change threshold.
+plt.xlabel(r"signed margin $y f(x)$")                                  # Label the signed-margin axis.
+plt.ylabel("hinge loss / slack")                                       # Label the loss axis.
+plt.title("Soft margin: hinge loss charges violations")                # Add a teaching title.
+plt.legend()                                                           # Show curve and threshold meanings.
+plt.show()                                                             # Render the plot.
+```
+▶ What you'll see: safe points have zero loss, inside-margin points have fractional loss, and larger $C$ makes the same violations cost more.
+
+### Step 6 — Kernels and the RBF kernel
+
+A kernel computes an inner product in a feature space without explicitly building that feature
+map. The RBF kernel $K(x,z)=\exp(-\gamma\|x-z\|^2)$ acts like local similarity: nearby points
+are close to 1, and faraway points are close to 0.
+
+```python
+anchor_demo = np.array([0.0, 0.0])                                      # Choose one reference point z.
+query_points_demo = np.array([[0.0, 0.0], [0.5, 0.0], [1.0, 0.0], [2.0, 0.0], [3.0, 0.0]])  # Points at growing distances.
+gamma_demo = 0.8                                                        # Choose one RBF sharpness value.
+dist2_demo = np.sum((query_points_demo - anchor_demo) ** 2, axis=1)     # Compute squared distances ||x-z||^2.
+rbf_demo = np.exp(-gamma_demo * dist2_demo)                             # Compute exp(-gamma ||x-z||^2).
+sigma_demo = 1.0 / np.sqrt(2.0 * gamma_demo)                            # Convert gamma to sigma using gamma=1/(2 sigma^2).
+
+log("squared distances", np.round(dist2_demo, 3))                       # Show distance inputs to the kernel.
+log("RBF similarities", np.round(rbf_demo, 3))                          # Show kernel outputs between 0 and 1.
+log("equivalent sigma", round(float(sigma_demo), 3))                    # Show the sigma interpretation.
+
+distance_grid_demo = np.linspace(0.0, 3.0, 200)                         # Create distances for smooth decay curves.
+gamma_smooth_demo = 0.2                                                 # Small gamma means broad similarity.
+gamma_local_demo = 1.2                                                  # Large gamma means local similarity.
+rbf_smooth_demo = np.exp(-gamma_smooth_demo * distance_grid_demo ** 2)  # Compute the broad RBF curve.
+rbf_local_demo = np.exp(-gamma_local_demo * distance_grid_demo ** 2)    # Compute the local RBF curve.
+xx_kernel_demo, yy_kernel_demo = np.meshgrid(np.linspace(-2.0, 2.0, 120), np.linspace(-2.0, 2.0, 120))  # Build a 2-D grid.
+grid_kernel_demo = np.column_stack([xx_kernel_demo.ravel(), yy_kernel_demo.ravel()])  # Flatten grid coordinates.
+heat_kernel_demo = np.exp(-gamma_demo * np.sum((grid_kernel_demo - anchor_demo) ** 2, axis=1)).reshape(xx_kernel_demo.shape)  # RBF similarity heatmap.
+
+plt.subplot(1, 2, 1)                                                    # Left panel: one-dimensional decay.
+plt.plot(distance_grid_demo, rbf_smooth_demo, label=r"$\gamma=0.2$", lw=2)  # Draw the smooth kernel.
+plt.plot(distance_grid_demo, rbf_local_demo, label=r"$\gamma=1.2$", lw=2)   # Draw the local kernel.
+plt.xlabel(r"distance $\|x-z\|$")                                       # Label distance axis.
+plt.ylabel("RBF similarity")                                            # Label similarity axis.
+plt.title("RBF decay")                                                  # Title the decay panel.
+plt.legend()                                                            # Show gamma labels.
+plt.subplot(1, 2, 2)                                                    # Right panel: 2-D similarity bump.
+plt.contourf(xx_kernel_demo, yy_kernel_demo, heat_kernel_demo, levels=20, cmap="viridis")  # Draw similarity around the anchor.
+plt.scatter([anchor_demo[0]], [anchor_demo[1]], color="red", edgecolor="k", s=70, label="anchor")  # Mark the anchor point.
+plt.xlabel("feature 1")                                                 # Label first feature.
+plt.ylabel("feature 2")                                                 # Label second feature.
+plt.title("RBF similarity around one point")                            # Title the heatmap panel.
+plt.legend()                                                            # Show the anchor label.
+plt.tight_layout()                                                      # Keep panels readable.
+plt.show()                                                              # Render both kernel views.
+```
+▶ What you'll see: larger $\gamma$ decays faster, and the heatmap shows a local similarity bump around the anchor.
+
+### Step 7 — Lagrange multipliers and support-vector sparsity
+
+In the dual view, $w=\sum_i \alpha_i y_i x_i$. Complementary slackness says non-support points
+outside the margin must have $\alpha_i=0$, so only points on the margin need nonzero
+multipliers.
+
+```python
+margin_sv_demo = y_rule_demo * (X_rule_demo @ w_rule_demo - b_rule_demo)   # Recompute canonical margin values.
+support_mask_demo = np.isclose(margin_sv_demo, 1.0)                         # Identify points exactly on the margin.
+alpha_demo = np.zeros(len(X_rule_demo))                                     # Start with zero dual weight for every point.
+alpha_demo[support_mask_demo] = 0.25                                        # Give nonzero alpha only to the two margin points.
+w_from_alpha_demo = np.sum((alpha_demo * y_rule_demo)[:, None] * X_rule_demo, axis=0)  # Rebuild w from support vectors.
+kkt_demo = alpha_demo * (margin_sv_demo - 1.0)                              # Compute alpha_i(y_i f_i - 1) for KKT slackness.
+
+log("margin values", np.round(margin_sv_demo, 3))                           # Show which points are on the margin.
+log("support-vector mask", support_mask_demo)                               # Show which points become support vectors.
+log("alpha values", alpha_demo)                                             # Show sparsity in the dual weights.
+log("w rebuilt from alpha", np.round(w_from_alpha_demo, 3))                 # Verify the support vectors reconstruct w.
+log("KKT products", np.round(kkt_demo, 10))                                 # Verify complementary slackness products are zero.
+
+plt.scatter(X_rule_demo[y_rule_demo == -1, 0], X_rule_demo[y_rule_demo == -1, 1], c="tab:blue", edgecolor="k", s=75, label="class -1")  # Draw negative points.
+plt.scatter(X_rule_demo[y_rule_demo == 1, 0], X_rule_demo[y_rule_demo == 1, 1], c="tab:orange", edgecolor="k", s=75, label="class +1")  # Draw positive points.
+plt.scatter(X_rule_demo[support_mask_demo, 0], X_rule_demo[support_mask_demo, 1], s=230, facecolors="none", edgecolors="red", linewidths=2.4, label="support vectors")  # Circle support vectors.
+plt.plot(x_grid_rule_demo, y_boundary_rule_demo, color="black", lw=2, label="boundary")  # Draw the decision boundary.
+plt.plot(x_grid_rule_demo, y_plus_demo, color="black", linestyle="--", label="margins")  # Draw the positive margin.
+plt.plot(x_grid_rule_demo, y_minus_demo, color="black", linestyle="--")       # Draw the negative margin.
+plt.xlim(-3, 3)                                                              # Keep the horizontal range focused.
+plt.ylim(-3, 3)                                                              # Keep the vertical range focused.
+plt.xlabel("feature 1")                                                      # Label the first coordinate.
+plt.ylabel("feature 2")                                                      # Label the second coordinate.
+plt.title("Support vectors are the nonzero-alpha margin points")             # Add a teaching title.
+plt.legend()                                                                 # Show class and support-vector labels.
+plt.show()                                                                   # Render the plot.
+```
+▶ What you'll see: only the circled margin points have nonzero $\alpha$, and they alone rebuild the separator.
+
+### Recap — what you just ran
+
+- The **linear decision rule** classified by the sign of $w^Tx-b$.
+- The **functional margin** checked correctness in score units, while the **geometric margin** converted that score into distance.
+- The **hard-margin objective** minimized $\frac12\|w\|^2$ to maximize width.
+- **Soft margins** used hinge loss and $C$ to handle violations.
+- The **RBF kernel** turned distance into local similarity, and **support vectors** were the sparse nonzero-$\alpha$ points defining the boundary.
+
+Everything below (starting at **§1 Overview**) develops these same ideas with full derivations,
+more examples, and an interactive experiment.
+
+---
+
 ## 1. Overview
 
 Support Vector Machines (SVMs) build classifiers by finding a decision boundary that separates classes with the widest possible margin. Instead of treating all training points equally, the fitted boundary is determined by a small set of critical points closest to the boundary: the **support vectors**.

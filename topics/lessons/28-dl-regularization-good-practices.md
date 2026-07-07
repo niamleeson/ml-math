@@ -2,6 +2,283 @@
 > **Source:** CS 230 · **Category:** Regularization · **Type:** ⚖️ Both · [↑ Full reference](../../ai-ml-cheatsheets.md)
 > 📓 The coded examples form a runnable notebook section; an .ipynb will be generated.
 
+## 0. Step-by-Step Worked Example — Start Here (Beginner Friendly)
+
+> 🧑‍🎓 **New to this topic? Start here.** This is a gentle, fully runnable walkthrough that
+> builds up *every* idea in this lesson one tiny step at a time. Each step **prints** the
+> numbers it computes and **draws a picture** so you can *see* what is happening. Run the
+> cells in order from top to bottom. Nothing here needs the internet or any downloaded data.
+
+**What we will build, step by step:**
+1. **Weight penalties: L1, L2, and elastic net** — charge large weights and compare shrinkage.
+2. **Dropout** — randomly remove activations while preserving expected scale.
+3. **Early stopping** — choose the best validation checkpoint instead of the final epoch.
+4. **Batch normalization** — normalize a mini-batch, then learn scale and shift.
+5. **Data augmentation** — add label-preserving variation to the training set.
+6. **Good-practice sanity checks** — overfit a tiny batch and gradient-check one derivative.
+
+### Step 0 — Set up our tools
+
+We import NumPy (arrays + gradients) and Matplotlib (pictures). We fix a random **seed** so the
+dropout masks and augmentation noise are reproducible. We also define a tiny `log()` helper so
+every step prints clearly labeled numbers.
+
+```python
+import numpy as np                       # NumPy: arrays, random masks, penalties, and gradient checks.
+import matplotlib.pyplot as plt          # Matplotlib: draw regularization diagnostics and sanity-check curves.
+
+np.random.seed(0)                         # Fix the seed so every run prints the SAME numbers.
+plt.rcParams["figure.figsize"] = (7, 4)   # A comfortable default plot size.
+
+def log(label, value):                    # A tiny logger so each printed line explains itself.
+    print(f"[{label}] {value}")           # Format is: [what this is] the value.
+
+log("setup", "tools ready — NumPy + Matplotlib imported, seed fixed to 0")  # Confirm setup ran.
+```
+▶ What you'll see: one line confirming the tools are ready.
+
+### Step 1 — Weight penalties: L1, L2, and elastic net
+
+Regularization can add a cost to the training objective so large or unnecessary weights become
+expensive. $L_2$ shrinks smoothly, $L_1$ can push small weights to exactly zero, and elastic net
+mixes both effects.
+
+```python
+theta_demo = np.array([2.5, -0.8, 0.2])  # Start with three toy weights: large, medium, and small.
+data_loss_demo = 1.4  # Pretend the data-fitting loss is already computed.
+lambda_demo = 0.25  # Regularization strength.
+elastic_alpha_demo = 0.5  # Mix half L1-style and half L2-style penalty.
+eta_demo = 0.3  # Learning rate for one shrinkage-only update.
+l1_norm_demo = np.sum(np.abs(theta_demo))  # Compute ||theta||_1.
+l2_squared_demo = np.sum(theta_demo ** 2)  # Compute ||theta||_2^2.
+l1_objective_demo = data_loss_demo + lambda_demo * l1_norm_demo  # Add the L1 penalty to the data loss.
+l2_objective_demo = data_loss_demo + lambda_demo * l2_squared_demo  # Add the L2 penalty to the data loss.
+elastic_objective_demo = data_loss_demo + lambda_demo * ((1.0 - elastic_alpha_demo) * l1_norm_demo + elastic_alpha_demo * l2_squared_demo)  # Add the mixed penalty.
+l2_grad_demo = 2.0 * lambda_demo * theta_demo  # L2 contributes gradient 2 lambda theta.
+theta_l2_step_demo = theta_demo - eta_demo * l2_grad_demo  # L2-only step smoothly shrinks every coordinate.
+theta_l1_soft_demo = np.sign(theta_demo) * np.maximum(np.abs(theta_demo) - eta_demo * lambda_demo, 0.0)  # L1-style soft thresholding can create zeros.
+log("L1 norm and L2 squared", (round(float(l1_norm_demo), 3), round(float(l2_squared_demo), 3)))  # Print penalty inputs.
+log("objectives L1/L2/elastic", np.round([l1_objective_demo, l2_objective_demo, elastic_objective_demo], 3))  # Print total objectives.
+log("L2 gradient", np.round(l2_grad_demo, 3))  # Print shrinkage gradient.
+log("weights after L2 shrink", np.round(theta_l2_step_demo, 3))  # Print smooth shrinkage result.
+log("weights after L1 threshold", np.round(theta_l1_soft_demo, 3))  # Print sparsity-friendly result.
+
+fig_demo, axes_demo = plt.subplots(1, 2, figsize=(10.5, 4))  # Create objective and coefficient panels.
+axes_demo[0].bar(["data", "L1", "L2", "elastic"], [data_loss_demo, l1_objective_demo, l2_objective_demo, elastic_objective_demo], color=["gray", "tab:orange", "tab:blue", "tab:green"])  # Compare objective values.
+axes_demo[0].set_ylabel("objective value")  # Label objective scale.
+axes_demo[0].set_title("penalties add to data loss")  # Title objective panel.
+positions_demo = np.arange(theta_demo.size)  # One x-position per weight.
+axes_demo[1].bar(positions_demo - 0.22, theta_demo, width=0.22, label="before")  # Plot starting weights.
+axes_demo[1].bar(positions_demo, theta_l2_step_demo, width=0.22, label="L2 step")  # Plot L2-shrunken weights.
+axes_demo[1].bar(positions_demo + 0.22, theta_l1_soft_demo, width=0.22, label="L1 threshold")  # Plot L1-thresholded weights.
+axes_demo[1].axhline(0.0, color="black", linewidth=0.8)  # Mark zero for sparsity.
+axes_demo[1].set_xticks(positions_demo, ["w1", "w2", "w3"])  # Label weight coordinates.
+axes_demo[1].set_title("shrinkage versus sparsity")  # Title coefficient panel.
+axes_demo[1].legend(fontsize=8)  # Identify bars.
+plt.tight_layout()  # Keep labels readable.
+plt.show()  # Render penalty visuals.
+```
+▶ What you'll see: all penalties raise the objective for large weights; L2 shrinks smoothly, while L1-style thresholding can drive the small weight to zero.
+
+### Step 2 — Dropout: random sub-networks with preserved scale
+
+Dropout samples a binary mask and zeros some activations during training. Inverted dropout divides
+surviving activations by the keep probability, so the average activation stays near its original
+scale.
+
+```python
+activation_demo = np.array([1.0, 2.0, 0.5, 3.0, 1.5, 2.5])  # Hidden activations before dropout.
+keep_prob_demo = 0.6  # Keep each unit with probability q.
+mask_demo = (np.random.rand(activation_demo.size) < keep_prob_demo).astype(float)  # Sample one dropout mask.
+dropped_demo = mask_demo * activation_demo / keep_prob_demo  # Apply inverted dropout.
+num_masks_demo = 4000  # Use many masks to estimate the expectation.
+masks_demo = (np.random.rand(num_masks_demo, activation_demo.size) < keep_prob_demo).astype(float)  # Sample many masks.
+dropped_many_demo = masks_demo * activation_demo / keep_prob_demo  # Apply inverted dropout to every mask.
+mean_after_dropout_demo = dropped_many_demo.mean(axis=0)  # Estimate expected activation after dropout.
+log("activation", activation_demo)  # Print original activations.
+log("one dropout mask", mask_demo)  # Print kept and dropped units.
+log("one dropout output", np.round(dropped_demo, 3))  # Print one training-time activation.
+log("mean after many masks", np.round(mean_after_dropout_demo, 3))  # Show expectation is preserved.
+log("absolute expectation error", np.round(np.abs(mean_after_dropout_demo - activation_demo), 3))  # Print Monte Carlo error.
+
+fig_demo, axes_demo = plt.subplots(1, 2, figsize=(10.5, 4))  # Create bar and mask panels.
+positions_demo = np.arange(activation_demo.size)  # One x-position per unit.
+axes_demo[0].bar(positions_demo - 0.18, activation_demo, width=0.36, label="original")  # Plot original activations.
+axes_demo[0].bar(positions_demo + 0.18, mean_after_dropout_demo, width=0.36, label="mean after dropout")  # Plot average dropout output.
+axes_demo[0].set_xlabel("hidden unit")  # Label unit index.
+axes_demo[0].set_ylabel("activation")  # Label activation value.
+axes_demo[0].set_title("inverted dropout preserves expected scale")  # Title expectation panel.
+axes_demo[0].legend(fontsize=8)  # Identify bars.
+image_demo = axes_demo[1].imshow(masks_demo[:8], cmap="Greys", aspect="auto", vmin=0.0, vmax=1.0)  # Show several sampled masks.
+axes_demo[1].set_xlabel("hidden unit")  # Label mask columns.
+axes_demo[1].set_ylabel("training step")  # Label mask rows.
+axes_demo[1].set_title("different sub-network each step")  # Title mask panel.
+fig_demo.colorbar(image_demo, ax=axes_demo[1], label="kept = 1")  # Add mask legend.
+plt.tight_layout()  # Keep panels readable.
+plt.show()  # Render dropout visuals.
+```
+▶ What you'll see: each mask drops a different subset of units, but the average over many inverted-dropout masks nearly matches the original activations.
+
+### Step 3 — Early stopping: keep the best validation checkpoint
+
+Training loss can keep falling after validation loss has started to rise. Early stopping watches
+validation loss and restores a checkpoint near the best epoch instead of trusting the final epoch.
+
+```python
+epochs_demo = np.arange(1, 16)  # Epoch numbers.
+train_loss_demo = 1.1 * np.exp(-0.18 * epochs_demo) + 0.08  # Smoothly decreasing training loss.
+val_loss_demo = np.array([0.95, 0.78, 0.63, 0.52, 0.45, 0.41, 0.39, 0.40, 0.43, 0.47, 0.52, 0.58, 0.65, 0.73, 0.82])  # Validation loss that overfits later.
+best_index_demo = int(np.argmin(val_loss_demo))  # Find lowest validation loss.
+best_epoch_demo = int(epochs_demo[best_index_demo])  # Convert index to epoch number.
+patience_demo = 2  # Stop after two epochs without improvement.
+stop_epoch_demo = int(min(epochs_demo[-1], best_epoch_demo + patience_demo))  # Demonstration stopping epoch.
+log("best validation epoch", best_epoch_demo)  # Print selected checkpoint.
+log("best validation loss", round(float(val_loss_demo[best_index_demo]), 3))  # Print best validation value.
+log("final validation loss", round(float(val_loss_demo[-1]), 3))  # Print worse final value.
+log("patience stop epoch", stop_epoch_demo)  # Print when patience would stop.
+
+plt.plot(epochs_demo, train_loss_demo, marker="o", label="train loss")  # Draw training curve.
+plt.plot(epochs_demo, val_loss_demo, marker="o", label="validation loss")  # Draw validation curve.
+plt.axvline(best_epoch_demo, color="green", linestyle="--", label=f"best epoch {best_epoch_demo}")  # Mark best checkpoint.
+plt.axvline(stop_epoch_demo, color="red", linestyle=":", label=f"stop epoch {stop_epoch_demo}")  # Mark patience stop.
+plt.scatter([best_epoch_demo], [val_loss_demo[best_index_demo]], s=90, color="green", zorder=3)  # Highlight validation minimum.
+plt.xlabel("epoch")  # Label epoch axis.
+plt.ylabel("loss")  # Label loss axis.
+plt.title("Early stopping chooses validation-best weights")  # Explain the plot.
+plt.legend()  # Show curve and checkpoint labels.
+plt.show()  # Render early-stopping plot.
+```
+▶ What you'll see: training loss keeps decreasing, but validation loss bottoms out and rises; early stopping chooses the bottom instead of the final epoch.
+
+### Step 4 — Batch normalization: normalize, then scale and shift
+
+Batch normalization computes a mini-batch mean and variance, normalizes activations, then applies
+learned parameters $\gamma$ and $\beta$. This stabilizes scale without forcing the network to keep
+mean 0 and variance 1 forever.
+
+```python
+z_batch_demo = np.array([8.0, 10.0, 9.0, 12.0, 11.0, 7.0, 13.0, 10.5])  # One mini-batch of pre-activations.
+mu_bn_demo = z_batch_demo.mean()  # Compute batch mean.
+var_bn_demo = np.mean((z_batch_demo - mu_bn_demo) ** 2)  # Compute batch variance.
+eps_bn_demo = 1e-5  # Add epsilon to avoid division by zero.
+z_hat_bn_demo = (z_batch_demo - mu_bn_demo) / np.sqrt(var_bn_demo + eps_bn_demo)  # Normalize to near mean 0 and std 1.
+gamma_bn_demo = 1.4  # Learned scale parameter.
+beta_bn_demo = -0.3  # Learned shift parameter.
+z_tilde_bn_demo = gamma_bn_demo * z_hat_bn_demo + beta_bn_demo  # Apply learned scale and shift.
+log("batch mean", round(float(mu_bn_demo), 3))  # Print mean.
+log("batch variance", round(float(var_bn_demo), 3))  # Print variance.
+log("z_hat mean/std", (round(float(z_hat_bn_demo.mean()), 3), round(float(z_hat_bn_demo.std()), 3)))  # Verify normalization.
+log("z_tilde mean/std", (round(float(z_tilde_bn_demo.mean()), 3), round(float(z_tilde_bn_demo.std()), 3)))  # Show gamma and beta effect.
+log("first normalized values", np.round(z_hat_bn_demo[:4], 3))  # Print a few normalized activations.
+
+plt.hist(z_batch_demo, bins=6, alpha=0.55, label="raw z")  # Plot raw pre-activations.
+plt.hist(z_hat_bn_demo, bins=6, alpha=0.55, label="normalized z_hat")  # Plot normalized values.
+plt.hist(z_tilde_bn_demo, bins=6, alpha=0.55, label="gamma zhat + beta")  # Plot final batch-norm outputs.
+plt.xlabel("activation value")  # Label value axis.
+plt.ylabel("count")  # Label histogram count.
+plt.title("Batch norm stabilizes and then learns activation scale")  # Explain the plot.
+plt.legend()  # Identify distributions.
+plt.show()  # Render batch-norm histograms.
+```
+▶ What you'll see: raw activations sit around a large positive mean; normalized values center near 0; learned scale and shift move them to a trainable range.
+
+### Step 5 — Data augmentation: label-preserving variation
+
+Augmentation expands the training distribution with transformations that should not change the
+label. Here, small jitter moves points within the same class neighborhood rather than across the
+class boundary.
+
+```python
+X_aug_demo = np.array([[0.0, 0.2], [0.2, -0.1], [0.4, 0.1], [2.0, 2.1], [2.2, 1.9], [1.8, 2.2]])  # Two tiny labeled clusters.
+y_aug_demo = np.array([0, 0, 0, 1, 1, 1])  # Cluster labels.
+noise_aug_demo = 0.12 * np.random.randn(*X_aug_demo.shape)  # Small Gaussian jitter.
+X_jitter_demo = X_aug_demo + noise_aug_demo  # Augmented points near originals.
+y_jitter_demo = y_aug_demo.copy()  # Labels stay unchanged.
+X_combined_demo = np.vstack([X_aug_demo, X_jitter_demo])  # Combine original and augmented inputs.
+y_combined_demo = np.concatenate([y_aug_demo, y_jitter_demo])  # Combine labels.
+log("original size", X_aug_demo.shape[0])  # Print original sample count.
+log("augmented size", X_combined_demo.shape[0])  # Print expanded sample count.
+log("labels preserved", bool(np.all(y_jitter_demo == y_aug_demo)))  # Verify labels were not changed.
+log("first original vs jittered", (np.round(X_aug_demo[0], 3), np.round(X_jitter_demo[0], 3)))  # Show one pair.
+
+plt.scatter(X_aug_demo[:, 0], X_aug_demo[:, 1], c=y_aug_demo, cmap="coolwarm", s=100, edgecolor="black", label="original")  # Plot originals.
+plt.scatter(X_jitter_demo[:, 0], X_jitter_demo[:, 1], c=y_jitter_demo, cmap="coolwarm", s=100, marker="x", label="augmented")  # Plot jittered copies.
+for idx_aug_demo in range(X_aug_demo.shape[0]):  # Draw connectors between each pair.
+    plt.plot([X_aug_demo[idx_aug_demo, 0], X_jitter_demo[idx_aug_demo, 0]], [X_aug_demo[idx_aug_demo, 1], X_jitter_demo[idx_aug_demo, 1]], color="gray", alpha=0.7, linewidth=0.8)  # Show small movement.
+plt.xlabel("feature 1")  # Label first feature.
+plt.ylabel("feature 2")  # Label second feature.
+plt.title("Augmentation adds nearby label-preserving examples")  # Explain the plot.
+plt.legend()  # Identify original and augmented markers.
+plt.show()  # Render augmentation scatter.
+```
+▶ What you'll see: each original point gets a nearby partner with the same color label, doubling the tiny dataset without changing class meaning.
+
+### Step 6 — Good-practice sanity checks: overfit a tiny batch and check a gradient
+
+Before trusting regularization, verify the model can fit a tiny clean batch when regularization is
+off. Also compare analytical gradients with centered finite differences to catch implementation
+bugs in backpropagation.
+
+```python
+x_small_demo = np.array([-1.0, 0.0, 1.0, 2.0])  # Tiny clean batch of one-dimensional inputs.
+y_small_demo = 2.0 * x_small_demo + 1.0  # Exactly linear targets that should be easy to overfit.
+w_small_demo = 0.0  # Initialize slope.
+b_small_demo = 0.0  # Initialize intercept.
+lr_small_demo = 0.12  # Learning rate for the tiny overfit check.
+losses_small_demo = []  # Store small-batch losses.
+for step_small_demo in range(120):  # Train long enough to fit the four examples.
+    pred_small_demo = w_small_demo * x_small_demo + b_small_demo  # Forward pass for the tiny batch.
+    err_small_demo = pred_small_demo - y_small_demo  # Residuals.
+    loss_small_demo = float(np.mean(err_small_demo ** 2))  # Mean squared error.
+    grad_w_small_demo = 2.0 * np.mean(err_small_demo * x_small_demo)  # Analytical slope gradient.
+    grad_b_small_demo = 2.0 * np.mean(err_small_demo)  # Analytical intercept gradient.
+    w_small_demo = w_small_demo - lr_small_demo * grad_w_small_demo  # Update slope.
+    b_small_demo = b_small_demo - lr_small_demo * grad_b_small_demo  # Update intercept.
+    losses_small_demo.append(loss_small_demo)  # Save loss.
+
+def scalar_fn_demo(w_check_demo):  # Simple scalar function for gradient checking.
+    return w_check_demo ** 3  # f(w)=w^3 has exact derivative 3w^2.
+
+w_check_demo = 2.0  # Point where we check the derivative.
+analytic_grad_demo = 3.0 * w_check_demo ** 2  # Exact derivative.
+h_values_demo = np.logspace(-1, -7, 7)  # Candidate finite-difference step sizes.
+errors_check_demo = []  # Store absolute gradient errors.
+for h_demo in h_values_demo:  # Try each finite-difference step size.
+    numeric_grad_demo = (scalar_fn_demo(w_check_demo + h_demo) - scalar_fn_demo(w_check_demo - h_demo)) / (2.0 * h_demo)  # Centered finite difference.
+    errors_check_demo.append(abs(numeric_grad_demo - analytic_grad_demo))  # Save absolute error.
+numeric_grad_demo = (scalar_fn_demo(w_check_demo + 1e-4) - scalar_fn_demo(w_check_demo - 1e-4)) / (2e-4)  # Representative numerical gradient.
+relative_error_demo = abs(numeric_grad_demo - analytic_grad_demo) / max(1.0, abs(numeric_grad_demo), abs(analytic_grad_demo))  # Relative gradient-check error.
+log("small-batch first/last loss", (round(losses_small_demo[0], 4), round(losses_small_demo[-1], 8)))  # Verify tiny batch overfits.
+log("learned slope/intercept", (round(float(w_small_demo), 3), round(float(b_small_demo), 3)))  # Print fitted parameters.
+log("analytic vs numeric grad", (round(float(analytic_grad_demo), 8), round(float(numeric_grad_demo), 8)))  # Compare gradients.
+log("relative gradient error", f"{relative_error_demo:.2e}")  # Print gradient-check error.
+
+fig_demo, axes_demo = plt.subplots(1, 2, figsize=(11, 4))  # Create overfit and gradient-check panels.
+axes_demo[0].plot(losses_small_demo, color="seagreen")  # Plot tiny-batch training loss.
+axes_demo[0].set_xlabel("gradient step")  # Label update steps.
+axes_demo[0].set_ylabel("MSE on tiny batch")  # Label small-batch loss.
+axes_demo[0].set_title("sanity check: tiny batch can be overfit")  # Title overfit panel.
+axes_demo[1].loglog(h_values_demo, errors_check_demo, marker="o")  # Plot finite-difference error by step size.
+axes_demo[1].invert_xaxis()  # Put smaller h values toward the right.
+axes_demo[1].set_xlabel("finite-difference h")  # Label h axis.
+axes_demo[1].set_ylabel("absolute gradient error")  # Label error axis.
+axes_demo[1].set_title("gradient check for f(w)=w^3")  # Title gradient-check panel.
+plt.tight_layout()  # Keep panels readable.
+plt.show()  # Render sanity-check diagnostics.
+```
+▶ What you'll see: the tiny-batch loss drops almost to zero, and the numerical derivative matches the analytical derivative with a tiny relative error.
+
+### Recap — what you just ran
+
+- **Weight penalties** made large weights costly; **dropout** sampled sub-networks while preserving average activation scale.
+- **Early stopping** selected the validation-best epoch; **batch norm** stabilized one mini-batch of activations.
+- **Data augmentation** added safe variation, and the **sanity checks** verified that a model can overfit a tiny batch and that a gradient is implemented correctly.
+
+Everything below (starting at **§1 Overview**) develops these same ideas with full derivations,
+more examples, and practical regularization experiments.
+
+---
+
 ## 1. Overview
 
 Deep networks are expressive enough to fit real signal and accidental noise. **Regularization** is the set of penalties, randomization tricks, stopping rules, normalization methods, and data practices that make the useful solution easier to learn than the memorizing solution.

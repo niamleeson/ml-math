@@ -2,6 +2,142 @@
 > **Source:** CS 221 · **Category:** Method · **Type:** 💻 Colab · [↑ Full reference](../../ai-ml-cheatsheets.md)
 > 📓 Runnable notebook section; an .ipynb will be generated.
 
+## 0. Step-by-Step Worked Example — Start Here (Beginner Friendly)
+
+> 🧑‍🎓 **New to this topic? Start here.** This is a gentle, fully runnable walkthrough that
+> builds up *every* idea in this lesson one tiny step at a time. Each step **prints** the
+> numbers it computes and **draws a picture** so you can *see* what is happening. Run the
+> cells in order from top to bottom. Nothing here needs the internet or any downloaded data.
+
+**What we will build, step by step:**
+1. **k-means clustering** — alternate nearest-centroid assignments and centroid updates while distortion falls.
+2. **PCA dimensionality reduction** — center data, find maximum-variance directions, and project to one dimension.
+
+### Step 0 — Set up our tools
+
+We import NumPy (arrays + linear algebra) and Matplotlib (pictures). We fix a random **seed** so every
+run gives the same printed numbers, then define a tiny `log()` helper for clearly labeled output.
+
+```python
+import numpy as np                       # NumPy: distances, means, covariance matrices, and eigenvectors.
+import matplotlib.pyplot as plt          # Matplotlib: plots for clusters, distortion, and PCA projections.
+
+np.random.seed(0)                         # Fix the seed so every run prints the same numbers.
+plt.rcParams["figure.figsize"] = (7, 4)   # Use a comfortable default plot size.
+
+
+def log(label, value):                    # Define one small logger used in every worked-example cell.
+    print(f"[{label}] {value}")           # Print each value with a readable label.
+
+log("setup", "tools ready — NumPy + Matplotlib imported, seed fixed to 0")  # Confirm setup finished.
+```
+▶ What you'll see: one line confirming the tools are ready.
+
+### Step 1 — k-means clustering: assign, update, repeat
+
+k-means has no labels, only points and centroids. Each iteration assigns every point to its nearest centroid,
+then moves each centroid to the mean of its assigned points; the distortion is the sum of squared assigned distances.
+
+```python
+cluster_left_demo = np.array([[-2.0, 0.0], [-1.6, 0.5], [-1.3, -0.4], [-1.8, -0.6]])  # Create a small left cloud.
+cluster_right_demo = np.array([[1.2, 0.4], [1.7, 0.9], [2.1, 0.1], [1.6, -0.5]])       # Create a small right cloud.
+points_demo = np.vstack([cluster_left_demo, cluster_right_demo])                       # Combine unlabeled examples.
+centroids_demo = np.array([[-0.8, 1.0], [0.8, -0.8]])                                  # Choose two initial centroids.
+distortions_demo = []                                                                   # Store distortion after each assignment step.
+
+for iteration_demo in range(5):                                                         # Run a few coordinate-minimization rounds.
+    diffs_demo = points_demo[:, None, :] - centroids_demo[None, :, :]                   # Compare every point to every centroid.
+    distances_demo = np.sum(diffs_demo ** 2, axis=2)                                    # Convert differences to squared distances.
+    assignments_demo = np.argmin(distances_demo, axis=1)                                # Assign each point to its nearest centroid.
+    distortion_demo = distances_demo[np.arange(len(points_demo)), assignments_demo].sum() # Sum assigned squared distances.
+    distortions_demo.append(distortion_demo)                                            # Save the current k-means objective value.
+    log(f"iteration {iteration_demo} distortion", round(float(distortion_demo), 3))     # Print the loss before updating centroids.
+    new_centroids_demo = centroids_demo.copy()                                          # Prepare updated centroid positions.
+    for cluster_demo in range(2):                                                       # Update each cluster separately.
+        new_centroids_demo[cluster_demo] = points_demo[assignments_demo == cluster_demo].mean(axis=0)  # Move centroid to cluster mean.
+    log(f"iteration {iteration_demo} centroids", np.round(new_centroids_demo, 2))       # Print the new centroid locations.
+    centroids_demo = new_centroids_demo                                                 # Use updated centroids for the next round.
+
+final_diffs_demo = points_demo[:, None, :] - centroids_demo[None, :, :]                 # Recompute distances to final centroids.
+final_distances_demo = np.sum(final_diffs_demo ** 2, axis=2)                            # Compute final squared distances.
+final_assignments_demo = np.argmin(final_distances_demo, axis=1)                        # Assign points using final centroids.
+final_distortion_demo = final_distances_demo[np.arange(len(points_demo)), final_assignments_demo].sum() # Compute final distortion.
+log("final distortion", round(float(final_distortion_demo), 3))                         # Print the final objective value.
+
+fig_demo, axes_demo = plt.subplots(1, 2, figsize=(10, 4))                                # Create cluster and loss panels.
+axes_demo[0].scatter(points_demo[:, 0], points_demo[:, 1], c=final_assignments_demo, cmap="coolwarm", s=90, edgecolor="black")  # Plot final clusters.
+axes_demo[0].scatter(centroids_demo[:, 0], centroids_demo[:, 1], marker="X", s=220, color="gold", edgecolor="black", label="centroids")  # Plot final centroids.
+axes_demo[0].set_title("final nearest-centroid assignments")                            # Title the clustering panel.
+axes_demo[0].set_xlabel("feature 1")                                                    # Label the first feature.
+axes_demo[0].set_ylabel("feature 2")                                                    # Label the second feature.
+axes_demo[0].legend()                                                                    # Show the centroid label.
+axes_demo[1].plot(np.arange(len(distortions_demo)), distortions_demo, marker="o")       # Plot distortion across iterations.
+axes_demo[1].set_title("distortion decreases")                                          # Title the loss panel.
+axes_demo[1].set_xlabel("iteration")                                                    # Label the iteration axis.
+axes_demo[1].set_ylabel("sum of squared distances")                                     # Label the k-means objective.
+plt.tight_layout()                                                                       # Keep panel labels readable.
+plt.show()                                                                               # Render the k-means visuals.
+```
+▶ What you'll see: assignments settle into two clusters, and the distortion log drops as centroids move to means.
+
+### Step 2 — PCA dimensionality reduction: keep the directions with most variance
+
+PCA first centers the data, then eigendecomposes the covariance matrix. The largest eigenvalue marks the direction
+of maximum variance, and projecting onto its eigenvector gives a compressed one-dimensional summary.
+
+```python
+t_demo = np.linspace(-2.5, 2.5, 30)                                                     # Create a one-dimensional hidden source.
+noise_demo = 0.25 * np.sin(4.0 * t_demo)                                                 # Add a tiny deterministic wiggle.
+data_demo = np.column_stack([t_demo, 0.55 * t_demo + noise_demo])                        # Build correlated 2D observations.
+mean_demo = data_demo.mean(axis=0)                                                       # Compute feature means for centering.
+centered_demo = data_demo - mean_demo                                                    # Subtract means from every feature column.
+cov_demo = centered_demo.T @ centered_demo / len(centered_demo)                          # Compute covariance X^T X / m.
+eigvals_demo, eigvecs_demo = np.linalg.eigh(cov_demo)                                    # Compute eigenvalues/eigenvectors of symmetric covariance.
+order_demo = np.argsort(eigvals_demo)[::-1]                                              # Sort eigenvalues from largest to smallest.
+eigvals_demo = eigvals_demo[order_demo]                                                  # Reorder eigenvalues by explained variance.
+eigvecs_demo = eigvecs_demo[:, order_demo]                                               # Reorder eigenvectors the same way.
+explained_demo = eigvals_demo / eigvals_demo.sum()                                       # Compute explained-variance ratios.
+top_vector_demo = eigvecs_demo[:, 0]                                                     # Keep the first principal direction.
+projected_demo = centered_demo @ top_vector_demo                                         # Project centered data to one dimension.
+reconstructed_demo = np.outer(projected_demo, top_vector_demo)                           # Map 1D coordinates back to the best-fit line.
+axis_points_demo = np.array([-2.7, 2.7])[:, None] * top_vector_demo[None, :]              # Create a line along PC1 for plotting.
+
+log("feature means", np.round(mean_demo, 3))                                             # Print the centering constants.
+log("covariance matrix", np.round(cov_demo, 3))                                         # Print the covariance matrix.
+log("eigenvalues", np.round(eigvals_demo, 3))                                           # Print variances along PCA directions.
+log("explained variance ratio", np.round(explained_demo, 3))                            # Print how much variance each component keeps.
+log("first five 1D coordinates", np.round(projected_demo[:5], 3))                       # Print a preview of compressed values.
+
+fig_demo, axes_demo = plt.subplots(1, 2, figsize=(10, 4))                                # Create original-space and compressed-space panels.
+axes_demo[0].scatter(centered_demo[:, 0], centered_demo[:, 1], color="steelblue", edgecolor="black", label="centered data")  # Plot centered points.
+axes_demo[0].plot(axis_points_demo[:, 0], axis_points_demo[:, 1], color="black", linewidth=2, label="PC1 direction")  # Draw the first principal axis.
+axes_demo[0].arrow(0.0, 0.0, eigvecs_demo[0, 1], eigvecs_demo[1, 1], color="salmon", width=0.015, label="PC2 direction")  # Draw the second direction.
+axes_demo[0].set_aspect("equal")                                                       # Use equal scaling so directions are geometric.
+axes_demo[0].set_title("PCA finds orthogonal variance directions")                      # Title the PCA direction panel.
+axes_demo[0].set_xlabel("centered feature 1")                                           # Label centered feature 1.
+axes_demo[0].set_ylabel("centered feature 2")                                           # Label centered feature 2.
+axes_demo[0].legend()                                                                    # Show direction labels.
+axes_demo[1].scatter(projected_demo, np.zeros_like(projected_demo), color="seagreen", edgecolor="black", label="1D projection")  # Plot compressed coordinates.
+axes_demo[1].scatter(reconstructed_demo[:, 0], reconstructed_demo[:, 1], color="gold", edgecolor="black", alpha=0.8, label="back on PC1 line")  # Plot reconstructions.
+axes_demo[1].set_title("top component gives a 1D summary")                              # Title the projection panel.
+axes_demo[1].set_xlabel("PC1 coordinate or reconstructed x")                            # Label the mixed horizontal scale.
+axes_demo[1].set_ylabel("zero line / reconstructed y")                                  # Label the vertical scale.
+axes_demo[1].legend()                                                                    # Show projection labels.
+plt.tight_layout()                                                                       # Keep subplot labels readable.
+plt.show()                                                                               # Render the PCA visuals.
+```
+▶ What you'll see: most variance lies along PC1, so the 1D projection keeps almost all of the structure.
+
+### Recap — what you just ran
+
+- **k-means clustering** alternated nearest-centroid assignments with centroid-mean updates and tracked distortion.
+- **PCA dimensionality reduction** centered data, computed covariance eigenvectors, explained variance, and 1D projections.
+
+Everything below (starting at **§1 Overview**) develops these same ideas with full derivations,
+more examples, and an interactive experiment.
+
+---
+
 ## 1. Overview
 
 Unsupervised learning discovers structure in feature vectors without using target labels. In the CS 221 AI setting, those feature vectors might represent documents, images, search states, user behavior, or any object mapped through a feature extractor $\phi(x)$.

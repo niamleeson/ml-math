@@ -2,6 +2,263 @@
 > **Source:** CS 229 · **Category:** Concept/Tips · **Type:** ⚖️ Both · [↑ Full reference](../../ai-ml-cheatsheets.md)
 > 📓 The coded examples form a runnable notebook section; an .ipynb will be generated.
 
+## 0. Step-by-Step Worked Example — Start Here (Beginner Friendly)
+
+> 🧑‍🎓 **New to this topic? Start here.** This is a gentle, fully runnable walkthrough that
+> builds up *every* idea in this lesson one tiny step at a time. Each step **prints** the
+> numbers it computes and **draws a picture** so you can *see* what is happening. Run the
+> cells in order from top to bottom. Nothing here needs the internet or any downloaded data.
+
+**What we will build, step by step:**
+1. **Train/validation/test split** — keep fitting, tuning, and final auditing separate.
+2. **$k$-fold cross-validation** — rotate which fold validates and average the errors.
+3. **Bias-variance decomposition** — see underfitting and overfitting as bias and variance.
+4. **Regularization** — shrink coefficients to smooth a flexible model.
+5. **Learning and validation curves** — diagnose whether data size or model complexity is the issue.
+
+### Step 0 — Set up our tools
+
+We import NumPy (arrays, random numbers, and small linear algebra) and Matplotlib (pictures).
+We fix a random **seed** so every split, fitted curve, and printed diagnostic is reproducible.
+The tiny `log()` helper makes each intermediate number easy to find in the output.
+
+```python
+import numpy as np                       # NumPy: arrays, random draws, polynomial fits, and linear algebra.
+import matplotlib.pyplot as plt          # Matplotlib: plots for splits, CV errors, and diagnostics.
+
+np.random.seed(0)                         # Fix the seed so every run prints the SAME numbers.
+plt.rcParams["figure.figsize"] = (7, 4)   # Use a comfortable default figure size.
+
+
+def log(label, value):                    # A tiny logger so each printed line explains itself.
+    print(f"[{label}] {value}")           # Format is: [what this is] the value.
+
+log("setup", "tools ready — NumPy + Matplotlib imported, seed fixed to 0")  # Confirm setup.
+```
+▶ What you'll see: one line confirming the tools are ready.
+
+### Step 1 — Train/validation/test split: separate fitting, tuning, and final audit
+
+A train/validation/test split gives each row exactly one job. Training rows fit parameters,
+validation rows choose model settings, and test rows stay untouched until the final audit.
+The first diagnostic is simply checking that the three index sets are disjoint and complete.
+
+```python
+n_split_demo = 30                                                   # Use 30 tiny examples so the split is easy to inspect.
+x_split_demo = np.linspace(-3.0, 3.0, n_split_demo)                 # Create one input value per example.
+y_split_demo = 0.7 * x_split_demo**2 - 0.4 * x_split_demo + np.random.normal(0.0, 0.8, n_split_demo)  # Make a noisy curved target.
+shuffled_split_demo = np.random.permutation(n_split_demo)           # Shuffle row indices before assigning roles.
+train_idx_demo = shuffled_split_demo[:18]                           # Use 60% of rows for parameter fitting.
+val_idx_demo = shuffled_split_demo[18:24]                            # Use 20% of rows for tuning decisions.
+test_idx_demo = shuffled_split_demo[24:]                             # Reserve 20% of rows for the final audit.
+covered_idx_demo = np.sort(np.concatenate([train_idx_demo, val_idx_demo, test_idx_demo]))  # Combine all assigned indices.
+disjoint_demo = len(np.unique(covered_idx_demo)) == n_split_demo     # Check that no row appears in two roles.
+complete_demo = np.array_equal(covered_idx_demo, np.arange(n_split_demo))  # Check that every original row appears once.
+log("train/val/test sizes", (len(train_idx_demo), len(val_idx_demo), len(test_idx_demo)))  # Print role sizes.
+log("first validation indices", val_idx_demo[:5].tolist())          # Print a few validation indices for inspection.
+log("disjoint split?", bool(disjoint_demo))                         # Print the no-overlap check.
+log("complete coverage?", bool(complete_demo))                      # Print the no-missing-rows check.
+
+plt.scatter(x_split_demo[train_idx_demo], y_split_demo[train_idx_demo], label="train", color="steelblue")  # Plot training rows.
+plt.scatter(x_split_demo[val_idx_demo], y_split_demo[val_idx_demo], label="validation", color="orange")  # Plot validation rows.
+plt.scatter(x_split_demo[test_idx_demo], y_split_demo[test_idx_demo], label="test", color="seagreen")  # Plot test rows.
+plt.title("Train / validation / test rows have separate roles")     # Title the split picture.
+plt.xlabel("x")                                                     # Label the input axis.
+plt.ylabel("y")                                                     # Label the target axis.
+plt.legend()                                                        # Show which color belongs to each role.
+plt.show()                                                          # Render the split visualization.
+```
+▶ What you'll see: printed split sizes plus a scatter plot where every point is colored as train, validation, or test exactly once.
+
+### Step 2 — $k$-fold cross-validation: average several validation estimates
+
+A single validation split can be lucky or unlucky. In $k$-fold cross-validation, each fold
+acts as validation once while the other folds train; then we average the fold errors and pick
+the hyperparameter with the lowest average.
+
+```python
+x_cv_demo = np.linspace(-2.5, 2.5, 25)                               # Create a small one-dimensional regression dataset.
+y_cv_demo = 1.0 + 0.4 * x_cv_demo - 0.6 * x_cv_demo**2 + np.random.normal(0.0, 0.35, x_cv_demo.size)  # Add curved signal plus noise.
+folds_demo = np.array_split(np.random.permutation(x_cv_demo.size), 5) # Make five shuffled validation folds.
+degrees_cv_demo = np.array([1, 2, 5])                                 # Try underfit, suitable, and flexible polynomial degrees.
+mean_cv_errors_demo = []                                              # Store the average validation error for each degree.
+all_fold_errors_demo = []                                             # Store fold-level errors for plotting.
+for degree_cv_demo in degrees_cv_demo:                                # Evaluate one candidate model complexity at a time.
+    fold_errors_demo = []                                             # Collect this degree's five validation errors.
+    for val_idx_cv_demo in folds_demo:                                # Rotate which fold is held out.
+        train_idx_cv_demo = np.setdiff1d(np.arange(x_cv_demo.size), val_idx_cv_demo)  # Use all non-fold rows for training.
+        coef_cv_demo = np.polyfit(x_cv_demo[train_idx_cv_demo], y_cv_demo[train_idx_cv_demo], int(degree_cv_demo))  # Fit only training rows.
+        pred_cv_demo = np.polyval(coef_cv_demo, x_cv_demo[val_idx_cv_demo])  # Predict the held-out fold.
+        fold_errors_demo.append(np.mean((pred_cv_demo - y_cv_demo[val_idx_cv_demo]) ** 2))  # Save fold MSE.
+    all_fold_errors_demo.append(fold_errors_demo)                     # Keep fold errors for the plot.
+    mean_cv_errors_demo.append(float(np.mean(fold_errors_demo)))      # Average fold errors into CV_k(h).
+best_degree_cv_demo = int(degrees_cv_demo[np.argmin(mean_cv_errors_demo)])  # Select the lowest-CV-error degree.
+for degree_cv_demo, fold_errors_demo, mean_error_demo in zip(degrees_cv_demo, all_fold_errors_demo, mean_cv_errors_demo):  # Print each candidate.
+    log(f"degree {degree_cv_demo} fold MSEs", np.round(fold_errors_demo, 3).tolist())  # Print granular fold results.
+    log(f"degree {degree_cv_demo} mean CV MSE", round(mean_error_demo, 3))  # Print the fold average.
+log("selected degree by CV", best_degree_cv_demo)                     # Print the model choice made by CV.
+
+plt.plot(degrees_cv_demo, mean_cv_errors_demo, marker="o", label="mean CV MSE")  # Plot average CV error by degree.
+for degree_cv_demo, fold_errors_demo in zip(degrees_cv_demo, all_fold_errors_demo):  # Add fold-level dots.
+    plt.scatter(np.repeat(degree_cv_demo, len(fold_errors_demo)), fold_errors_demo, color="gray", alpha=0.55)  # Show fold variation.
+plt.axvline(best_degree_cv_demo, color="black", linestyle="--", label="selected degree")  # Mark the CV winner.
+plt.title("k-fold CV averages validation errors")                    # Title the CV diagnostic.
+plt.xlabel("polynomial degree")                                      # Label the hyperparameter axis.
+plt.ylabel("validation mean squared error")                          # Label the error metric.
+plt.legend()                                                         # Show mean and selected-degree labels.
+plt.show()                                                           # Render the CV plot.
+```
+▶ What you'll see: each degree prints five fold errors, then the plot shows their average and the selected degree.
+
+### Step 3 — Bias-variance decomposition: watch underfit become overfit
+
+For squared error, expected test error splits into **bias² + variance + irreducible noise**.
+Simple models tend to have high bias; very flexible models can have high variance because their
+predictions change a lot from one training sample to the next.
+
+```python
+x0_bv_demo = 1.0                                                     # Inspect predictions at one fixed input x0.
+true_x0_demo = np.sin(1.2 * x0_bv_demo)                              # Compute the noiseless target f(x0).
+noise_std_bv_demo = 0.25                                             # Set the irreducible noise standard deviation.
+degrees_bv_demo = np.array([1, 3, 9])                                 # Compare underfit, middle, and very flexible models.
+reps_bv_demo = 120                                                   # Repeat many tiny training sets to estimate bias and variance.
+preds_bv_demo = np.zeros((len(degrees_bv_demo), reps_bv_demo))        # Store one prediction per degree and repeat.
+for rep_bv_demo in range(reps_bv_demo):                               # Simulate repeated training datasets.
+    x_train_bv_demo = np.sort(np.random.uniform(-3.0, 3.0, 18))       # Draw training inputs for this repeat.
+    y_train_bv_demo = np.sin(1.2 * x_train_bv_demo) + np.random.normal(0.0, noise_std_bv_demo, x_train_bv_demo.size)  # Add noise.
+    for pos_bv_demo, degree_bv_demo in enumerate(degrees_bv_demo):    # Fit each complexity on the same repeat.
+        coef_bv_demo = np.polyfit(x_train_bv_demo, y_train_bv_demo, int(degree_bv_demo))  # Fit a polynomial model.
+        preds_bv_demo[pos_bv_demo, rep_bv_demo] = np.polyval(coef_bv_demo, x0_bv_demo)  # Save prediction at x0.
+mean_pred_bv_demo = preds_bv_demo.mean(axis=1)                        # Estimate E_D[hat f(x0)].
+bias2_bv_demo = (mean_pred_bv_demo - true_x0_demo) ** 2               # Compute squared bias at x0.
+variance_bv_demo = preds_bv_demo.var(axis=1)                          # Compute prediction variance at x0.
+noise_bv_demo = np.repeat(noise_std_bv_demo**2, len(degrees_bv_demo))  # Store the irreducible noise term.
+for degree_bv_demo, bias2_one_demo, variance_one_demo in zip(degrees_bv_demo, bias2_bv_demo, variance_bv_demo):  # Print the decomposition.
+    log(f"degree {degree_bv_demo} bias^2", round(float(bias2_one_demo), 4))  # Print squared bias.
+    log(f"degree {degree_bv_demo} variance", round(float(variance_one_demo), 4))  # Print prediction variance.
+
+plt.bar(degrees_bv_demo, bias2_bv_demo, label="bias²", color="salmon")  # Draw the bias-squared component.
+plt.bar(degrees_bv_demo, variance_bv_demo, bottom=bias2_bv_demo, label="variance", color="cornflowerblue")  # Stack variance.
+plt.bar(degrees_bv_demo, noise_bv_demo, bottom=bias2_bv_demo + variance_bv_demo, label="noise", color="lightgray")  # Stack noise.
+plt.title("Bias-variance pieces at one x value")                      # Title the decomposition plot.
+plt.xlabel("polynomial degree")                                      # Label the complexity axis.
+plt.ylabel("estimated error contribution")                           # Label the contribution scale.
+plt.legend()                                                         # Show the three error pieces.
+plt.show()                                                           # Render the stacked bars.
+```
+▶ What you'll see: low degree has more bias, high degree has more variance, and the noise floor stays the same.
+
+### Step 4 — Regularization: shrink coefficients to smooth a flexible model
+
+Regularization adds a penalty such as $\lambda\lVert w\rVert_2^2$ to the training loss. The model
+can still be flexible, but large coefficients become expensive, so increasing $\lambda$ usually
+smooths the fit and reduces variance.
+
+```python
+x_reg_demo = np.linspace(-3.0, 3.0, 20)                               # Create small training inputs.
+y_reg_demo = np.sin(1.4 * x_reg_demo) + np.random.normal(0.0, 0.22, x_reg_demo.size)  # Create noisy nonlinear targets.
+degree_reg_demo = 9                                                   # Use a flexible polynomial basis that can wiggle.
+X_reg_demo = np.vander(x_reg_demo, N=degree_reg_demo + 1, increasing=True)  # Build columns [1, x, x^2, ...].
+grid_reg_demo = np.linspace(-3.1, 3.1, 250)                           # Build a smooth grid for plotting fitted curves.
+X_grid_reg_demo = np.vander(grid_reg_demo, N=degree_reg_demo + 1, increasing=True)  # Build grid polynomial features.
+lambdas_reg_demo = np.array([0.0, 0.01, 0.1, 1.0, 10.0])               # Try no penalty through strong penalty.
+penalty_reg_demo = np.eye(degree_reg_demo + 1)                         # Create the ridge penalty matrix.
+penalty_reg_demo[0, 0] = 0.0                                           # Leave the intercept unpenalized.
+fits_reg_demo = []                                                     # Store fitted curves for each lambda.
+norms_reg_demo = []                                                    # Store non-intercept coefficient sizes.
+for lambda_reg_demo in lambdas_reg_demo:                               # Solve one ridge system per penalty strength.
+    system_reg_demo = X_reg_demo.T @ X_reg_demo + lambda_reg_demo * penalty_reg_demo  # Build X^T X + lambda D.
+    rhs_reg_demo = X_reg_demo.T @ y_reg_demo                           # Build X^T y.
+    coef_reg_demo = np.linalg.solve(system_reg_demo, rhs_reg_demo)      # Solve for ridge coefficients.
+    fits_reg_demo.append(X_grid_reg_demo @ coef_reg_demo)               # Save the smooth fitted curve.
+    norms_reg_demo.append(float(np.linalg.norm(coef_reg_demo[1:])))     # Save coefficient size excluding intercept.
+log("lambda values", lambdas_reg_demo.tolist())                        # Print the tried regularization strengths.
+log("coefficient norms", np.round(norms_reg_demo, 3).tolist())         # Print how shrinkage changes with lambda.
+
+plt.subplot(1, 2, 1)                                                   # Start the fitted-curve panel.
+plt.scatter(x_reg_demo, y_reg_demo, color="black", s=30, label="data")  # Plot the noisy training points.
+for lambda_reg_demo, fit_reg_demo in zip(lambdas_reg_demo, fits_reg_demo):  # Draw one curve per lambda.
+    plt.plot(grid_reg_demo, fit_reg_demo, label=f"λ={lambda_reg_demo:g}")  # Plot the regularized fit.
+plt.title("regularization smooths a flexible fit")                    # Title the curve panel.
+plt.xlabel("x")                                                       # Label the input axis.
+plt.ylabel("y")                                                       # Label the target axis.
+plt.legend(fontsize=8)                                                 # Show lambda labels.
+plt.subplot(1, 2, 2)                                                   # Start the coefficient-norm panel.
+plt.plot(lambdas_reg_demo, norms_reg_demo, marker="o")                 # Plot coefficient size versus lambda.
+plt.xscale("symlog", linthresh=0.01)                                  # Show lambda=0 and positive lambdas on one axis.
+plt.title("larger λ shrinks weights")                                 # Title the shrinkage panel.
+plt.xlabel("λ")                                                       # Label regularization strength.
+plt.ylabel("non-intercept weight norm")                               # Label coefficient size.
+plt.tight_layout()                                                     # Prevent subplot labels from overlapping.
+plt.show()                                                            # Render both regularization views.
+```
+▶ What you'll see: large $\lambda$ values print smaller coefficient norms and draw smoother curves.
+
+### Step 5 — Learning and validation curves: diagnose data need and complexity choice
+
+A **learning curve** changes the training-set size and asks whether more data helps. A
+**validation curve** changes a hyperparameter and asks where the sweet spot lies between
+underfitting and overfitting.
+
+```python
+x_curve_demo = np.linspace(-3.0, 3.0, 60)                              # Create a reusable synthetic regression dataset.
+y_curve_demo = np.sin(1.3 * x_curve_demo) + 0.25 * x_curve_demo + np.random.normal(0.0, 0.3, x_curve_demo.size)  # Add trend and noise.
+perm_curve_demo = np.random.permutation(x_curve_demo.size)             # Shuffle row indices before splitting.
+train_curve_demo = perm_curve_demo[:42]                                # Use most rows for training.
+val_curve_demo = perm_curve_demo[42:]                                  # Hold out the rest for validation.
+sizes_curve_demo = np.array([6, 12, 24, 42])                            # Try growing amounts of training data.
+learn_train_demo = []                                                  # Store learning-curve training MSE values.
+learn_val_demo = []                                                    # Store learning-curve validation MSE values.
+for size_curve_demo in sizes_curve_demo:                                # Fit the same complexity with more data each time.
+    subset_curve_demo = train_curve_demo[:size_curve_demo]              # Select the first size_curve_demo training rows.
+    coef_curve_demo = np.polyfit(x_curve_demo[subset_curve_demo], y_curve_demo[subset_curve_demo], 4)  # Fit a fixed degree-four model.
+    learn_train_demo.append(np.mean((np.polyval(coef_curve_demo, x_curve_demo[subset_curve_demo]) - y_curve_demo[subset_curve_demo]) ** 2))  # Save train MSE.
+    learn_val_demo.append(np.mean((np.polyval(coef_curve_demo, x_curve_demo[val_curve_demo]) - y_curve_demo[val_curve_demo]) ** 2))  # Save validation MSE.
+degrees_curve_demo = np.arange(1, 10)                                  # Try polynomial degrees for a validation curve.
+valid_train_demo = []                                                  # Store validation-curve training errors.
+valid_val_demo = []                                                    # Store validation-curve validation errors.
+for degree_curve_demo in degrees_curve_demo:                            # Fit one model per degree.
+    coef_valid_demo = np.polyfit(x_curve_demo[train_curve_demo], y_curve_demo[train_curve_demo], int(degree_curve_demo))  # Fit on training rows.
+    valid_train_demo.append(np.mean((np.polyval(coef_valid_demo, x_curve_demo[train_curve_demo]) - y_curve_demo[train_curve_demo]) ** 2))  # Save train MSE.
+    valid_val_demo.append(np.mean((np.polyval(coef_valid_demo, x_curve_demo[val_curve_demo]) - y_curve_demo[val_curve_demo]) ** 2))  # Save validation MSE.
+best_degree_demo = int(degrees_curve_demo[np.argmin(valid_val_demo)])  # Select the validation-curve minimum.
+log("learning sizes", sizes_curve_demo.tolist())                       # Print data sizes used in the learning curve.
+log("learning validation MSE", np.round(learn_val_demo, 3).tolist())   # Print validation error as data grows.
+log("best validation-curve degree", best_degree_demo)                  # Print the selected model complexity.
+
+plt.subplot(1, 2, 1)                                                   # Start the learning-curve panel.
+plt.plot(sizes_curve_demo, learn_train_demo, marker="o", label="train")  # Plot training error versus data size.
+plt.plot(sizes_curve_demo, learn_val_demo, marker="o", label="validation")  # Plot validation error versus data size.
+plt.title("learning curve")                                           # Title the data-size diagnostic.
+plt.xlabel("training examples")                                       # Label the sample-size axis.
+plt.ylabel("mean squared error")                                      # Label the error metric.
+plt.legend()                                                          # Show train and validation labels.
+plt.subplot(1, 2, 2)                                                   # Start the validation-curve panel.
+plt.plot(degrees_curve_demo, valid_train_demo, marker="o", label="train")  # Plot train error by degree.
+plt.plot(degrees_curve_demo, valid_val_demo, marker="o", label="validation")  # Plot validation error by degree.
+plt.axvline(best_degree_demo, color="black", linestyle="--", label="selected")  # Mark the sweet spot.
+plt.title("validation curve")                                         # Title the hyperparameter diagnostic.
+plt.xlabel("polynomial degree")                                      # Label the complexity axis.
+plt.ylabel("mean squared error")                                     # Label the error metric.
+plt.legend()                                                          # Show train, validation, and selected labels.
+plt.tight_layout()                                                     # Keep subplot labels readable.
+plt.show()                                                            # Render both diagnostic curves.
+```
+▶ What you'll see: one curve shows how error changes with more data, and the other marks the best complexity by validation error.
+
+### Recap — what you just ran
+
+- A **train/validation/test split** kept fitting, tuning, and final reporting in separate buckets.
+- **$k$-fold cross-validation** rotated the validation fold and averaged the errors for model choice.
+- **Bias-variance diagnostics** showed why simple models underfit and very flexible models vary too much.
+- **Regularization** shrank coefficients so a flexible model became smoother.
+- **Learning and validation curves** separated “need more data” from “need a different hyperparameter.”
+
+Everything below (starting at **§1 Overview**) develops these same ideas with full derivations,
+more examples, and diagnostic workflows.
+
+---
+
 ## 1. Overview
 
 Model selection is the discipline of choosing a learning procedure without accidentally using the final test set as a guide. Diagnostics are the follow-up tools that tell us *why* a model is failing: high bias, high variance, data leakage, insufficient data, poor features, or systematic error patterns.

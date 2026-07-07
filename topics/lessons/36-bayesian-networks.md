@@ -2,6 +2,370 @@
 > **Source:** CS 221 · **Category:** Concept+Method · **Type:** ⚖️ Both · [↑ Full reference](../../ai-ml-cheatsheets.md)
 > 📓 The coded examples form a runnable notebook section; an .ipynb will be generated.
 
+## 0. Step-by-Step Worked Example — Start Here (Beginner Friendly)
+
+> 🧑‍🎓 **New to this topic? Start here.** This is a gentle, fully runnable walkthrough that
+> builds up *every* idea in this lesson one tiny step at a time. Each step **prints** the
+> numbers it computes and **draws a picture** so you can *see* what is happening. Run the
+> cells in order from top to bottom. Nothing here needs the internet or any downloaded data.
+
+**What we will build, step by step:**
+1. **Directed acyclic graph and parents** — a tiny Rain/Sprinkler/WetGrass Bayesian network.
+2. **Factorized joint distribution** — multiplying local CPT entries into joint probabilities.
+3. **Conditional independence** — chain, fork, collider, and explaining away.
+4. **Exact inference by enumeration** — summing hidden variables and normalizing.
+5. **Variable elimination** — summing out hidden variables through compact factors.
+6. **Gibbs sampling** — approximating a posterior by local resampling.
+7. **Forward-backward for HMMs** — smoothing hidden states using past and future evidence.
+8. **Learning CPTs with MLE and Laplace smoothing** — turning counts into probabilities.
+
+### Step 0 — Set up our tools
+
+We import NumPy (arrays, small probability tables, and random sampling) and Matplotlib (pictures).
+We fix a random **seed** for reproducible output and define tiny helpers for logging and normalizing.
+
+```python
+import numpy as np                       # NumPy stores CPTs, probabilities, messages, and samples.
+import matplotlib.pyplot as plt          # Matplotlib draws DAGs, posterior bars, traces, and HMM heatmaps.
+
+np.random.seed(0)                         # Fix the seed so every random draw is reproducible.
+plt.rcParams["figure.figsize"] = (7, 4)   # Use a readable default figure size.
+
+
+def log(label, value):                    # Define a tiny logger for clear labeled output.
+    print(f"[{label}] {value}")           # Print each result as [label] value.
+
+
+def normalize_demo(weights_demo):         # Convert nonnegative weights into probabilities.
+    weights_demo = np.asarray(weights_demo, dtype=float)  # Convert input to a floating NumPy array.
+    total_demo = weights_demo.sum()        # Compute the normalizing constant.
+    return weights_demo / total_demo       # Divide by the total so probabilities sum to one.
+
+log("setup", "tools ready — NumPy + Matplotlib imported, seed fixed to 0")  # Confirm setup succeeded.
+```
+▶ What you'll see: one line confirming the tools are ready.
+
+### Step 1 — Directed acyclic graph and parents
+
+A Bayesian network is a DAG plus one CPT per node. Each CPT row must sum to one for every fixed
+parent assignment.
+
+```python
+variables_demo = ["R", "S", "W"]  # Name Rain, Sprinkler, and WetGrass.
+parents_demo = {"R": [], "S": [], "W": ["R", "S"]}  # Store parent sets for the DAG.
+edges_demo = [("R", "W"), ("S", "W")]  # Store directed edges from parents to child.
+positions_demo = {"R": (0.0, 1.0), "S": (2.0, 1.0), "W": (1.0, 0.0)}  # Place nodes for plotting.
+cpts_demo = {  # Store one local conditional probability table per variable.
+    "R": {(): {0: 0.80, 1: 0.20}},  # Prior P(Rain), where 1 means rain.
+    "S": {(): {0: 0.60, 1: 0.40}},  # Prior P(Sprinkler), where 1 means sprinkler on.
+    "W": {(0, 0): {0: 0.95, 1: 0.05}, (0, 1): {0: 0.30, 1: 0.70}, (1, 0): {0: 0.20, 1: 0.80}, (1, 1): {0: 0.05, 1: 0.95}},  # CPT P(WetGrass | Rain, Sprinkler).
+}  # Finish the CPT dictionary.
+for node_demo in variables_demo:  # Check every local CPT.
+    for parent_key_demo, row_demo in cpts_demo[node_demo].items():  # Visit every parent assignment row.
+        row_sum_demo = sum(row_demo.values())  # Sum probabilities over the child values.
+        log(f"CPT row sum {node_demo}{parent_key_demo}", round(row_sum_demo, 3))  # Print the normalization check.
+fig_demo, ax_demo = plt.subplots()  # Create a DAG figure.
+for parent_demo, child_demo in edges_demo:  # Draw each directed edge.
+    ax_demo.annotate("", xy=positions_demo[child_demo], xytext=positions_demo[parent_demo], arrowprops={"arrowstyle": "->", "lw": 2})  # Draw one arrow.
+for node_demo, (x_demo, y_demo) in positions_demo.items():  # Draw every node.
+    ax_demo.scatter(x_demo, y_demo, s=1200, color="white", edgecolor="black", linewidth=2, zorder=3)  # Draw a node circle.
+    ax_demo.text(x_demo, y_demo, node_demo, ha="center", va="center", fontsize=13, weight="bold")  # Label the node.
+ax_demo.set_title("Step 1: DAG parents choose which CPT row to use")  # Title the diagram.
+ax_demo.set_xlim(-0.5, 2.5)  # Fix horizontal limits.
+ax_demo.set_ylim(-0.4, 1.4)  # Fix vertical limits.
+ax_demo.axis("off")  # Hide axes for a graph drawing.
+plt.show()  # Display the DAG.
+```
+▶ What you'll see: Rain and Sprinkler both point to WetGrass, and every CPT row sums to 1.
+
+### Step 2 — Factorized joint distribution
+
+The joint probability of one full assignment is the product of one local CPT entry per node:
+$P(R,S,W)=P(R)P(S)P(W\mid R,S)$.
+
+```python
+def parent_key_demo(node_demo, assignment_demo):  # Extract parent values in the order listed by parents_demo.
+    return tuple(assignment_demo[parent_demo] for parent_demo in parents_demo[node_demo])  # Return the CPT row key.
+
+def local_prob_demo(node_demo, value_demo, assignment_demo):  # Read one local CPT entry.
+    return cpts_demo[node_demo][parent_key_demo(node_demo, assignment_demo)][value_demo]  # Return P(node=value | parents).
+
+def joint_prob_demo(assignment_demo):  # Compute the factorized joint probability.
+    product_demo = 1.0  # Start the product at one.
+    for node_demo in variables_demo:  # Multiply one local factor per node.
+        product_demo *= local_prob_demo(node_demo, assignment_demo[node_demo], assignment_demo)  # Include this node's CPT entry.
+    return product_demo  # Return the joint probability.
+
+def all_assignments_demo():  # Enumerate all binary assignments for R, S, W.
+    for rain_demo in [0, 1]:  # Try both Rain values.
+        for sprinkler_demo in [0, 1]:  # Try both Sprinkler values.
+            for wet_demo in [0, 1]:  # Try both WetGrass values.
+                yield {"R": rain_demo, "S": sprinkler_demo, "W": wet_demo}  # Yield one complete assignment.
+
+example_assignment_demo = {"R": 1, "S": 0, "W": 1}  # Choose one assignment to inspect.
+terms_demo = [local_prob_demo(node_demo, example_assignment_demo[node_demo], example_assignment_demo) for node_demo in variables_demo]  # Collect local factors.
+log("assignment", example_assignment_demo)  # Print the assignment.
+log("local CPT terms", terms_demo)  # Print P(R), P(S), and P(W|R,S).
+log("joint product", round(joint_prob_demo(example_assignment_demo), 5))  # Print the product.
+joint_rows_demo = [(assignment_demo, joint_prob_demo(assignment_demo)) for assignment_demo in all_assignments_demo()]  # Build all eight joint rows.
+log("joint total probability", round(sum(prob_demo for assignment_demo, prob_demo in joint_rows_demo), 6))  # Verify normalization.
+labels_demo = [f"R{assignment_demo['R']}S{assignment_demo['S']}W{assignment_demo['W']}" for assignment_demo, prob_demo in joint_rows_demo]  # Build compact row labels.
+probs_demo = [prob_demo for assignment_demo, prob_demo in joint_rows_demo]  # Extract joint probabilities.
+plt.bar(labels_demo, probs_demo, color="steelblue", edgecolor="black")  # Plot the full joint table.
+plt.xticks(rotation=45, ha="right")  # Rotate labels for readability.
+plt.ylabel("joint probability")  # Label the y-axis.
+plt.title("Step 2: the factorized joint sums to 1")  # Title the plot.
+plt.tight_layout()  # Fit rotated labels.
+plt.show()  # Display the joint distribution.
+```
+▶ What you'll see: all eight joint rows are nonnegative and sum to 1.
+
+### Step 3 — Conditional independence: chain, fork, collider, explaining away
+
+Bayesian-network structure tells us when variables become independent after conditioning. Chains
+and forks are blocked by observing the middle variable; colliders are opened by observing the effect.
+
+```python
+chain_p_a_demo = {0: 0.6, 1: 0.4}  # Store P(A) for a chain A->B->C.
+chain_p_b_demo = {(0,): {0: 0.8, 1: 0.2}, (1,): {0: 0.3, 1: 0.7}}  # Store P(B|A).
+chain_p_c_demo = {(0,): {0: 0.9, 1: 0.1}, (1,): {0: 0.25, 1: 0.75}}  # Store P(C|B).
+
+def chain_joint_demo(a_demo, b_demo, c_demo):  # Compute P(A,B,C) in the chain.
+    return chain_p_a_demo[a_demo] * chain_p_b_demo[(a_demo,)][b_demo] * chain_p_c_demo[(b_demo,)][c_demo]  # Multiply chain factors.
+
+def chain_c_given_a_demo(a_demo):  # Compute P(C=1 | A=a).
+    numerator_demo = sum(chain_joint_demo(a_demo, b_demo, 1) for b_demo in [0, 1])  # Sum hidden B with C=1.
+    denominator_demo = sum(chain_joint_demo(a_demo, b_demo, c_demo) for b_demo in [0, 1] for c_demo in [0, 1])  # Sum hidden B and C.
+    return numerator_demo / denominator_demo  # Return the conditional probability.
+
+def chain_c_given_a_b_demo(a_demo, b_demo):  # Compute P(C=1 | A=a,B=b).
+    numerator_demo = chain_joint_demo(a_demo, b_demo, 1)  # Joint with C=1.
+    denominator_demo = chain_joint_demo(a_demo, b_demo, 0) + chain_joint_demo(a_demo, b_demo, 1)  # Sum over C.
+    return numerator_demo / denominator_demo  # Return the conditional probability.
+
+log("chain P(C=1|A=0)", round(chain_c_given_a_demo(0), 3))  # Show A affects C before B is known.
+log("chain P(C=1|A=1)", round(chain_c_given_a_demo(1), 3))  # Show a different value before conditioning.
+log("chain P(C=1|A=0,B=1)", round(chain_c_given_a_b_demo(0, 1), 3))  # Show A no longer matters once B is fixed.
+log("chain P(C=1|A=1,B=1)", round(chain_c_given_a_b_demo(1, 1), 3))  # Show the same conditional value.
+fork_message_demo = "In a fork A<-B->C, conditioning on common cause B similarly blocks A-C."  # Summarize the fork motif.
+log("fork motif", fork_message_demo)  # Print the fork lesson.
+p_r_prior_demo = sum(joint_prob_demo({"R": 1, "S": s_demo, "W": w_demo}) for s_demo in [0, 1] for w_demo in [0, 1])  # Compute P(R=1).
+p_r_wet_demo = sum(joint_prob_demo({"R": 1, "S": s_demo, "W": 1}) for s_demo in [0, 1]) / sum(joint_prob_demo({"R": r_demo, "S": s_demo, "W": 1}) for r_demo in [0, 1] for s_demo in [0, 1])  # Compute P(R=1|W=1).
+p_r_wet_s_demo = joint_prob_demo({"R": 1, "S": 1, "W": 1}) / sum(joint_prob_demo({"R": r_demo, "S": 1, "W": 1}) for r_demo in [0, 1])  # Compute P(R=1|W=1,S=1).
+log("collider P(R=1)", round(p_r_prior_demo, 3))  # Print prior Rain probability.
+log("collider P(R=1|W=1)", round(p_r_wet_demo, 3))  # Observing WetGrass opens the collider path.
+log("explaining away P(R=1|W=1,S=1)", round(p_r_wet_s_demo, 3))  # Sprinkler explains away some Rain probability.
+plt.bar(["P(R)", "P(R|W)", "P(R|W,S)"], [p_r_prior_demo, p_r_wet_demo, p_r_wet_s_demo], color=["gray", "orange", "seagreen"], edgecolor="black")  # Plot explaining-away probabilities.
+plt.ylim(0, 1)  # Use probability scale.
+plt.ylabel("probability of Rain")  # Label the y-axis.
+plt.title("Step 3: collider evidence creates dependence, then explains away")  # Title the plot.
+plt.show()  # Display the conditional-independence chart.
+```
+▶ What you'll see: the chain endpoints become independent once the middle is known, while collider evidence changes the causes' probabilities.
+
+### Step 4 — Exact inference by enumeration
+
+Exact inference sums over hidden variables. For $P(R\mid W=1)$, Sprinkler is hidden, so we sum
+both Sprinkler values for each Rain value and then normalize.
+
+```python
+evidence_demo = {"W": 1}  # Observe that the grass is wet.
+query_values_demo = [0, 1]  # Consider Rain=0 and Rain=1.
+enum_scores_demo = []  # Store unnormalized P(R, W=1) scores.
+for rain_demo in query_values_demo:  # Loop over query values.
+    score_demo = 0.0  # Start the hidden-variable sum.
+    pieces_demo = []  # Store printed terms for this Rain value.
+    for sprinkler_demo in [0, 1]:  # Sum over hidden Sprinkler.
+        assignment_demo = {"R": rain_demo, "S": sprinkler_demo, "W": 1}  # Build one full assignment.
+        term_demo = joint_prob_demo(assignment_demo)  # Compute its joint probability.
+        score_demo += term_demo  # Add it to the score.
+        pieces_demo.append(round(term_demo, 5))  # Save a readable term.
+    enum_scores_demo.append(score_demo)  # Store P(R=rain,W=1).
+    log(f"R={rain_demo} hidden terms", pieces_demo)  # Print the terms being summed.
+enum_posterior_demo = normalize_demo(enum_scores_demo)  # Normalize over Rain.
+log("unnormalized P(R,W=1)", np.round(enum_scores_demo, 5))  # Print the raw scores.
+log("P(R=0|W=1), P(R=1|W=1)", np.round(enum_posterior_demo, 5))  # Print the posterior.
+plt.bar(["R=0", "R=1"], enum_posterior_demo, color=["steelblue", "orange"], edgecolor="black")  # Plot posterior probabilities.
+plt.ylim(0, 1)  # Keep y-axis as probability.
+plt.ylabel("posterior probability")  # Label y-axis.
+plt.title("Step 4: enumeration posterior P(R | W=1)")  # Title the plot.
+plt.show()  # Display exact posterior.
+```
+▶ What you'll see: two hidden Sprinkler terms are summed for each Rain value, then normalized.
+
+### Step 5 — Variable elimination
+
+Variable elimination computes the same answer but sums out hidden variables through compact factors.
+Here we eliminate Sprinkler into a message over Rain.
+
+```python
+phi_r_demo = {0: cpts_demo["R"][()][0], 1: cpts_demo["R"][()][1]}  # Keep the Rain prior factor.
+phi_s_demo = {0: cpts_demo["S"][()][0], 1: cpts_demo["S"][()][1]}  # Keep the Sprinkler prior factor.
+phi_w_demo = {(r_demo, s_demo): cpts_demo["W"][(r_demo, s_demo)][1] for r_demo in [0, 1] for s_demo in [0, 1]}  # Restrict W evidence to W=1.
+message_to_r_demo = {}  # Store m(R)=sum_S P(S)P(W=1|R,S).
+for rain_demo in [0, 1]:  # Build one message entry per Rain value.
+    products_demo = []  # Store products before summing.
+    for sprinkler_demo in [0, 1]:  # Eliminate Sprinkler.
+        product_demo = phi_s_demo[sprinkler_demo] * phi_w_demo[(rain_demo, sprinkler_demo)]  # Multiply factors mentioning Sprinkler.
+        products_demo.append(product_demo)  # Save this product.
+    message_to_r_demo[rain_demo] = sum(products_demo)  # Sum out Sprinkler.
+    log(f"message m(R={rain_demo}) pieces", np.round(products_demo, 5))  # Print the local products.
+ve_scores_demo = np.array([phi_r_demo[rain_demo] * message_to_r_demo[rain_demo] for rain_demo in [0, 1]])  # Multiply remaining Rain prior by message.
+ve_posterior_demo = normalize_demo(ve_scores_demo)  # Normalize over Rain.
+log("VE posterior", np.round(ve_posterior_demo, 5))  # Print variable-elimination result.
+log("matches enumeration", bool(np.allclose(ve_posterior_demo, enum_posterior_demo)))  # Verify equality.
+x_demo = np.arange(2)  # Create bar positions.
+width_demo = 0.35  # Offset paired bars.
+plt.bar(x_demo - width_demo / 2, enum_posterior_demo, width_demo, label="enumeration", color="steelblue")  # Plot enumeration result.
+plt.bar(x_demo + width_demo / 2, ve_posterior_demo, width_demo, label="variable elimination", color="orange")  # Plot VE result.
+plt.xticks(x_demo, ["R=0", "R=1"])  # Label query values.
+plt.ylim(0, 1)  # Use probability scale.
+plt.ylabel("posterior probability")  # Label y-axis.
+plt.title("Step 5: variable elimination matches enumeration")  # Title the plot.
+plt.legend()  # Show method labels.
+plt.show()  # Display comparison.
+```
+▶ What you'll see: variable elimination produces the same posterior while reusing a compact Sprinkler-summed message.
+
+### Step 6 — Gibbs sampling
+
+Gibbs sampling keeps evidence fixed and repeatedly resamples non-evidence variables from their
+conditional distribution given the current values of all others.
+
+```python
+def full_conditional_demo(node_demo, state_demo, evidence_now_demo):  # Compute P(node | all other current variables) by tiny joint scores.
+    weights_demo = []  # Store one weight per candidate value.
+    for value_demo in [0, 1]:  # Try binary values.
+        candidate_demo = dict(state_demo)  # Copy the current state.
+        candidate_demo[node_demo] = value_demo  # Replace this node.
+        if node_demo in evidence_now_demo and evidence_now_demo[node_demo] != value_demo:  # Respect clamped evidence.
+            weights_demo.append(0.0)  # Evidence-inconsistent values get zero weight.
+        else:  # Score evidence-consistent candidates.
+            weights_demo.append(joint_prob_demo(candidate_demo))  # Use joint probability as an unnormalized conditional weight.
+    return normalize_demo(weights_demo)  # Normalize into a conditional distribution.
+
+rng_demo = np.random.default_rng(36)  # Create a seeded random generator.
+state_demo = {"R": 0, "S": 0, "W": 1}  # Initialize a full state consistent with W=1.
+samples_demo = []  # Store Rain samples after burn-in.
+running_demo = []  # Store the running estimate of P(R=1|W=1).
+burn_in_demo = 50  # Skip early samples.
+sweeps_demo = 1200  # Run enough sweeps for a tiny visible convergence trace.
+for sweep_demo in range(sweeps_demo):  # Repeat Gibbs sweeps.
+    for node_demo in ["R", "S"]:  # Resample non-evidence variables only.
+        probs_demo = full_conditional_demo(node_demo, state_demo, {"W": 1})  # Compute local conditional probabilities.
+        state_demo[node_demo] = int(rng_demo.choice([0, 1], p=probs_demo))  # Sample the new value.
+    if sweep_demo >= burn_in_demo:  # Keep post-burn-in samples.
+        samples_demo.append(state_demo["R"])  # Record Rain.
+        running_demo.append(float(np.mean(samples_demo)))  # Update the empirical Rain probability.
+log("final Gibbs state", state_demo)  # Print the final state.
+log("Gibbs estimate P(R=1|W=1)", round(running_demo[-1], 4))  # Print sampled estimate.
+log("exact P(R=1|W=1)", round(float(enum_posterior_demo[1]), 4))  # Print exact reference.
+plt.plot(running_demo, color="steelblue", label="Gibbs running estimate")  # Plot running estimate.
+plt.axhline(enum_posterior_demo[1], color="red", linestyle="--", label="exact posterior")  # Mark exact answer.
+plt.xlabel("retained sample index")  # Label x-axis.
+plt.ylabel("estimated P(R=1 | W=1)")  # Label y-axis.
+plt.title("Step 6: Gibbs sampling approaches the exact posterior")  # Title the trace.
+plt.legend()  # Show labels.
+plt.show()  # Display convergence plot.
+```
+▶ What you'll see: the sampled estimate jitters but stays near the exact posterior line.
+
+### Step 7 — Forward-backward for hidden Markov models
+
+An HMM repeats a small Bayesian network over time. Forward messages summarize past evidence;
+backward messages summarize future evidence; multiplying them gives a smoothed posterior.
+
+```python
+states_hmm_demo = ["Sunny", "Rainy"]  # Name two hidden weather states.
+initial_demo = np.array([0.60, 0.40])  # Store P(H1).
+transition_demo = np.array([[0.80, 0.20], [0.30, 0.70]])  # Store P(H_t | H_{t-1}) by previous-state rows.
+emission_demo = np.array([[0.90, 0.10], [0.20, 0.80]])  # Store P(Umbrella=0/1 | hidden state).
+observations_demo = np.array([1, 1, 0, 1])  # Observe a short umbrella sequence.
+time_count_demo = len(observations_demo)  # Count time steps.
+state_count_demo = len(states_hmm_demo)  # Count hidden states.
+forward_demo = np.zeros((time_count_demo, state_count_demo))  # Allocate forward messages.
+backward_demo = np.zeros((time_count_demo, state_count_demo))  # Allocate backward messages.
+forward_demo[0] = normalize_demo(initial_demo * emission_demo[:, observations_demo[0]])  # Initialize with prior times first evidence likelihood.
+for time_demo in range(1, time_count_demo):  # Move forward through observations.
+    prediction_demo = forward_demo[time_demo - 1] @ transition_demo  # Predict current hidden state from previous message.
+    forward_demo[time_demo] = normalize_demo(prediction_demo * emission_demo[:, observations_demo[time_demo]])  # Condition on current evidence.
+backward_demo[-1] = np.ones(state_count_demo)  # Last backward message has no future evidence.
+for time_demo in range(time_count_demo - 2, -1, -1):  # Move backward through time.
+    future_demo = emission_demo[:, observations_demo[time_demo + 1]] * backward_demo[time_demo + 1]  # Combine next evidence and future message.
+    backward_demo[time_demo] = normalize_demo(transition_demo @ future_demo)  # Sum over next states and normalize.
+smoothed_demo = np.zeros_like(forward_demo)  # Allocate smoothed posteriors.
+for time_demo in range(time_count_demo):  # Smooth each time step.
+    smoothed_demo[time_demo] = normalize_demo(forward_demo[time_demo] * backward_demo[time_demo])  # Multiply past and future summaries.
+log("observations umbrella=1", observations_demo.tolist())  # Print evidence sequence.
+log("smoothed P(Rainy)", np.round(smoothed_demo[:, 1], 3).tolist())  # Print rain posterior over time.
+fig_demo, axes_demo = plt.subplots(1, 3, figsize=(12, 3.5))  # Create three heatmaps.
+for ax_demo, matrix_demo, title_demo in zip(axes_demo, [forward_demo, backward_demo, smoothed_demo], ["Forward", "Backward", "Smoothed"]):  # Plot each message type.
+    image_demo = ax_demo.imshow(matrix_demo.T, aspect="auto", cmap="Blues", vmin=0, vmax=1)  # Draw state-by-time probabilities.
+    ax_demo.set_yticks([0, 1])  # Set y tick positions.
+    ax_demo.set_yticklabels(states_hmm_demo)  # Label hidden states.
+    ax_demo.set_xticks(range(time_count_demo))  # Set x tick positions.
+    ax_demo.set_xticklabels([f"t={time_demo + 1}" for time_demo in range(time_count_demo)])  # Label time steps.
+    ax_demo.set_title(title_demo)  # Title this panel.
+    for row_demo in range(state_count_demo):  # Annotate hidden-state rows.
+        for col_demo in range(time_count_demo):  # Annotate time columns.
+            ax_demo.text(col_demo, row_demo, f"{matrix_demo[col_demo, row_demo]:.2f}", ha="center", va="center", fontsize=8)  # Write probabilities.
+fig_demo.colorbar(image_demo, ax=axes_demo.ravel().tolist(), shrink=0.75)  # Add one shared colorbar.
+plt.show()  # Display HMM messages.
+```
+▶ What you'll see: smoothing uses both the forward and backward messages, so it can differ from filtering alone.
+
+### Step 8 — Learning CPTs by maximum likelihood and Laplace smoothing
+
+With fully observed data, MLE estimates each CPT row by normalized counts. Laplace smoothing adds
+pseudo-counts so unseen events do not receive brittle zero probability.
+
+```python
+training_rows_demo = np.array([[1, 1], [1, 1], [1, 0], [0, 0], [0, 0], [0, 0]])  # Store rows [Disease, Fever].
+lambda_demo = 1.0  # Use add-one Laplace smoothing.
+counts_demo = {(disease_demo, fever_demo): 0 for disease_demo in [0, 1] for fever_demo in [0, 1]}  # Initialize all counts.
+for disease_demo, fever_demo in training_rows_demo:  # Count fully observed examples.
+    counts_demo[(int(disease_demo), int(fever_demo))] += 1  # Increment the matching count.
+mle_cpt_demo = {}  # Store raw MLE rows.
+laplace_cpt_demo = {}  # Store smoothed rows.
+for disease_demo in [0, 1]:  # Learn P(Fever | Disease=d) row by row.
+    total_demo = counts_demo[(disease_demo, 0)] + counts_demo[(disease_demo, 1)]  # Count rows with this disease value.
+    mle_cpt_demo[disease_demo] = {fever_demo: counts_demo[(disease_demo, fever_demo)] / total_demo for fever_demo in [0, 1]}  # Normalize raw counts.
+    laplace_cpt_demo[disease_demo] = {fever_demo: (counts_demo[(disease_demo, fever_demo)] + lambda_demo) / (total_demo + 2 * lambda_demo) for fever_demo in [0, 1]}  # Normalize smoothed counts.
+log("raw counts N(D,F)", counts_demo)  # Print the count table.
+log("MLE P(F|D)", mle_cpt_demo)  # Print maximum-likelihood CPT.
+log("Laplace P(F|D)", laplace_cpt_demo)  # Print smoothed CPT.
+labels_demo = ["F=0|D=0", "F=1|D=0", "F=0|D=1", "F=1|D=1"]  # Label CPT entries.
+mle_values_demo = [mle_cpt_demo[0][0], mle_cpt_demo[0][1], mle_cpt_demo[1][0], mle_cpt_demo[1][1]]  # Extract MLE probabilities.
+laplace_values_demo = [laplace_cpt_demo[0][0], laplace_cpt_demo[0][1], laplace_cpt_demo[1][0], laplace_cpt_demo[1][1]]  # Extract smoothed probabilities.
+x_demo = np.arange(len(labels_demo))  # Create bar positions.
+width_demo = 0.36  # Set grouped bar width.
+plt.bar(x_demo - width_demo / 2, mle_values_demo, width_demo, label="MLE", color="gray")  # Plot MLE entries.
+plt.bar(x_demo + width_demo / 2, laplace_values_demo, width_demo, label="Laplace", color="orange")  # Plot smoothed entries.
+plt.xticks(x_demo, labels_demo, rotation=20)  # Label CPT cells.
+plt.ylim(0, 1)  # Keep probability scale.
+plt.ylabel("probability")  # Label y-axis.
+plt.title("Step 8: Laplace smoothing avoids zero-count probabilities")  # Title the plot.
+plt.legend()  # Show methods.
+plt.tight_layout()  # Fit rotated labels.
+plt.show()  # Display learned CPT comparison.
+```
+▶ What you'll see: MLE assigns zero to an unseen fever case, while Laplace smoothing gives it a small nonzero probability.
+
+### Recap — what you just ran
+
+- You built a tiny Bayesian network DAG with **parents** and locally normalized **CPTs**.
+- You multiplied local CPT entries to form the **factorized joint distribution**.
+- You checked **conditional independence** patterns, including collider **explaining away**.
+- You computed exact posteriors by **enumeration** and by **variable elimination**.
+- You approximated a posterior with **Gibbs sampling**.
+- You smoothed an HMM with **forward-backward** messages.
+- You learned CPT rows with **MLE** and **Laplace smoothing**.
+
+Everything below (starting at **§1 Overview**) develops these same ideas with full derivations,
+more examples, and larger inference experiments.
+
+---
+
 ## 1. Overview
 
 A Bayesian network is a compact representation of a joint probability distribution.  It uses a directed acyclic graph (DAG) to say which variables directly influence which other variables, and it stores one local conditional probability table (CPT) per node instead of one enormous joint table.

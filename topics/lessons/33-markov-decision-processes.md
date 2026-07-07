@@ -2,6 +2,535 @@
 > **Source:** CS 221 · **Category:** Concept+Method · **Type:** ⚖️ Both · [↑ Full reference](../../ai-ml-cheatsheets.md)
 > 📓 The coded examples form a runnable notebook section; an `.ipynb` will be generated. [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](#)
 
+## 0. Step-by-Step Worked Example — Start Here (Beginner Friendly)
+
+> 🧑‍🎓 **New to this topic? Start here.** This is a gentle, fully runnable walkthrough that
+> builds up *every* idea in this lesson one tiny step at a time. Each step **prints** the
+> numbers it computes and **draws a picture** so you can *see* what is happening. Run the
+> cells in order from top to bottom. Nothing here needs the internet or any downloaded data.
+
+**What we will build, step by step:**
+1. **MDP ingredients** — states, actions, transitions, rewards, terminal states, and discounting.
+2. **Transition probabilities** — checking that each action's outcomes form a distribution.
+3. **Policies** — a simple map from each state to the action the agent will take.
+4. **Discounted utility** — turning a reward stream into one total return.
+5. **Action values and state values** — computing $Q_\pi(s,a)$ and $V_\pi(s)$.
+6. **Bellman expectation equation** — the self-consistency check for a fixed policy.
+7. **Optimal values and policy** — using a max over actions to choose the best move.
+8. **Policy evaluation** — repeatedly applying Bellman backups for one fixed policy.
+9. **Value iteration** — planning by repeated optimal Bellman backups.
+10. **Policy iteration** — alternating policy evaluation and greedy improvement.
+11. **Model-based Monte Carlo** — estimating transition probabilities from sampled experience.
+12. **Model-free Monte Carlo** — averaging sampled returns directly into $Q$ values.
+13. **SARSA** — updating with the next action actually taken.
+14. **Q-learning** — updating with the greedy next-action value.
+15. **Epsilon-greedy exploration** — balancing random trying with current best actions.
+
+### Step 0 — Set up our tools
+
+We import NumPy (arrays + random choices) and Matplotlib (pictures). We fix a random **seed**
+so every run prints the same small numbers, and define a tiny `log()` helper for clearly
+labeled output.
+
+```python
+import numpy as np                       # NumPy gives us arrays, probability calculations, and seeded random choices.
+import matplotlib.pyplot as plt          # Matplotlib draws the tiny MDP diagrams, value curves, and learning plots.
+
+np.random.seed(0)                         # Fix the seed so every run prints the same results.
+plt.rcParams["figure.figsize"] = (7, 4)   # Use a comfortable default size for beginner-friendly plots.
+
+
+def log(label, value):                    # Define the exact small logger used throughout this walkthrough.
+    print(f"[{label}] {value}")           # Print labels in brackets so every number explains itself.
+
+log("setup", "tools ready — NumPy + Matplotlib imported, seed fixed to 0")  # Confirm that setup ran.
+```
+▶ What you'll see: one line confirming the tools are ready.
+
+### Step 1 — MDP ingredients: states, actions, transitions, rewards, ends, and discount
+
+A Markov Decision Process is a tiny world for sequential decisions. We will use a three-state
+chain where action outcomes can be random, rewards arrive on transitions, and `G` is terminal.
+
+```python
+states_demo = ["A", "B", "G"]  # List every state in the tiny MDP.
+start_state_demo = "A"  # Mark the state where each episode begins.
+terminal_states_demo = {"G"}  # Mark G as terminal, meaning there is no future value after arrival.
+gamma_demo = 0.90  # Store the discount factor so future rewards count, but slightly less than immediate rewards.
+actions_demo = {"A": ["safe", "risky"], "B": ["finish", "reset"], "G": []}  # Give each state its legal actions.
+transitions_demo = {  # Store T(s,a,s') together with the immediate reward for that transition.
+    ("A", "safe"): [(0.80, "B", -0.10), (0.20, "A", -0.10)],  # Safe usually reaches B but can leave us in A.
+    ("A", "risky"): [(0.50, "G", 1.00), (0.50, "A", -0.40)],  # Risky can finish immediately or waste effort.
+    ("B", "finish"): [(1.00, "G", 1.00)],  # Finish deterministically enters the good terminal state.
+    ("B", "reset"): [(1.00, "A", -0.20)],  # Reset returns to A with a small penalty.
+}  # Finish the transition model dictionary.
+position_demo = {"A": (0.0, 0.0), "B": (1.4, 0.0), "G": (2.8, 0.0)}  # Place states on a line for plotting.
+log("states", states_demo)  # Print the states.
+log("start", start_state_demo)  # Print the start state.
+log("terminal states", sorted(terminal_states_demo))  # Print the terminal set.
+log("discount gamma", gamma_demo)  # Print the discount factor.
+fig_demo, ax_demo = plt.subplots()  # Create a small diagram canvas.
+for state_demo in states_demo:  # Draw each state as a labeled dot.
+    x_demo, y_demo = position_demo[state_demo]  # Read the plotting coordinates for this state.
+    color_demo = "lightgreen" if state_demo in terminal_states_demo else "lightblue"  # Color terminal state differently.
+    ax_demo.scatter(x_demo, y_demo, s=900, color=color_demo, edgecolor="black", zorder=3)  # Draw the state circle.
+    ax_demo.text(x_demo, y_demo, state_demo, ha="center", va="center", fontsize=12, weight="bold")  # Label the state.
+for (state_demo, action_demo), outcomes_demo in transitions_demo.items():  # Draw one arrow for each possible outcome.
+    for prob_demo, next_state_demo, reward_demo in outcomes_demo:  # Visit each stochastic successor.
+        x0_demo, y0_demo = position_demo[state_demo]  # Read the source coordinates.
+        x1_demo, y1_demo = position_demo[next_state_demo]  # Read the destination coordinates.
+        y_offset_demo = 0.18 if action_demo in ["safe", "finish"] else -0.18  # Separate overlapping arrows vertically.
+        ax_demo.annotate("", xy=(x1_demo, y1_demo + y_offset_demo), xytext=(x0_demo, y0_demo + y_offset_demo), arrowprops={"arrowstyle": "->", "alpha": prob_demo})  # Draw a probability-weighted arrow.
+        ax_demo.text((x0_demo + x1_demo) / 2, y_offset_demo + 0.05, f"{action_demo}\np={prob_demo}, r={reward_demo}", ha="center", fontsize=8)  # Label action, probability, and reward.
+ax_demo.set_title("Step 1: a tiny MDP has states, actions, probabilities, and rewards")  # Title the diagram.
+ax_demo.axis("off")  # Hide axes because this is a state diagram, not a coordinate graph.
+plt.show()  # Display the MDP picture.
+```
+▶ What you'll see: three states, labeled arrows, outcome probabilities, and rewards.
+
+### Step 2 — Transition probabilities: every action's outcomes sum to one
+
+For each fixed state-action pair, the successor probabilities must form a valid probability
+distribution. We check every row and visualize the outcome masses.
+
+```python
+prob_sums_demo = []  # Collect one probability sum per state-action pair.
+row_labels_demo = []  # Collect readable labels like A-safe.
+for key_demo, outcomes_demo in transitions_demo.items():  # Loop over every transition row.
+    prob_sum_demo = sum(prob_demo for prob_demo, next_state_demo, reward_demo in outcomes_demo)  # Add the probabilities in this row.
+    row_labels_demo.append(f"{key_demo[0]}-{key_demo[1]}")  # Store a compact row label.
+    prob_sums_demo.append(prob_sum_demo)  # Store the probability sum.
+    log(f"sum T for {key_demo}", round(prob_sum_demo, 3))  # Print the distribution check.
+plt.bar(row_labels_demo, prob_sums_demo, color="steelblue", edgecolor="black")  # Draw one bar per probability row.
+plt.axhline(1.0, color="red", linestyle="--", label="must equal 1")  # Mark the required total probability.
+plt.ylim(0.0, 1.2)  # Keep the probability scale readable.
+plt.ylabel("sum of successor probabilities")  # Label the vertical axis.
+plt.title("Step 2: each T(s,a,·) row is a probability distribution")  # Title the chart.
+plt.legend()  # Show the reference-line label.
+plt.show()  # Display the probability-sum chart.
+```
+▶ What you'll see: every bar reaches exactly 1, so each transition row is valid.
+
+### Step 3 — Policies: choose one action in each nonterminal state
+
+A policy is a simple rule: given a state, pick an action. Here our beginner policy plays `safe`
+from `A` and `finish` from `B`.
+
+```python
+policy_demo = {"A": "safe", "B": "finish"}  # Define a deterministic policy pi(s).
+for state_demo in policy_demo:  # Print the policy action at each nonterminal state.
+    log(f"pi({state_demo})", policy_demo[state_demo])  # Show the state-to-action map.
+chosen_labels_demo = list(policy_demo.keys())  # Store states for the bar chart.
+chosen_numbers_demo = [actions_demo[state_demo].index(policy_demo[state_demo]) for state_demo in chosen_labels_demo]  # Encode chosen actions by their index.
+plt.bar(chosen_labels_demo, chosen_numbers_demo, color="seagreen", edgecolor="black")  # Draw the selected action index per state.
+plt.yticks([0, 1], ["first action", "second action"])  # Decode the y-axis into action positions.
+plt.title("Step 3: a policy maps each state to one action")  # Title the policy plot.
+plt.ylabel("chosen action position")  # Label what the bar height means.
+plt.show()  # Display the policy chart.
+```
+▶ What you'll see: the policy chooses one legal action for `A` and one for `B`.
+
+### Step 4 — Discounted utility: turn a reward stream into one return
+
+A path produces many rewards, but planning needs one score. The discounted utility
+$\sum_t \gamma^t r_t$ makes immediate rewards count most and later rewards fade by powers of $\gamma$.
+
+```python
+rewards_path_demo = np.array([-0.10, -0.10, 1.00])  # Store a sample path reward stream A -> B -> A -> G.
+times_demo = np.arange(len(rewards_path_demo))  # Create time indices 0, 1, 2 for discount powers.
+weights_demo = gamma_demo ** times_demo  # Compute gamma^t for each reward time.
+terms_demo = weights_demo * rewards_path_demo  # Multiply each reward by its discount weight.
+return_demo = float(np.sum(terms_demo))  # Add discounted terms into one utility number.
+log("raw rewards", rewards_path_demo)  # Print the undiscounted rewards.
+log("discount weights", np.round(weights_demo, 3))  # Print the powers of gamma.
+log("discounted terms", np.round(terms_demo, 3))  # Print each contribution to the return.
+log("discounted utility", round(return_demo, 3))  # Print the final scalar return.
+plt.bar(["t=0", "t=1", "t=2"], terms_demo, color=["salmon", "salmon", "seagreen"], edgecolor="black")  # Plot each discounted term.
+plt.axhline(0.0, color="black", linewidth=1)  # Mark zero so costs and rewards are separated.
+plt.ylabel("discounted contribution")  # Label the contribution axis.
+plt.title("Step 4: discounted utility adds weighted rewards")  # Title the plot.
+plt.show()  # Display the utility bar chart.
+```
+▶ What you'll see: the later reward is positive but shrunk by $\gamma^2$ before being added.
+
+### Step 5 — Action values and state values under a fixed policy
+
+$Q_\pi(s,a)$ scores taking action $a$ now and then following the policy. $V_\pi(s)$ is just the
+$Q$ value of the action the policy actually chooses in state $s$.
+
+```python
+def q_backup_demo(state_demo, action_demo, values_demo, gamma_value_demo):  # Define one Bellman action-value backup.
+    total_demo = 0.0  # Start the expected value at zero.
+    for prob_demo, next_state_demo, reward_demo in transitions_demo[(state_demo, action_demo)]:  # Loop over stochastic successors.
+        total_demo += prob_demo * (reward_demo + gamma_value_demo * values_demo[next_state_demo])  # Add probability times reward-plus-future.
+    return total_demo  # Return Q(s,a) for the supplied value function.
+
+values_guess_demo = {"A": 0.50, "B": 1.00, "G": 0.00}  # Use a small value guess so the arithmetic is visible.
+q_policy_demo = {}  # Store Q values for the policy-chosen actions.
+for state_demo, action_demo in policy_demo.items():  # Visit each nonterminal state under the policy.
+    q_value_demo = q_backup_demo(state_demo, action_demo, values_guess_demo, gamma_demo)  # Compute Q_pi(s, pi(s)).
+    q_policy_demo[state_demo] = q_value_demo  # Store the state value implied by the policy action.
+    log(f"Q_pi({state_demo},{action_demo})", round(q_value_demo, 3))  # Print the action value.
+    log(f"V_pi({state_demo})", round(q_policy_demo[state_demo], 3))  # Print the matching state value.
+plt.bar(list(q_policy_demo.keys()), list(q_policy_demo.values()), color="mediumpurple", edgecolor="black")  # Plot state values induced by the policy.
+plt.ylabel("value")  # Label the value axis.
+plt.title("Step 5: V_pi(s) equals Q_pi(s, pi(s))")  # Title the chart.
+plt.show()  # Display the Q-to-V relationship.
+```
+▶ What you'll see: each state's printed $V_\pi$ equals the $Q_\pi$ value of its policy action.
+
+### Step 6 — Bellman expectation equation: fixed-policy self-consistency
+
+The Bellman expectation equation says a correct fixed-policy value agrees with its own one-step
+backup. We solve the tiny policy exactly enough to check left side versus right side for state `A`.
+
+```python
+value_bellman_demo = {"A": 0.62 / 0.82, "B": 1.00, "G": 0.00}  # Store the exact fixed-policy values for safe/finish.
+right_side_demo = q_backup_demo("A", policy_demo["A"], value_bellman_demo, gamma_demo)  # Compute the Bellman RHS for A.
+left_side_demo = value_bellman_demo["A"]  # Read the Bellman LHS V_pi(A).
+log("left side V_pi(A)", round(left_side_demo, 4))  # Print the value estimate.
+log("right side backup", round(right_side_demo, 4))  # Print the one-step expectation.
+log("difference", round(abs(left_side_demo - right_side_demo), 8))  # Print the mismatch, which should be tiny.
+plt.bar(["left V(A)", "right backup"], [left_side_demo, right_side_demo], color=["steelblue", "orange"], edgecolor="black")  # Compare both sides visually.
+plt.ylabel("value")  # Label the value axis.
+plt.title("Step 6: Bellman expectation equation matches both sides")  # Title the check.
+plt.show()  # Display the Bellman equality chart.
+```
+▶ What you'll see: the two bars line up, showing the value is self-consistent with the policy.
+
+### Step 7 — Optimal values and policy: maximize over actions
+
+Optimal control replaces “follow the policy action” with “try every legal action and keep the best.”
+That max gives $V_*(s)=\max_a Q_*(s,a)$ and the greedy optimal policy.
+
+```python
+values_opt_guess_demo = {"A": 0.80, "B": 1.00, "G": 0.00}  # Use a near-optimal value guess to inspect one max backup.
+action_values_a_demo = []  # Store Q(A,a) for each action.
+for action_demo in actions_demo["A"]:  # Try every legal action at A.
+    q_value_demo = q_backup_demo("A", action_demo, values_opt_guess_demo, gamma_demo)  # Compute the action backup.
+    action_values_a_demo.append(q_value_demo)  # Save the candidate Q value.
+    log(f"Q_opt guess for A,{action_demo}", round(q_value_demo, 3))  # Print the candidate.
+best_index_demo = int(np.argmax(action_values_a_demo))  # Find the maximizing action index.
+best_action_demo = actions_demo["A"][best_index_demo]  # Convert the index back to an action label.
+value_opt_a_demo = action_values_a_demo[best_index_demo]  # Read the maximum action value.
+log("V_opt(A)=max_a Q(A,a)", round(value_opt_a_demo, 3))  # Print the optimal value estimate.
+log("pi_opt(A)", best_action_demo)  # Print the greedy action.
+colors_demo = ["orange" if action_demo == best_action_demo else "gray" for action_demo in actions_demo["A"]]  # Highlight the best action.
+plt.bar(actions_demo["A"], action_values_a_demo, color=colors_demo, edgecolor="black")  # Plot the candidate action values.
+plt.ylabel("one-step optimal Q")  # Label the Q-value axis.
+plt.title("Step 7: optimal policy chooses the largest action value")  # Title the max backup plot.
+plt.show()  # Display the action comparison.
+```
+▶ What you'll see: the highlighted action is the one with the largest backed-up value.
+
+### Step 8 — Policy evaluation: repeat Bellman expectation backups
+
+Policy evaluation starts from guesses and repeatedly applies the fixed-policy Bellman backup.
+Values stop moving once the policy's future rewards have fully propagated backward.
+
+```python
+values_eval_demo = {state_demo: 0.0 for state_demo in states_demo}  # Initialize all state values to zero.
+history_eval_demo = []  # Store values after each sweep for plotting.
+for sweep_demo in range(8):  # Run a few synchronous policy-evaluation sweeps.
+    old_values_demo = values_eval_demo.copy()  # Freeze old values so this sweep is synchronous.
+    for state_demo in states_demo:  # Visit every state.
+        if state_demo in terminal_states_demo:  # Handle terminal states separately.
+            values_eval_demo[state_demo] = 0.0  # Terminal continuation value is zero.
+        else:  # Update nonterminal states by following the policy action.
+            values_eval_demo[state_demo] = q_backup_demo(state_demo, policy_demo[state_demo], old_values_demo, gamma_demo)  # Apply the expectation backup.
+    history_eval_demo.append([values_eval_demo[state_demo] for state_demo in states_demo])  # Save the sweep's values.
+    log(f"policy-eval sweep {sweep_demo + 1}", {state_demo: round(values_eval_demo[state_demo], 3) for state_demo in states_demo})  # Print the sweep.
+history_eval_demo = np.array(history_eval_demo)  # Convert the history to an array for plotting.
+for index_demo, state_demo in enumerate(states_demo):  # Plot one value curve per state.
+    plt.plot(history_eval_demo[:, index_demo], marker="o", label=f"V({state_demo})")  # Draw that state's evaluation trajectory.
+plt.xlabel("sweep")  # Label the dynamic-programming sweep axis.
+plt.ylabel("value under fixed policy")  # Label the value axis.
+plt.title("Step 8: policy evaluation converges by repeated backups")  # Title the convergence plot.
+plt.legend()  # Show state labels.
+plt.show()  # Display the policy-evaluation curves.
+```
+▶ What you'll see: values change quickly at first, then flatten near the Bellman fixed point.
+
+### Step 9 — Value iteration: repeat optimal Bellman backups
+
+Value iteration is like policy evaluation, except each state keeps the best action backup instead
+of a policy-specified action. This simultaneously estimates optimal values and reveals greedy actions.
+
+```python
+values_vi_demo = {state_demo: 0.0 for state_demo in states_demo}  # Initialize optimal values at zero.
+history_vi_demo = []  # Store value snapshots by sweep.
+deltas_vi_demo = []  # Store the largest value change per sweep.
+for sweep_demo in range(10):  # Run optimal Bellman sweeps.
+    old_values_demo = values_vi_demo.copy()  # Freeze old values for a synchronous sweep.
+    for state_demo in states_demo:  # Visit every state.
+        if state_demo in terminal_states_demo:  # Handle terminal state.
+            values_vi_demo[state_demo] = 0.0  # Terminal value remains zero.
+        else:  # Update nonterminal values by maximizing over actions.
+            candidates_demo = [q_backup_demo(state_demo, action_demo, old_values_demo, gamma_demo) for action_demo in actions_demo[state_demo]]  # Compute all action backups.
+            values_vi_demo[state_demo] = float(np.max(candidates_demo))  # Keep the largest backup.
+    delta_demo = max(abs(values_vi_demo[state_demo] - old_values_demo[state_demo]) for state_demo in states_demo)  # Measure the biggest change.
+    deltas_vi_demo.append(delta_demo)  # Save the convergence diagnostic.
+    history_vi_demo.append([values_vi_demo[state_demo] for state_demo in states_demo])  # Save current values.
+    log(f"value-iteration sweep {sweep_demo + 1}", {state_demo: round(values_vi_demo[state_demo], 3) for state_demo in states_demo})  # Print the sweep.
+policy_vi_demo = {}  # Allocate the greedy policy from final values.
+for state_demo in states_demo:  # Extract greedy actions for nonterminal states.
+    if state_demo not in terminal_states_demo:  # Skip terminal state.
+        q_row_demo = [q_backup_demo(state_demo, action_demo, values_vi_demo, gamma_demo) for action_demo in actions_demo[state_demo]]  # Compute final action values.
+        policy_vi_demo[state_demo] = actions_demo[state_demo][int(np.argmax(q_row_demo))]  # Store the greedy action.
+log("greedy policy from VI", policy_vi_demo)  # Print the final greedy policy.
+plt.plot(deltas_vi_demo, marker="o", color="crimson")  # Plot max update size by sweep.
+plt.xlabel("sweep")  # Label the sweep axis.
+plt.ylabel("max value change")  # Label the convergence diagnostic.
+plt.title("Step 9: value iteration changes shrink toward zero")  # Title the plot.
+plt.show()  # Display the value-iteration convergence curve.
+```
+▶ What you'll see: values stabilize and the greedy policy becomes clear.
+
+### Step 10 — Policy iteration: evaluate, then improve
+
+Policy iteration alternates two moves: evaluate the current policy, then greedily improve it using
+those values. It often changes whole policies in a few big jumps.
+
+```python
+policy_pi_demo = {"A": "risky", "B": "reset"}  # Start from a deliberately weak policy.
+changes_pi_demo = []  # Track how many actions change after each improvement.
+for iteration_demo in range(5):  # Run a few evaluate-improve rounds.
+    values_pi_demo = {state_demo: 0.0 for state_demo in states_demo}  # Reset values for evaluating the current policy.
+    for sweep_demo in range(12):  # Evaluate the policy with repeated Bellman expectation backups.
+        old_values_demo = values_pi_demo.copy()  # Freeze values for a synchronous sweep.
+        for state_demo in states_demo:  # Visit every state.
+            if state_demo in terminal_states_demo:  # Handle terminal states.
+                values_pi_demo[state_demo] = 0.0  # Terminal continuation value is zero.
+            else:  # Follow the current policy action.
+                values_pi_demo[state_demo] = q_backup_demo(state_demo, policy_pi_demo[state_demo], old_values_demo, gamma_demo)  # Apply policy evaluation.
+    improved_policy_demo = {}  # Build the improved greedy policy.
+    for state_demo in policy_pi_demo:  # Improve each nonterminal state's action.
+        q_row_demo = [q_backup_demo(state_demo, action_demo, values_pi_demo, gamma_demo) for action_demo in actions_demo[state_demo]]  # Score all actions.
+        improved_policy_demo[state_demo] = actions_demo[state_demo][int(np.argmax(q_row_demo))]  # Choose the greedy action.
+    changed_demo = sum(policy_pi_demo[state_demo] != improved_policy_demo[state_demo] for state_demo in policy_pi_demo)  # Count changed actions.
+    changes_pi_demo.append(changed_demo)  # Store this iteration's change count.
+    log(f"policy-iteration round {iteration_demo + 1}", {"old": policy_pi_demo, "new": improved_policy_demo, "changed": changed_demo})  # Print old and new policies.
+    policy_pi_demo = improved_policy_demo  # Adopt the improved policy.
+    if changed_demo == 0:  # Stop if greedy improvement no longer changes anything.
+        break  # End policy iteration once stable.
+plt.bar(np.arange(1, len(changes_pi_demo) + 1), changes_pi_demo, color="darkorange", edgecolor="black")  # Plot changed actions per improvement.
+plt.xlabel("policy-improvement round")  # Label the iteration axis.
+plt.ylabel("number of changed actions")  # Label the change count.
+plt.title("Step 10: policy iteration stops when improvement changes nothing")  # Title the plot.
+plt.show()  # Display the policy-iteration change chart.
+```
+▶ What you'll see: the weak starting policy is replaced by a stable greedy policy.
+
+### Step 11 — Model-based Monte Carlo: estimate the model from samples
+
+If the transition table is unknown, sampled experience can estimate it. Model-based Monte Carlo
+counts how often each successor appears after a state-action pair, then normalizes counts into probabilities.
+
+```python
+def sample_transition_demo(state_demo, action_demo):  # Sample one transition from the tiny MDP.
+    outcomes_demo = transitions_demo[(state_demo, action_demo)]  # Read all possible outcomes for this state-action pair.
+    probs_demo = np.array([prob_demo for prob_demo, next_state_demo, reward_demo in outcomes_demo])  # Extract probabilities.
+    index_demo = int(np.random.choice(len(outcomes_demo), p=probs_demo))  # Draw one outcome index using those probabilities.
+    prob_demo, next_state_demo, reward_demo = outcomes_demo[index_demo]  # Unpack the sampled transition.
+    return next_state_demo, reward_demo  # Return only what an agent would observe.
+
+triple_counts_demo = {}  # Count observed (state, action, next_state) triples.
+pair_counts_demo = {}  # Count observed (state, action) pairs.
+reward_sums_demo = {}  # Sum rewards for each observed triple.
+for episode_demo in range(250):  # Generate many short random episodes.
+    state_demo = start_state_demo  # Reset each episode to the start state.
+    for step_demo in range(4):  # Cap each episode so the demo stays fast.
+        if state_demo in terminal_states_demo:  # Stop when a terminal state is reached.
+            break  # End this sampled episode.
+        action_demo = actions_demo[state_demo][int(np.random.choice(len(actions_demo[state_demo])))]  # Choose a random legal action.
+        next_state_demo, reward_demo = sample_transition_demo(state_demo, action_demo)  # Observe one sampled transition.
+        triple_key_demo = (state_demo, action_demo, next_state_demo)  # Build the transition-count key.
+        pair_key_demo = (state_demo, action_demo)  # Build the state-action-count key.
+        triple_counts_demo[triple_key_demo] = triple_counts_demo.get(triple_key_demo, 0) + 1  # Increment the triple count.
+        pair_counts_demo[pair_key_demo] = pair_counts_demo.get(pair_key_demo, 0) + 1  # Increment the pair count.
+        reward_sums_demo[triple_key_demo] = reward_sums_demo.get(triple_key_demo, 0.0) + reward_demo  # Accumulate observed rewards.
+        state_demo = next_state_demo  # Move to the successor.
+inspect_pair_demo = ("A", "safe")  # Choose one state-action pair to inspect.
+true_probs_demo = [prob_demo for prob_demo, next_state_demo, reward_demo in transitions_demo[inspect_pair_demo]]  # Read true probabilities.
+est_probs_demo = []  # Store estimated probabilities for the same successors.
+next_labels_demo = []  # Store successor labels.
+for prob_demo, next_state_demo, reward_demo in transitions_demo[inspect_pair_demo]:  # Compare true and estimated successor masses.
+    count_demo = triple_counts_demo.get((inspect_pair_demo[0], inspect_pair_demo[1], next_state_demo), 0)  # Read the observed successor count.
+    total_demo = pair_counts_demo.get(inspect_pair_demo, 1)  # Read the total visits to this state-action pair.
+    est_prob_demo = count_demo / total_demo  # Normalize the count into an estimated probability.
+    est_probs_demo.append(est_prob_demo)  # Store the estimate.
+    next_labels_demo.append(next_state_demo)  # Store the successor label.
+    log(f"estimated T{inspect_pair_demo}->{next_state_demo}", round(est_prob_demo, 3))  # Print the estimated probability.
+x_demo = np.arange(len(next_labels_demo))  # Create x positions for paired bars.
+plt.bar(x_demo - 0.18, true_probs_demo, width=0.36, label="true T", color="steelblue")  # Plot true probabilities.
+plt.bar(x_demo + 0.18, est_probs_demo, width=0.36, label="estimated T-hat", color="orange")  # Plot estimated probabilities.
+plt.xticks(x_demo, next_labels_demo)  # Label each successor state.
+plt.ylim(0.0, 1.0)  # Use probability scale.
+plt.ylabel("probability")  # Label the probability axis.
+plt.title("Step 11: model-based Monte Carlo estimates T from counts")  # Title the model-estimation plot.
+plt.legend()  # Show true versus estimated labels.
+plt.show()  # Display the comparison.
+```
+▶ What you'll see: the estimated probabilities are close to the true transition probabilities.
+
+### Step 12 — Model-free Monte Carlo: average sampled returns directly
+
+Model-free Monte Carlo skips estimating $T$ and rewards. It runs episodes, computes the realized
+return after each visited state-action pair, and averages those returns into $\widehat Q_\pi(s,a)$.
+
+```python
+returns_mc_demo = {}  # Store a list of returns for each observed state-action pair.
+for episode_demo in range(120):  # Run many episodes under the fixed beginner policy.
+    trajectory_demo = []  # Store (state, action, reward) tuples for this episode.
+    state_demo = start_state_demo  # Start at A.
+    for step_demo in range(4):  # Keep episodes short for the tiny chain.
+        if state_demo in terminal_states_demo:  # Stop at terminal state.
+            break  # End this episode.
+        action_demo = policy_demo[state_demo]  # Follow the fixed policy.
+        next_state_demo, reward_demo = sample_transition_demo(state_demo, action_demo)  # Sample one transition.
+        trajectory_demo.append((state_demo, action_demo, reward_demo))  # Save the experience for return calculation.
+        state_demo = next_state_demo  # Advance to the next state.
+    return_so_far_demo = 0.0  # Initialize the backward discounted return.
+    for state_demo, action_demo, reward_demo in reversed(trajectory_demo):  # Walk backward through the episode.
+        return_so_far_demo = reward_demo + gamma_demo * return_so_far_demo  # Update the return from this time step.
+        returns_mc_demo.setdefault((state_demo, action_demo), []).append(return_so_far_demo)  # Store this sampled return.
+q_mc_demo = {key_demo: float(np.mean(values_demo)) for key_demo, values_demo in returns_mc_demo.items()}  # Average returns into Q estimates.
+for key_demo in sorted(q_mc_demo):  # Print learned model-free action values.
+    log(f"MC Q{key_demo}", round(q_mc_demo[key_demo], 3))  # Report one averaged return estimate.
+labels_mc_demo = [f"{key_demo[0]}-{key_demo[1]}" for key_demo in q_mc_demo]  # Build labels for plotting.
+values_mc_demo = [q_mc_demo[key_demo] for key_demo in q_mc_demo]  # Build values for plotting.
+plt.bar(labels_mc_demo, values_mc_demo, color="seagreen", edgecolor="black")  # Plot the model-free Q estimates.
+plt.ylabel("average sampled return")  # Label the return axis.
+plt.title("Step 12: model-free Monte Carlo averages returns")  # Title the plot.
+plt.show()  # Display the MC value estimates.
+```
+▶ What you'll see: Q estimates appear without ever normalizing transition counts.
+
+### Step 13 — SARSA: update using the next action actually taken
+
+SARSA is on-policy: its target uses the action the behavior policy really chooses next. That means
+exploration affects the values being learned.
+
+```python
+q_sarsa_demo = {(state_demo, action_demo): 0.0 for state_demo in states_demo for action_demo in actions_demo[state_demo]}  # Initialize a tabular SARSA Q table.
+alpha_demo = 0.45  # Use a visible learning rate for the short demo.
+epsilon_demo = 0.25  # Explore sometimes while learning.
+rewards_sarsa_demo = []  # Track episode returns.
+for episode_demo in range(60):  # Run a small number of SARSA episodes.
+    state_demo = start_state_demo  # Reset to the start state.
+    action_demo = actions_demo[state_demo][int(np.random.choice(len(actions_demo[state_demo])))] if np.random.rand() < epsilon_demo else actions_demo[state_demo][int(np.argmax([q_sarsa_demo[(state_demo, a_demo)] for a_demo in actions_demo[state_demo]]))]  # Choose the initial epsilon-greedy action.
+    total_reward_demo = 0.0  # Reset this episode's reward total.
+    for step_demo in range(5):  # Limit episode length.
+        next_state_demo, reward_demo = sample_transition_demo(state_demo, action_demo)  # Sample the environment.
+        total_reward_demo += reward_demo  # Accumulate realized reward.
+        if next_state_demo in terminal_states_demo:  # Handle terminal next state.
+            target_demo = reward_demo  # Terminal SARSA target has no future action.
+            next_action_demo = None  # Store no next action.
+        else:  # Choose the actual next behavior action.
+            next_action_demo = actions_demo[next_state_demo][int(np.random.choice(len(actions_demo[next_state_demo])))] if np.random.rand() < epsilon_demo else actions_demo[next_state_demo][int(np.argmax([q_sarsa_demo[(next_state_demo, a_demo)] for a_demo in actions_demo[next_state_demo]]))]  # Draw epsilon-greedy next action.
+            target_demo = reward_demo + gamma_demo * q_sarsa_demo[(next_state_demo, next_action_demo)]  # Use the sampled next action in the target.
+        old_q_demo = q_sarsa_demo[(state_demo, action_demo)]  # Read the old Q estimate.
+        q_sarsa_demo[(state_demo, action_demo)] = old_q_demo + alpha_demo * (target_demo - old_q_demo)  # Move toward the SARSA target.
+        if episode_demo < 2:  # Print only the first few episodes to keep logs readable.
+            log("SARSA update", f"s={state_demo}, a={action_demo}, target={target_demo:.3f}, newQ={q_sarsa_demo[(state_demo, action_demo)]:.3f}")  # Show the update arithmetic.
+        if next_state_demo in terminal_states_demo:  # Stop after terminal transition.
+            break  # End the episode.
+        state_demo, action_demo = next_state_demo, next_action_demo  # Continue with the actual next state and action.
+    rewards_sarsa_demo.append(total_reward_demo)  # Save episode reward.
+q_sarsa_matrix_demo = np.array([[q_sarsa_demo.get((state_demo, action_demo), np.nan) for action_demo in ["safe", "risky", "finish", "reset"]] for state_demo in states_demo])  # Convert Q to a display matrix.
+plt.imshow(q_sarsa_matrix_demo, cmap="viridis", aspect="auto")  # Plot SARSA Q values as a heatmap.
+plt.xticks(range(4), ["safe", "risky", "finish", "reset"], rotation=20)  # Label action columns.
+plt.yticks(range(len(states_demo)), states_demo)  # Label state rows.
+plt.colorbar(label="SARSA Q")  # Add a colorbar for values.
+plt.title("Step 13: SARSA learns from actual next actions")  # Title the heatmap.
+plt.show()  # Display the SARSA table.
+```
+▶ What you'll see: early logs show targets using the next sampled action, and the heatmap shows learned Q values.
+
+### Step 14 — Q-learning: update using the greedy next-action value
+
+Q-learning is off-policy: even when the behavior explores, the target assumes the next state will
+use its best currently known action. The update bootstraps from $\max_{a'}Q(s',a')$.
+
+```python
+q_learning_demo = {(state_demo, action_demo): 0.0 for state_demo in states_demo for action_demo in actions_demo[state_demo]}  # Initialize a Q-learning table.
+rewards_q_demo = []  # Track episode rewards.
+for episode_demo in range(60):  # Run a small number of Q-learning episodes.
+    state_demo = start_state_demo  # Reset to A.
+    total_reward_demo = 0.0  # Reset the episode reward.
+    for step_demo in range(5):  # Limit episode length.
+        if np.random.rand() < epsilon_demo:  # Explore with probability epsilon.
+            action_demo = actions_demo[state_demo][int(np.random.choice(len(actions_demo[state_demo])))]  # Choose a random legal action.
+        else:  # Exploit otherwise.
+            action_demo = actions_demo[state_demo][int(np.argmax([q_learning_demo[(state_demo, a_demo)] for a_demo in actions_demo[state_demo]]))]  # Choose the greedy current action.
+        next_state_demo, reward_demo = sample_transition_demo(state_demo, action_demo)  # Sample one transition.
+        total_reward_demo += reward_demo  # Accumulate the reward.
+        best_next_demo = 0.0 if next_state_demo in terminal_states_demo else max(q_learning_demo[(next_state_demo, a_demo)] for a_demo in actions_demo[next_state_demo])  # Compute max next Q.
+        target_demo = reward_demo + gamma_demo * best_next_demo  # Build the Q-learning target.
+        old_q_demo = q_learning_demo[(state_demo, action_demo)]  # Read the old Q value.
+        q_learning_demo[(state_demo, action_demo)] = old_q_demo + alpha_demo * (target_demo - old_q_demo)  # Move toward the greedy target.
+        if episode_demo < 2:  # Print only early updates.
+            log("Q-learning update", f"s={state_demo}, a={action_demo}, target={target_demo:.3f}, newQ={q_learning_demo[(state_demo, action_demo)]:.3f}")  # Show the target and new value.
+        if next_state_demo in terminal_states_demo:  # Stop after terminal state.
+            break  # End this episode.
+        state_demo = next_state_demo  # Continue from the sampled successor.
+    rewards_q_demo.append(total_reward_demo)  # Save episode reward.
+q_learning_matrix_demo = np.array([[q_learning_demo.get((state_demo, action_demo), np.nan) for action_demo in ["safe", "risky", "finish", "reset"]] for state_demo in states_demo])  # Convert Q-learning values to a display matrix.
+plt.imshow(q_learning_matrix_demo, cmap="magma", aspect="auto")  # Plot Q-learning Q values as a heatmap.
+plt.xticks(range(4), ["safe", "risky", "finish", "reset"], rotation=20)  # Label action columns.
+plt.yticks(range(len(states_demo)), states_demo)  # Label state rows.
+plt.colorbar(label="Q-learning Q")  # Add a colorbar for values.
+plt.title("Step 14: Q-learning bootstraps from max next Q")  # Title the heatmap.
+plt.show()  # Display the Q-learning table.
+```
+▶ What you'll see: Q-learning logs use the greedy next value, not necessarily the next action sampled by exploration.
+
+### Step 15 — Epsilon-greedy exploration: sometimes try, usually trust
+
+Epsilon-greedy chooses a random action with probability $\epsilon$ and the greedy action otherwise.
+We hold one Q row fixed and vary $\epsilon$ so the exploration/exploitation tradeoff is visible.
+
+```python
+q_choice_demo = np.array([0.20, 1.00])  # Store one state's Q values where action 1 is greedy.
+action_names_demo = np.array(["left", "right"])  # Name the two possible actions.
+greedy_index_demo = int(np.argmax(q_choice_demo))  # Find the greedy action index.
+epsilons_demo = np.array([0.0, 0.1, 0.3, 0.7, 1.0])  # Try exploration rates from none to all-random.
+greedy_rates_demo = []  # Store the simulated probability of choosing the greedy action.
+for epsilon_value_demo in epsilons_demo:  # Test each epsilon value.
+    choices_demo = []  # Store repeated choices for this epsilon.
+    for trial_demo in range(2000):  # Repeat many times to estimate the probability.
+        if np.random.rand() < epsilon_value_demo:  # Explore with probability epsilon.
+            choice_demo = int(np.random.choice(len(action_names_demo)))  # Pick a uniformly random action.
+        else:  # Exploit with probability 1 - epsilon.
+            choice_demo = greedy_index_demo  # Pick the greedy action.
+        choices_demo.append(choice_demo)  # Store the selected action.
+    greedy_rate_demo = float(np.mean(np.array(choices_demo) == greedy_index_demo))  # Estimate how often the chosen action was greedy.
+    greedy_rates_demo.append(greedy_rate_demo)  # Save the empirical rate.
+    log(f"epsilon={epsilon_value_demo:.1f}", f"greedy action chosen {greedy_rate_demo:.3f}")  # Print the tradeoff.
+expected_rates_demo = (1.0 - epsilons_demo) + epsilons_demo / len(action_names_demo)  # Compute the theoretical greedy-choice rate.
+plt.plot(epsilons_demo, greedy_rates_demo, marker="o", label="simulated greedy-choice rate")  # Plot simulated rates.
+plt.plot(epsilons_demo, expected_rates_demo, linestyle="--", label="expected rate")  # Plot the probability formula.
+plt.xlabel("epsilon")  # Label the exploration knob.
+plt.ylabel("P(chosen action is greedy)")  # Label the outcome probability.
+plt.title("Step 15: epsilon-greedy trades exploitation for exploration")  # Title the plot.
+plt.legend()  # Show simulated and expected labels.
+plt.show()  # Display the epsilon-greedy chart.
+```
+▶ What you'll see: as $\epsilon$ rises, greedy choices become less frequent because more decisions explore.
+
+### Recap — what you just ran
+
+- You built a complete tiny **MDP** with states, actions, transition probabilities, rewards, terminal states, and discounting.
+- You evaluated a fixed **policy**, checked the **Bellman expectation equation**, and found greedy **optimal** actions.
+- You compared **policy evaluation**, **value iteration**, and **policy iteration** as planning methods.
+- You learned from samples using **model-based Monte Carlo**, **model-free Monte Carlo**, **SARSA**, and **Q-learning**.
+- You saw how **epsilon-greedy** exploration controls the balance between trying actions and trusting current values.
+
+Everything below (starting at **§1 Overview**) develops these same ideas with full derivations,
+more examples, and larger gridworld experiments.
+
+---
+
 ## 1. Overview
 
 A Markov decision process (MDP) models sequential decisions when actions are uncertain and rewards accumulate over time. It extends deterministic search: an agent no longer asks only “which path reaches the goal?” but “which policy maximizes expected discounted reward?”

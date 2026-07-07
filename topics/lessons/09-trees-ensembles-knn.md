@@ -2,6 +2,238 @@
 > **Source:** CS 229 · **Category:** Model · **Type:** 💻 Colab · [↑ Full reference](../../ai-ml-cheatsheets.md)
 > 📓 This section is written as a runnable notebook; an `.ipynb` will be generated from it.
 
+## 0. Step-by-Step Worked Example — Start Here (Beginner Friendly)
+
+> 🧑‍🎓 **New to this topic? Start here.** This is a gentle, fully runnable walkthrough that
+> builds up *every* idea in this lesson one tiny step at a time. Each step **prints** the
+> numbers it computes and **draws a picture** so you can *see* what is happening. Run the
+> cells in order from top to bottom. Nothing here needs the internet or any downloaded data.
+
+**What we will build, step by step:**
+1. **Decision-tree splitting** — how Gini, entropy, and information gain choose a threshold.
+2. **k-nearest neighbors** — how distances, sorted neighbors, and majority vote make a prediction.
+3. **Bagging and random forests** — how averaging many noisy trees reduces variance, especially when trees are decorrelated.
+4. **Boosting** — how weak learners are added one at a time to correct residual errors.
+
+### Step 0 — Set up our tools
+
+We import NumPy (arrays + random numbers) and Matplotlib (pictures). We fix a random **seed**
+so every run produces the same printed numbers, then define a tiny `log()` helper so each line
+of output tells you what it means.
+
+```python
+import numpy as np                       # NumPy: arrays, distances, counts, bootstraps, and random draws.
+import matplotlib.pyplot as plt          # Matplotlib: draw splits, neighbors, averaging, and boosting progress.
+
+np.random.seed(0)                         # Fix the seed so every run prints the SAME numbers.
+plt.rcParams["figure.figsize"] = (7, 4)   # Use a comfortable default plot size.
+
+
+def log(label, value):                    # A tiny logger so each printed line explains itself.
+    print(f"[{label}] {value}")           # Format is: [what this is] the value.
+
+log("setup", "tools ready — NumPy + Matplotlib imported, seed fixed to 0")
+```
+▶ What you'll see: one line confirming the tools are ready.
+
+### Step 1 — Decision-tree splitting: pick the threshold that cleans up labels
+
+A decision tree asks simple yes/no questions such as "is feature 1 below this threshold?".
+For each candidate split, CART compares the parent impurity to the weighted child impurity;
+the drop is the **information gain**.
+
+```python
+x_tree_demo = np.array([1.0, 1.4, 1.8, 2.6, 3.0, 3.3, 4.2, 4.6])  # One sorted feature column.
+y_tree_demo = np.array([0, 0, 0, 1, 1, 1, 0, 1])                  # Binary labels attached to those feature values.
+threshold_tree_demo = 2.2                                           # Candidate rule: send x <= 2.2 left.
+left_mask_demo = x_tree_demo <= threshold_tree_demo                 # Boolean mask for the left child.
+right_mask_demo = ~left_mask_demo                                   # Boolean mask for the right child.
+
+parent_counts_demo = np.bincount(y_tree_demo, minlength=2)          # Count labels before the split.
+left_counts_demo = np.bincount(y_tree_demo[left_mask_demo], minlength=2)   # Count labels in the left child.
+right_counts_demo = np.bincount(y_tree_demo[right_mask_demo], minlength=2) # Count labels in the right child.
+parent_probs_demo = parent_counts_demo / parent_counts_demo.sum()   # Convert parent counts into class proportions.
+left_probs_demo = left_counts_demo / left_counts_demo.sum()         # Convert left counts into class proportions.
+right_probs_demo = right_counts_demo / right_counts_demo.sum()      # Convert right counts into class proportions.
+
+parent_gini_demo = 1.0 - np.sum(parent_probs_demo**2)               # Gini impurity: 1 - sum p_k^2.
+left_gini_demo = 1.0 - np.sum(left_probs_demo**2)                   # Left-child Gini impurity.
+right_gini_demo = 1.0 - np.sum(right_probs_demo**2)                 # Right-child Gini impurity.
+nonzero_parent_demo = parent_probs_demo > 0                         # Guard against log(0) for entropy.
+parent_entropy_demo = -np.sum(parent_probs_demo[nonzero_parent_demo] * np.log(parent_probs_demo[nonzero_parent_demo]))  # Entropy: -sum p log p.
+weighted_child_gini_demo = left_mask_demo.mean() * left_gini_demo + right_mask_demo.mean() * right_gini_demo  # Weighted child impurity.
+gain_tree_demo = parent_gini_demo - weighted_child_gini_demo        # Information gain: impurity removed by the split.
+
+log("parent counts", parent_counts_demo)                            # Show the mixed parent node.
+log("left counts", left_counts_demo)                                # Show labels sent left.
+log("right counts", right_counts_demo)                              # Show labels sent right.
+log("parent Gini", round(parent_gini_demo, 3))                      # Print parent impurity.
+log("parent entropy", round(parent_entropy_demo, 3))                # Print an alternate impurity measure.
+log("weighted child Gini", round(weighted_child_gini_demo, 3))      # Print after-split impurity.
+log("information gain", round(gain_tree_demo, 3))                   # Print the split improvement.
+
+fig_tree_demo, axes_tree_demo = plt.subplots(1, 2, figsize=(10, 3.6))  # Create split-geometry and impurity panels.
+axes_tree_demo[0].scatter(x_tree_demo[y_tree_demo == 0], np.zeros(np.sum(y_tree_demo == 0)), s=90, label="class 0")  # Draw class-0 points.
+axes_tree_demo[0].scatter(x_tree_demo[y_tree_demo == 1], np.zeros(np.sum(y_tree_demo == 1)), s=90, label="class 1")  # Draw class-1 points.
+axes_tree_demo[0].axvline(threshold_tree_demo, color="black", linestyle="--", label="threshold")  # Draw the candidate threshold.
+axes_tree_demo[0].set_yticks([])                                    # Hide the unused vertical axis.
+axes_tree_demo[0].set_xlabel("feature value")                       # Label the feature axis.
+axes_tree_demo[0].set_title("Tree split: x <= 2.2")                 # Title the split panel.
+axes_tree_demo[0].legend()                                          # Explain colors and threshold.
+axes_tree_demo[1].bar(["parent", "children"], [parent_gini_demo, weighted_child_gini_demo], color=["gray", "seagreen"])  # Compare impurity before/after.
+axes_tree_demo[1].set_ylabel("Gini impurity")                       # Label the impurity scale.
+axes_tree_demo[1].set_title("Information gain = impurity drop")     # Title the score panel.
+plt.tight_layout()                                                   # Keep the two panels from overlapping.
+plt.show()                                                           # Render the decision-tree visualization.
+```
+▶ What you'll see: the dashed threshold makes the child nodes cleaner, so the weighted Gini bar drops below the parent bar.
+
+### Step 2 — k-nearest neighbors: let nearby training points vote
+
+kNN stores the training examples and waits until prediction time. For a new query point, it
+computes distances, sorts neighbors, and predicts from the labels of the closest $k$ points.
+
+```python
+X_knn_demo = np.array([[0.0, 0.0], [0.4, 0.2], [0.2, 0.8], [2.0, 2.0], [2.4, 2.1], [2.1, 2.6], [1.2, 1.5]])  # Tiny 2-D training set.
+y_knn_demo = np.array([0, 0, 0, 1, 1, 1, 0])                  # Class labels for the training points.
+query_knn_demo = np.array([1.45, 1.55])                       # New point whose label we want.
+dist_knn_demo = np.linalg.norm(X_knn_demo - query_knn_demo, axis=1)  # Euclidean distance from query to each point.
+order_knn_demo = np.argsort(dist_knn_demo)                    # Neighbor indices sorted from nearest to farthest.
+k_knn_demo = 3                                                 # Use the three closest neighbors for the main vote.
+neighbors_knn_demo = order_knn_demo[:k_knn_demo]               # Select the k nearest indices.
+votes_knn_demo = np.bincount(y_knn_demo[neighbors_knn_demo], minlength=2)  # Count class votes among those neighbors.
+pred_knn_demo = int(np.argmax(votes_knn_demo))                 # Predict the class with the most votes.
+
+log("all distances", np.round(dist_knn_demo, 3))               # Print every distance so the ranking is inspectable.
+log("nearest order", order_knn_demo)                           # Print nearest-to-farthest indices.
+log("k=3 neighbor labels", y_knn_demo[neighbors_knn_demo])      # Print the voters' labels.
+log("k=3 vote counts", votes_knn_demo)                         # Print class vote totals.
+log("k=3 prediction", pred_knn_demo)                           # Print the majority-vote prediction.
+
+for k_try_demo in [1, 3, 5, 7]:                                 # Compare several neighborhood sizes.
+    near_try_demo = order_knn_demo[:k_try_demo]                 # Select the first k sorted neighbors.
+    votes_try_demo = np.bincount(y_knn_demo[near_try_demo], minlength=2)  # Count votes for this k.
+    log(f"k={k_try_demo} votes", votes_try_demo)                # Print how the vote changes with k.
+
+plt.scatter(X_knn_demo[y_knn_demo == 0, 0], X_knn_demo[y_knn_demo == 0, 1], s=85, label="class 0")  # Draw class-0 training points.
+plt.scatter(X_knn_demo[y_knn_demo == 1, 0], X_knn_demo[y_knn_demo == 1, 1], s=85, label="class 1")  # Draw class-1 training points.
+plt.scatter(query_knn_demo[0], query_knn_demo[1], s=170, marker="*", color="black", label=f"query → class {pred_knn_demo}")  # Draw the query.
+plt.scatter(X_knn_demo[neighbors_knn_demo, 0], X_knn_demo[neighbors_knn_demo, 1], s=260, facecolors="none", edgecolors="black", linewidths=2, label="k=3 neighbors")  # Ring the voters.
+plt.xlabel("feature 1")                                         # Label the horizontal feature.
+plt.ylabel("feature 2")                                         # Label the vertical feature.
+plt.title("kNN predicts from nearby votes")                     # Title the local-vote picture.
+plt.legend()                                                     # Identify points, query, and voters.
+plt.show()                                                       # Render the kNN visualization.
+```
+▶ What you'll see: the query star is classified by the circled nearby points, and changing $k$ changes which labels get to vote.
+
+### Step 3 — Bagging and random forests: average noisy trees to reduce variance
+
+A deep tree can be unstable, so bagging trains many trees on bootstrap samples and averages
+or votes. Random forests add feature randomness to make trees less correlated, which makes
+that averaging more effective.
+
+```python
+true_value_demo = 10.0                                            # Pretend the correct prediction at one query is 10.
+num_trees_demo = 6                                                 # Build a tiny ensemble we can inspect by hand.
+tree_preds_demo = true_value_demo + np.random.normal(0.0, 3.0, size=num_trees_demo)  # Simulate noisy tree predictions.
+bagged_pred_demo = tree_preds_demo.mean()                         # Average the predictions like bagging.
+log("individual tree predictions", np.round(tree_preds_demo, 2))  # Show the high-variance single-tree outputs.
+log("bagged average", round(bagged_pred_demo, 2))                 # Show the stabilized ensemble output.
+
+max_trees_demo = 30                                                # Compare ensemble sizes from 1 to 30.
+trials_bag_demo = 2000                                             # Repeat many ensembles to estimate prediction variance.
+shared_noise_demo = np.random.normal(0.0, 1.6, size=(trials_bag_demo, 1))  # Shared error makes tree predictions correlated.
+private_noise_demo = np.random.normal(0.0, 2.4, size=(trials_bag_demo, max_trees_demo))  # Tree-specific error can cancel by averaging.
+bag_errors_demo = shared_noise_demo + private_noise_demo           # Bagging-like errors still share some structure.
+forest_errors_demo = 0.3 * shared_noise_demo + private_noise_demo  # Forest-like errors are less correlated after feature randomness.
+bag_means_demo = np.cumsum(bag_errors_demo, axis=1) / np.arange(1, max_trees_demo + 1)  # Average first B bagged errors.
+forest_means_demo = np.cumsum(forest_errors_demo, axis=1) / np.arange(1, max_trees_demo + 1)  # Average first B forest errors.
+bag_var_demo = bag_means_demo.var(axis=0)                          # Estimate variance of bagged averages.
+forest_var_demo = forest_means_demo.var(axis=0)                    # Estimate variance of decorrelated forest averages.
+B_values_demo = np.arange(1, max_trees_demo + 1)                   # Ensemble-size axis for plotting.
+
+sample_boot_demo = np.array([4.0, 6.0, 8.0, 10.0, 12.0])           # Tiny target sample for bootstrap intuition.
+boot_ids_demo = np.random.randint(0, len(sample_boot_demo), size=(3, len(sample_boot_demo)))  # Draw rows with replacement.
+boot_means_demo = np.array([sample_boot_demo[ids_demo].mean() for ids_demo in boot_ids_demo])  # Average each bootstrap sample.
+log("bootstrap index rows", boot_ids_demo)                        # Show repeated and omitted rows.
+log("bootstrap means", np.round(boot_means_demo, 2))              # Show different trees see different samples.
+log("bag variance at B=30", round(bag_var_demo[-1], 3))           # Print variance after averaging many correlated trees.
+log("forest variance at B=30", round(forest_var_demo[-1], 3))     # Print variance after averaging less-correlated trees.
+
+plt.plot(B_values_demo, bag_var_demo, marker="o", markersize=3, label="bagging-like correlated trees")  # Plot correlated averaging.
+plt.plot(B_values_demo, forest_var_demo, marker="s", markersize=3, label="forest-like decorrelated trees")  # Plot decorrelated averaging.
+plt.xlabel("number of averaged trees B")                          # Label the ensemble-size axis.
+plt.ylabel("variance of averaged prediction")                     # Label the variance being reduced.
+plt.title("Averaging lowers variance; decorrelation helps more")  # Title the bagging/forest picture.
+plt.legend()                                                       # Identify the two curves.
+plt.show()                                                         # Render the variance-reduction plot.
+```
+▶ What you'll see: averaging many trees lowers prediction variance, and the less-correlated forest-like curve drops farther.
+
+### Step 4 — Boosting: add small models that fix current mistakes
+
+Boosting builds an additive model one weak learner at a time. In squared-error regression,
+the next learner fits the **residuals** $y-F(x)$ — the mistakes left by the current ensemble.
+
+```python
+x_boost_demo = np.array([0.0, 0.5, 1.0, 1.5, 2.0, 2.5])           # One-dimensional inputs so stumps are easy to see.
+y_boost_demo = np.array([1.0, 1.2, 1.1, 2.8, 3.0, 3.2])           # Targets with a jump near the middle.
+pred_boost_demo = np.full_like(y_boost_demo, y_boost_demo.mean()) # Start with the best constant prediction.
+start_pred_demo = pred_boost_demo.copy()                         # Save the initial prediction for plotting.
+learning_rate_demo = 0.8                                          # Shrink each residual correction.
+thresholds_boost_demo = (x_boost_demo[:-1] + x_boost_demo[1:]) / 2.0  # Candidate stump thresholds.
+mse_history_demo = [np.mean((y_boost_demo - pred_boost_demo) ** 2)]  # Track mean squared error by round.
+log("initial prediction", np.round(start_pred_demo, 3))            # Print the flat starting model.
+log("initial MSE", round(mse_history_demo[0], 3))                  # Print starting error.
+
+for round_demo in range(3):                                        # Run three boosting rounds by hand.
+    residual_demo = y_boost_demo - pred_boost_demo                 # Compute current mistakes y - F(x).
+    best_loss_demo = np.inf                                        # Start with no best stump yet.
+    best_correction_demo = None                                    # Store the best stump's residual predictions.
+    best_threshold_demo = None                                     # Store the best threshold.
+    for threshold_demo in thresholds_boost_demo:                   # Try every one-split stump.
+        left_demo = x_boost_demo <= threshold_demo                 # Identify points on the left side.
+        right_demo = ~left_demo                                    # Identify points on the right side.
+        left_value_demo = residual_demo[left_demo].mean()          # Best left leaf predicts mean residual.
+        right_value_demo = residual_demo[right_demo].mean()        # Best right leaf predicts mean residual.
+        correction_try_demo = np.where(left_demo, left_value_demo, right_value_demo)  # Candidate residual correction.
+        loss_try_demo = np.mean((residual_demo - correction_try_demo) ** 2)  # Score how well the stump fits residuals.
+        if loss_try_demo < best_loss_demo:                         # Keep the lowest residual loss.
+            best_loss_demo = loss_try_demo                         # Update the best loss.
+            best_correction_demo = correction_try_demo             # Update the best correction vector.
+            best_threshold_demo = threshold_demo                   # Update the best threshold.
+    pred_boost_demo = pred_boost_demo + learning_rate_demo * best_correction_demo  # Add the shrunken weak learner.
+    mse_history_demo.append(np.mean((y_boost_demo - pred_boost_demo) ** 2))  # Record new ensemble error.
+    if round_demo == 0:                                            # Save the one-round model for plotting.
+        one_round_pred_demo = pred_boost_demo.copy()               # Copy predictions after the first correction.
+    log(f"round {round_demo + 1} best threshold", round(best_threshold_demo, 3))  # Print the chosen stump split.
+    log(f"round {round_demo + 1} MSE", round(mse_history_demo[-1], 4))  # Print the updated error.
+
+plt.scatter(x_boost_demo, y_boost_demo, s=90, color="black", label="targets")  # Draw the training targets.
+plt.step(x_boost_demo, start_pred_demo, where="mid", label=f"start MSE={mse_history_demo[0]:.2f}")  # Draw the constant start.
+plt.step(x_boost_demo, one_round_pred_demo, where="mid", label=f"1 round MSE={mse_history_demo[1]:.2f}")  # Draw after one correction.
+plt.step(x_boost_demo, pred_boost_demo, where="mid", label=f"3 rounds MSE={mse_history_demo[-1]:.2f}")  # Draw final boosted predictions.
+plt.xlabel("x")                                                     # Label the input axis.
+plt.ylabel("prediction")                                           # Label the target/prediction scale.
+plt.title("Boosting adds residual-correction stumps")              # Title the boosting picture.
+plt.legend()                                                        # Identify targets and model stages.
+plt.show()                                                          # Render the boosting progress plot.
+```
+▶ What you'll see: each round chooses a stump for the remaining residuals, and the MSE decreases as the step function moves toward the targets.
+
+### Recap — what you just ran
+
+- **Decision trees** scored a threshold by reducing impurity, using Gini, entropy, and information gain.
+- **kNN** predicted from Euclidean distances, sorted neighbors, and a local majority vote.
+- **Bagging and random forests** averaged noisy trees; decorrelating trees made the variance drop farther.
+- **Boosting** added weak residual-correction stumps one round at a time.
+
+Everything below (starting at **§1 Overview**) develops these same ideas with fuller examples,
+model comparisons, and an interactive experiment.
+
+---
+
 ## 1. Overview
 
 Trees, ensembles, and $k$-nearest neighbors are flexible non-parametric methods: instead of imposing one global linear formula, they adapt their predictions to local regions of the data. A single tree is easy to inspect but high-variance, a forest or boosting model combines many weak trees, and kNN predicts directly from nearby training examples.

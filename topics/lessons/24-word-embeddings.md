@@ -2,6 +2,248 @@
 > **Source:** CS 230 · **Category:** Method · **Type:** 💻 Colab · [↑ Full reference](../../ai-ml-cheatsheets.md)
 > 📓 Runnable notebook section; an `.ipynb` will be generated.
 
+## 0. Step-by-Step Worked Example — Start Here (Beginner Friendly)
+
+> 🧑‍🎓 **New to this topic? Start here.** This is a gentle, fully runnable walkthrough that
+> builds up *every* idea in this lesson one tiny step at a time. Each step **prints** the
+> numbers it computes and **draws a picture** so you can *see* what is happening. Run the
+> cells in order from top to bottom. Nothing here needs the internet or any downloaded data.
+
+**What we will build, step by step:**
+1. **Dense lookup from a one-hot word** — use an embedding matrix as a lookup table.
+2. **word2vec from local prediction** — skip-gram softmax, negative sampling, and CBOW averaging.
+3. **GloVe from global counts** — co-occurrence counts, log-count reconstruction, and final vector averaging.
+4. **Compare, solve analogies, and visualize** — cosine similarity, vector arithmetic, and a PCA map.
+
+### Step 0 — Set up our tools
+
+We import NumPy (vectors + matrix math) and Matplotlib (pictures). We fix a random **seed** so
+every run is reproducible, then define a tiny `log()` helper for clearly labeled output.
+
+```python
+import numpy as np                       # NumPy: one-hot vectors, embedding matrices, softmax, and cosine math.
+import matplotlib.pyplot as plt          # Matplotlib: draw lookup tables, probabilities, heatmaps, and embedding maps.
+
+np.random.seed(0)                         # Fix the seed so every run prints the SAME numbers.
+plt.rcParams["figure.figsize"] = (7, 4)   # A comfortable default plot size.
+
+def log(label, value):                    # A tiny logger so each printed line explains itself.
+    print(f"[{label}] {value}")           # Format is: [what this is] the value.
+
+log("setup", "tools ready — NumPy + Matplotlib imported, seed fixed to 0")
+```
+▶ What you'll see: one line confirming the tools are ready.
+
+### Step 1 — Dense lookup from a one-hot word
+
+A one-hot vector stores only a word's ID. Multiplying by an embedding matrix $E$ selects the
+column for that word: $e_w=Eo_w$. The dense column can then live near related words in geometry.
+
+```python
+vocab_demo = np.array(["cat", "dog", "king", "queen"])                      # A tiny vocabulary in a fixed column order.
+word_demo = "king"                                                          # The word we want to look up.
+index_demo = int(np.where(vocab_demo == word_demo)[0][0])                   # Find the vocabulary index for the word.
+one_hot_demo = np.zeros(len(vocab_demo))                                    # Start with all zeros.
+one_hot_demo[index_demo] = 1.0                                              # Put the single 1 at the chosen word's index.
+embedding_matrix_demo = np.array([[0.90, 0.82, -0.35, -0.28], [0.10, 0.18, 0.95, 0.88]]) # E has shape embedding_dim by vocabulary_size.
+embedding_demo = embedding_matrix_demo @ one_hot_demo                       # Matrix multiplication selects one column of E.
+
+log("vocabulary order", vocab_demo.tolist())                                # Print the word-to-column order.
+log("one-hot for king", one_hot_demo)                                       # Print the sparse ID vector.
+log("embedding matrix shape", embedding_matrix_demo.shape)                  # Print E's dimensions.
+log("looked-up dense vector", embedding_demo)                               # Print the selected dense vector.
+log("same as E column?", bool(np.allclose(embedding_demo, embedding_matrix_demo[:, index_demo]))) # Verify lookup equals direct column selection.
+
+fig_demo, axes_demo = plt.subplots(1, 2, figsize=(10, 4))                   # Create a matrix panel and a geometry panel.
+image_demo = axes_demo[0].imshow(embedding_matrix_demo, cmap="Blues", aspect="auto") # Show the embedding table as a heatmap.
+axes_demo[0].axvline(index_demo, color="red", linewidth=3, label="selected column") # Highlight the chosen word's column.
+axes_demo[0].set_xticks(np.arange(len(vocab_demo)))                         # Set one tick per vocabulary word.
+axes_demo[0].set_xticklabels(vocab_demo)                                    # Label columns by word.
+axes_demo[0].set_yticks([0, 1])                                             # Set one tick per embedding dimension.
+axes_demo[0].set_yticklabels(["dim 1", "dim 2"])                            # Label embedding dimensions.
+axes_demo[0].set_title("E matrix selects one column")                       # Title the lookup heatmap.
+axes_demo[0].legend()                                                       # Explain the selected column.
+plt.colorbar(image_demo, ax=axes_demo[0], fraction=0.046)                   # Add a color scale for matrix values.
+axes_demo[1].scatter(embedding_matrix_demo[0], embedding_matrix_demo[1], s=90) # Plot every word vector in 2-D.
+for word_label_demo, vector_demo in zip(vocab_demo, embedding_matrix_demo.T): # Label each vector endpoint.
+    axes_demo[1].text(vector_demo[0] + 0.02, vector_demo[1] + 0.02, word_label_demo) # Add a word label.
+axes_demo[1].scatter(embedding_demo[0], embedding_demo[1], s=220, facecolors="none", edgecolors="black", linewidths=2, label="lookup result") # Highlight selected vector.
+axes_demo[1].set_xlabel("dense coordinate 1")                               # Label x-axis.
+axes_demo[1].set_ylabel("dense coordinate 2")                               # Label y-axis.
+axes_demo[1].set_title("Dense vectors can have neighborhoods")              # Title the geometry panel.
+axes_demo[1].legend()                                                       # Explain the highlight.
+plt.tight_layout()                                                          # Keep panels readable.
+plt.show()                                                                  # Render the lookup visualization.
+```
+▶ What you'll see: the one-hot vector selects the `king` column, and the dense map places `king` near `queen`.
+
+### Step 2 — word2vec: learn from local prediction
+
+Skip-gram predicts nearby context words from a center word with a softmax. Negative sampling
+replaces the full softmax with small binary classifiers, and CBOW reverses direction by averaging
+context vectors to predict the missing center word.
+
+```python
+vocab_w2v_demo = np.array(["king", "queen", "dog", "crown"])                # A small vocabulary for local prediction.
+center_word_demo = "king"                                                   # Center word c.
+true_context_demo = "queen"                                                 # Observed nearby context word t.
+negative_context_demo = "dog"                                               # A sampled non-neighbor for negative sampling.
+center_index_demo = int(np.where(vocab_w2v_demo == center_word_demo)[0][0]) # Center word index.
+true_index_demo = int(np.where(vocab_w2v_demo == true_context_demo)[0][0])  # True context index.
+negative_index_demo = int(np.where(vocab_w2v_demo == negative_context_demo)[0][0]) # Negative context index.
+input_vectors_demo = np.array([[0.20, 0.90], [0.10, 0.85], [0.85, 0.05], [0.30, 0.70]]) # Input embeddings e_c.
+context_vectors_demo = np.array([[0.15, 0.80], [0.05, 0.55], [0.70, 0.10], [0.25, 0.60]]) # Output/context vectors theta_j.
+center_vector_demo = input_vectors_demo[center_index_demo]                  # Look up e_king.
+
+def softmax_demo(scores_demo):                                              # Define a stable softmax for the tiny vocabulary.
+    shifted_demo = scores_demo - np.max(scores_demo)                        # Subtract max for numerical stability.
+    exp_demo = np.exp(shifted_demo)                                         # Convert scores to positive weights.
+    return exp_demo / exp_demo.sum()                                        # Normalize weights into probabilities.
+
+def sigmoid_demo(score_demo):                                               # Define sigmoid for negative sampling.
+    return 1.0 / (1.0 + np.exp(-np.clip(score_demo, -40.0, 40.0)))           # Convert one dot product into a binary probability.
+
+scores_demo = context_vectors_demo @ center_vector_demo                     # Skip-gram scores theta_j^T e_c for all context words.
+probs_demo = softmax_demo(scores_demo)                                      # Full-softmax P(t | c).
+positive_logit_demo = float(context_vectors_demo[true_index_demo] @ center_vector_demo) # Positive-pair dot product.
+negative_logit_demo = float(context_vectors_demo[negative_index_demo] @ center_vector_demo) # Negative-pair dot product.
+positive_prob_demo = float(sigmoid_demo(positive_logit_demo))               # Negative-sampling P(y=1 | king, queen).
+negative_prob_demo = float(sigmoid_demo(negative_logit_demo))               # Negative-sampling P(y=1 | king, dog).
+context_average_demo = (input_vectors_demo[true_index_demo] + input_vectors_demo[3]) / 2.0 # CBOW averages context vectors queen and crown.
+cbow_scores_demo = context_vectors_demo @ context_average_demo              # CBOW scores candidates from averaged context.
+cbow_probs_demo = softmax_demo(cbow_scores_demo)                            # CBOW probabilities for the missing center word.
+
+log("skip-gram softmax P(context | king)", dict(zip(vocab_w2v_demo.tolist(), np.round(probs_demo, 3)))) # Print full softmax distribution.
+log("P(true context queen | king)", round(float(probs_demo[true_index_demo]), 3)) # Print observed context probability.
+log("negative sampling positive pair", round(positive_prob_demo, 3))         # Print sigmoid score for observed pair.
+log("negative sampling negative pair", round(negative_prob_demo, 3))         # Print sigmoid score for sampled non-neighbor.
+log("CBOW P(king | queen,crown avg)", round(float(cbow_probs_demo[center_index_demo]), 3)) # Print CBOW probability for center.
+
+fig_demo, axes_demo = plt.subplots(1, 2, figsize=(10, 4))                   # Create softmax and negative-sampling panels.
+axes_demo[0].bar(vocab_w2v_demo, probs_demo, color="steelblue")             # Draw skip-gram context probabilities.
+axes_demo[0].set_ylim(0.0, 1.0)                                             # Probabilities live in [0,1].
+axes_demo[0].set_ylabel("softmax probability")                              # Label probability scale.
+axes_demo[0].set_title("skip-gram: predict nearby context")                 # Title skip-gram panel.
+axes_demo[1].bar(["observed\nking-queen", "negative\nking-dog"], [positive_prob_demo, negative_prob_demo], color=["seagreen", "salmon"]) # Draw binary pair scores.
+axes_demo[1].set_ylim(0.0, 1.0)                                             # Sigmoid probabilities live in [0,1].
+axes_demo[1].set_ylabel("P(y=1 | pair)")                                    # Label binary classifier output.
+axes_demo[1].set_title("negative sampling: classify pairs")                 # Title negative-sampling panel.
+plt.tight_layout()                                                          # Prevent overlap.
+plt.show()                                                                  # Render word2vec visualization.
+```
+▶ What you'll see: skip-gram gives every context a probability, negative sampling scores one positive and one negative pair, and CBOW uses an averaged context.
+
+### Step 3 — GloVe: learn from global counts
+
+GloVe first builds a co-occurrence matrix $X$. Then it learns target and context vectors whose dot
+products, plus biases in the full model, reconstruct $\log(X_{ij})$ for observed counts; a final
+embedding often averages target and context vectors.
+
+```python
+sentences_glove_demo = [["king", "queen", "crown"], ["king", "crown", "palace"], ["queen", "crown", "palace"], ["dog", "pet", "home"], ["dog", "pet", "cat"]] # Tiny corpus.
+vocab_glove_demo = np.array(["king", "queen", "crown", "palace", "dog", "pet", "cat", "home"]) # Stable vocabulary order.
+w2i_glove_demo = {word_demo: index_demo for index_demo, word_demo in enumerate(vocab_glove_demo)} # Word-to-index mapping.
+counts_glove_demo = np.zeros((len(vocab_glove_demo), len(vocab_glove_demo))) # Initialize co-occurrence matrix X.
+window_glove_demo = 1                                                       # Count immediate neighbors.
+
+for sentence_demo in sentences_glove_demo:                                  # Scan each tokenized sentence.
+    for center_pos_demo, center_token_demo in enumerate(sentence_demo):      # Choose each word as a target row.
+        left_demo = max(0, center_pos_demo - window_glove_demo)              # Left edge of context window.
+        right_demo = min(len(sentence_demo), center_pos_demo + window_glove_demo + 1) # Right edge of context window.
+        for context_pos_demo in range(left_demo, right_demo):                # Scan nearby context positions.
+            if context_pos_demo != center_pos_demo:                         # Skip the target word itself.
+                context_token_demo = sentence_demo[context_pos_demo]         # Read context word.
+                counts_glove_demo[w2i_glove_demo[center_token_demo], w2i_glove_demo[context_token_demo]] += 1.0 # Add one co-occurrence count.
+
+target_vectors_demo = np.array([[1.00, 0.25], [0.95, 0.30], [0.85, 0.35], [0.70, 0.45], [-0.80, 0.20], [-0.75, 0.15], [-0.70, 0.10], [-0.65, 0.05]]) # Toy target vectors.
+context_vectors_glove_demo = np.array([[0.95, 0.30], [0.90, 0.35], [0.82, 0.38], [0.65, 0.50], [-0.78, 0.22], [-0.72, 0.18], [-0.68, 0.12], [-0.62, 0.08]]) # Toy context vectors.
+final_vectors_glove_demo = (target_vectors_demo + context_vectors_glove_demo) / 2.0 # Average target/context vectors into final embeddings.
+positive_mask_demo = counts_glove_demo > 0.0                                # GloVe ignores zero-count pairs in this simplified demo.
+log_counts_demo = np.zeros_like(counts_glove_demo)                          # Allocate log-count target matrix.
+log_counts_demo[positive_mask_demo] = np.log(counts_glove_demo[positive_mask_demo]) # Fill log targets for observed counts.
+fitted_demo = target_vectors_demo @ context_vectors_glove_demo.T            # Dot products that try to reconstruct log counts.
+fit_error_demo = fitted_demo[positive_mask_demo] - log_counts_demo[positive_mask_demo] # Errors on observed entries.
+
+log("co-occurrence matrix shape", counts_glove_demo.shape)                  # Print matrix dimensions.
+log("observed nonzero pairs", int(positive_mask_demo.sum()))                # Print number of observed counts.
+log("X[king,crown]", int(counts_glove_demo[w2i_glove_demo["king"], w2i_glove_demo["crown"]])) # Print one count.
+log("dot(king,crown context)", round(float(fitted_demo[w2i_glove_demo["king"], w2i_glove_demo["crown"]]), 3)) # Print one fitted dot product.
+log("log X[king,crown]", round(float(log_counts_demo[w2i_glove_demo["king"], w2i_glove_demo["crown"]]), 3)) # Print its log-count target.
+log("mean squared fit error", round(float(np.mean(fit_error_demo ** 2)), 3)) # Print overall toy reconstruction error.
+log("final vector for king", np.round(final_vectors_glove_demo[w2i_glove_demo["king"]], 3)) # Print averaged final embedding.
+
+plt.imshow(counts_glove_demo, cmap="Blues")                                 # Visualize the global co-occurrence matrix.
+plt.xticks(np.arange(len(vocab_glove_demo)), vocab_glove_demo, rotation=45, ha="right") # Label context columns.
+plt.yticks(np.arange(len(vocab_glove_demo)), vocab_glove_demo)              # Label target rows.
+plt.colorbar(label="co-occurrence count")                                   # Add count scale.
+plt.title("GloVe starts from a global co-occurrence matrix")                # Title the heatmap.
+plt.tight_layout()                                                          # Prevent label clipping.
+plt.show()                                                                  # Render the GloVe heatmap.
+```
+▶ What you'll see: royalty words co-occur with royalty words, pet words with pet words, and dot products are compared with log-count targets.
+
+### Step 4 — Compare, solve analogies, and visualize
+
+After training, embeddings become useful through geometry. Cosine similarity compares directions,
+analogy arithmetic forms query vectors like $e_{\text{king}}-e_{\text{man}}+e_{\text{woman}}$,
+and 2-D projections such as PCA (or t-SNE for local neighborhoods) help us inspect the map.
+
+```python
+words_geom_demo = np.array(["man", "woman", "king", "queen", "prince", "princess", "cat", "dog", "computer"]) # Words to compare and plot.
+vectors_geom_demo = np.array([[-1.0, 0.0, 0.0], [1.0, 0.0, 0.0], [-1.0, 1.0, 0.0], [1.0, 1.0, 0.0], [-1.0, 0.8, 0.0], [1.0, 0.8, 0.0], [0.0, 0.0, 1.0], [0.05, 0.0, 0.95], [0.0, -0.2, -1.0]]) # Gender, royalty, and animal/tech directions.
+w2i_geom_demo = {word_demo: index_demo for index_demo, word_demo in enumerate(words_geom_demo)} # Word-to-row lookup.
+
+def cosine_geom_demo(a_demo, b_demo):                                       # Define cosine similarity for embeddings.
+    denom_demo = max(np.linalg.norm(a_demo) * np.linalg.norm(b_demo), 1e-12) # Protect against zero-length vectors.
+    return float((a_demo @ b_demo) / denom_demo)                             # Return normalized dot product.
+
+query_geom_demo = vectors_geom_demo[w2i_geom_demo["king"]] - vectors_geom_demo[w2i_geom_demo["man"]] + vectors_geom_demo[w2i_geom_demo["woman"]] # Analogy query.
+candidate_scores_demo = []                                                  # Store valid analogy candidates.
+for word_demo in words_geom_demo:                                           # Score every candidate word.
+    if word_demo not in {"king", "man", "woman"}:                           # Exclude input words from the answer.
+        score_demo = cosine_geom_demo(query_geom_demo, vectors_geom_demo[w2i_geom_demo[word_demo]]) # Compare candidate direction to query.
+        candidate_scores_demo.append((word_demo, score_demo))               # Save candidate and cosine score.
+candidate_scores_demo = sorted(candidate_scores_demo, key=lambda pair_demo: pair_demo[1], reverse=True) # Rank candidates by similarity.
+
+log("cosine(cat,dog)", round(cosine_geom_demo(vectors_geom_demo[w2i_geom_demo["cat"]], vectors_geom_demo[w2i_geom_demo["dog"]]), 3)) # Print similar animal cosine.
+log("cosine(cat,computer)", round(cosine_geom_demo(vectors_geom_demo[w2i_geom_demo["cat"]], vectors_geom_demo[w2i_geom_demo["computer"]]), 3)) # Print unrelated cosine.
+log("king - man + woman", query_geom_demo)                                  # Print analogy query vector.
+log("nearest analogy candidates", [(word_demo, round(float(score_demo), 3)) for word_demo, score_demo in candidate_scores_demo[:4]]) # Print top analogy answers.
+
+mean_geom_demo = vectors_geom_demo.mean(axis=0, keepdims=True)              # Center vectors before PCA.
+centered_geom_demo = vectors_geom_demo - mean_geom_demo                     # Subtract the mean vector.
+u_geom_demo, s_geom_demo, vt_geom_demo = np.linalg.svd(centered_geom_demo, full_matrices=False) # Compute deterministic PCA via SVD.
+coords_geom_demo = centered_geom_demo @ vt_geom_demo[:2].T                  # Project words onto the first two principal components.
+query_coord_demo = (query_geom_demo - mean_geom_demo.ravel()) @ vt_geom_demo[:2].T # Project the analogy query into the same map.
+coord_lookup_demo = {word_demo: coords_geom_demo[index_demo] for index_demo, word_demo in enumerate(words_geom_demo)} # Map words to projected coordinates.
+
+plt.scatter(coords_geom_demo[:, 0], coords_geom_demo[:, 1], s=90, color="steelblue") # Draw word points.
+for word_demo, xy_demo in coord_lookup_demo.items():                         # Label every projected point.
+    plt.text(xy_demo[0] + 0.03, xy_demo[1] + 0.03, word_demo)                # Add the word label.
+plt.scatter(query_coord_demo[0], query_coord_demo[1], s=230, facecolors="none", edgecolors="black", linewidths=2, label="king-man+woman") # Highlight analogy query.
+plt.arrow(coord_lookup_demo["man"][0], coord_lookup_demo["man"][1], coord_lookup_demo["woman"][0] - coord_lookup_demo["man"][0], coord_lookup_demo["woman"][1] - coord_lookup_demo["man"][1], color="orange", head_width=0.04, length_includes_head=True) # Draw man-to-woman offset.
+plt.arrow(coord_lookup_demo["king"][0], coord_lookup_demo["king"][1], coord_lookup_demo["queen"][0] - coord_lookup_demo["king"][0], coord_lookup_demo["queen"][1] - coord_lookup_demo["king"][1], color="orange", head_width=0.04, length_includes_head=True) # Draw king-to-queen offset.
+plt.xlabel("PCA dimension 1")                                                # Label first projection axis.
+plt.ylabel("PCA dimension 2")                                                # Label second projection axis.
+plt.title("Cosine, analogy arithmetic, and a 2-D PCA visualization")         # Title the geometry plot.
+plt.legend()                                                                # Explain the query marker.
+plt.axis("equal")                                                           # Preserve relative geometry.
+plt.show()                                                                  # Render embedding geometry.
+```
+▶ What you'll see: `cat` is much closer to `dog` than to `computer`, the analogy query ranks `queen` first, and PCA shows the relation arrows.
+
+### Recap — what you just ran
+
+- A **one-hot word** selected a dense column from an embedding matrix.
+- **word2vec** used local prediction: skip-gram softmax, negative-sampling binary scores, and CBOW context averaging.
+- **GloVe** used global co-occurrence counts and fit dot products to log counts, then averaged target/context vectors.
+- **Cosine similarity**, **analogy arithmetic**, and **2-D projections** made embedding geometry inspectable.
+
+Everything below (starting at **§1 Overview**) develops these same ideas with fuller training loops,
+nearest-neighbor tables, analogy examples, and visualization diagnostics.
+
+---
+
 ## 1. Overview
 
 Word embeddings replace isolated one-hot word IDs with dense vectors whose geometry carries information about similarity, context, and relationships. They are learned from text by solving proxy tasks such as predicting nearby words or reconstructing co-occurrence counts.

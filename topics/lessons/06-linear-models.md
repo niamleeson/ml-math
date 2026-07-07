@@ -2,6 +2,267 @@
 > **Source:** CS 229 · **Category:** Model · **Type:** ⚖️ Both · [↑ Full reference](../../ai-ml-cheatsheets.md)
 > 📓 The coded examples form a runnable notebook section; an .ipynb will be generated.
 
+## 0. Step-by-Step Worked Example — Start Here (Beginner Friendly)
+
+> 🧑‍🎓 **New to this topic? Start here.** This is a gentle, fully runnable walkthrough that
+> builds up *every* idea in this lesson one tiny step at a time. Each step **prints** the
+> numbers it computes and **draws a picture** so you can *see* what is happening. Run the
+> cells in order from top to bottom. Nothing here needs the internet or any downloaded data.
+
+**What we will build, step by step:**
+1. **Linear hypothesis** — turn an intercept and feature into one score, $h_\theta(x)=\theta^Tx$.
+2. **Least squares and the normal equations** — solve for the line with the smallest squared residuals.
+3. **LMS / gradient descent** — improve the same line by many tiny downhill updates.
+4. **Locally weighted regression** — fit a fresh nearby line for each query point.
+5. **Logistic regression and sigmoid** — convert linear scores into probabilities and a boundary.
+6. **Softmax and GLMs** — normalize multiclass scores and see the GLM response-function idea.
+
+### Step 0 — Set up our tools
+
+We import NumPy (arrays, matrix products, random numbers) and Matplotlib (plots). We fix a
+random **seed** so the printed numbers are reproducible, and define a tiny `log()` helper so
+each line of output has a label.
+
+```python
+import numpy as np                       # NumPy: arrays, linear algebra, exponentials, and random samples.
+import matplotlib.pyplot as plt          # Matplotlib: draw lines, losses, weights, and probabilities.
+
+np.random.seed(0)                         # Fix the seed so every run prints the SAME numbers.
+plt.rcParams["figure.figsize"] = (7, 4)   # A comfortable default plot size.
+
+def log(label, value):                    # A tiny logger so each printed line explains itself.
+    print(f"[{label}] {value}")           # Format is: [what this is] the value.
+
+log("setup", "tools ready — NumPy + Matplotlib imported, seed fixed to 0")
+```
+▶ What you'll see: one line confirming the tools are ready.
+
+### Step 1 — Linear hypothesis: one dot product makes predictions
+
+A linear model adds an intercept coordinate $x_0=1$, then computes
+$h_\theta(x)=\theta^Tx$. In matrix form, many predictions are just `X @ theta`, which makes
+the same formula work for every row at once.
+
+```python
+x_demo = np.array([-2.0, -1.0, 0.0, 1.0, 2.0])                 # Five one-dimensional feature values.
+y_demo = np.array([-2.2, -0.8, 1.1, 2.9, 5.0])                 # Synthetic targets that roughly follow a line.
+X_demo = np.column_stack([np.ones_like(x_demo), x_demo])       # Add x_0=1 so theta[0] is the intercept.
+theta_demo = np.array([1.0, 1.8])                              # Choose an intercept and slope by hand.
+yhat_demo = X_demo @ theta_demo                                # Compute h_theta(x) for every row at once.
+residuals_demo = y_demo - yhat_demo                            # Compare observed targets to predictions.
+
+log("design matrix first rows", X_demo[:3])                    # Show the intercept column and feature column.
+log("theta = [intercept, slope]", theta_demo)                  # Show the weights used by the hypothesis.
+log("predictions X @ theta", np.round(yhat_demo, 3))           # Show the predicted values.
+log("residuals y - prediction", np.round(residuals_demo, 3))   # Show signed prediction errors.
+
+x_line_demo = np.linspace(x_demo.min() - 0.3, x_demo.max() + 0.3, 100)  # Smooth x-grid for drawing the line.
+X_line_demo = np.column_stack([np.ones_like(x_line_demo), x_line_demo]) # Add the same intercept column to the grid.
+y_line_demo = X_line_demo @ theta_demo                         # Predict the line on the grid.
+plt.scatter(x_demo, y_demo, color="black", s=70, label="data") # Draw the synthetic observations.
+plt.plot(x_line_demo, y_line_demo, color="tab:blue", lw=2, label=r"$h_\theta(x)$")  # Draw the linear hypothesis.
+plt.vlines(x_demo, yhat_demo, y_demo, colors="gray", linestyles="--", label="residuals")  # Draw vertical errors.
+plt.xlabel("feature x"); plt.ylabel("target y")                # Label both axes.
+plt.title("Linear hypothesis: predictions come from one dot product")  # Add a teaching title.
+plt.legend(); plt.show()                                       # Show the legend and render the plot.
+```
+▶ What you'll see: a straight prediction line, plus dashed residuals showing where the hand-picked line misses.
+
+### Step 2 — Least squares and the normal equations
+
+Least squares chooses $\theta$ to make the squared residuals as small as possible. Setting the
+gradient of $\frac12\|X\theta-y\|^2$ to zero gives the normal equations
+$X^TX\theta=X^Ty$, which we solve directly on the same tiny data.
+
+```python
+XtX_demo = X_demo.T @ X_demo                                  # Compute the normal-equation matrix X^T X.
+Xty_demo = X_demo.T @ y_demo                                  # Compute the right-hand side X^T y.
+theta_ne_demo = np.linalg.solve(XtX_demo, Xty_demo)           # Solve X^T X theta = X^T y.
+yhat_ne_demo = X_demo @ theta_ne_demo                         # Predict with the least-squares theta.
+residuals_ne_demo = y_demo - yhat_ne_demo                     # Compute residuals at the optimum.
+sse_ne_demo = np.sum(residuals_ne_demo ** 2)                  # Sum squared residuals to inspect the objective.
+
+log("X^T X", XtX_demo)                                        # Show the 2-by-2 linear system matrix.
+log("X^T y", np.round(Xty_demo, 3))                           # Show the target side of the equations.
+log("normal-equation theta", np.round(theta_ne_demo, 4))      # Show the learned intercept and slope.
+log("sum squared error", round(float(sse_ne_demo), 4))        # Show the minimized squared-error value.
+
+y_line_ne_demo = X_line_demo @ theta_ne_demo                  # Predict the fitted line on the plotting grid.
+plt.scatter(x_demo, y_demo, color="black", s=70, label="data") # Draw the original data points.
+plt.plot(x_line_demo, y_line_ne_demo, color="tab:green", lw=2, label="least-squares fit")  # Draw the OLS line.
+plt.vlines(x_demo, yhat_ne_demo, y_demo, colors="crimson", linestyles="--", label="residuals")  # Draw OLS residuals.
+plt.xlabel("feature x"); plt.ylabel("target y")               # Label both axes.
+plt.title("Normal equations: one solve finds the least-squares line")  # Add a teaching title.
+plt.legend(); plt.show()                                      # Show the legend and render the plot.
+```
+▶ What you'll see: the learned line balances the residuals and reports a smaller squared error than a hand-picked line.
+
+### Step 3 — LMS / gradient descent: walk downhill one update at a time
+
+Gradient descent does not solve the normal equations in one shot. It starts with a rough
+$\theta$, computes prediction errors, and repeatedly moves opposite the squared-error gradient
+until the loss gets smaller.
+
+```python
+theta_gd_demo = np.array([-1.0, -0.5])                         # Start from a deliberately poor intercept and slope.
+alpha_demo = 0.08                                               # Choose a small learning rate for stable updates.
+steps_demo = 25                                                 # Keep the run short enough to inspect.
+losses_demo = []                                                # Store mean squared error at each step.
+theta_path_demo = [theta_gd_demo.copy()]                        # Store a few line positions for plotting.
+
+for step_demo in range(steps_demo):                             # Repeat small LMS-style batch updates.
+    pred_demo = X_demo @ theta_gd_demo                          # Predict using the current parameters.
+    error_demo = pred_demo - y_demo                             # Use prediction-minus-target for the gradient.
+    loss_demo = np.mean(error_demo ** 2)                         # Compute mean squared error for this step.
+    grad_demo = (X_demo.T @ error_demo) / len(y_demo)            # Average gradient of squared error.
+    losses_demo.append(loss_demo)                                # Record the loss before updating.
+    theta_gd_demo = theta_gd_demo - alpha_demo * grad_demo       # Step downhill by subtracting the gradient.
+    theta_path_demo.append(theta_gd_demo.copy())                 # Save the updated parameters.
+
+log("starting theta", theta_path_demo[0])                       # Show where gradient descent began.
+log("first three losses", np.round(losses_demo[:3], 4))         # Show early loss values.
+log("last three losses", np.round(losses_demo[-3:], 4))         # Show later loss values after learning.
+log("final gradient-descent theta", np.round(theta_gd_demo, 4)) # Show the parameters after updates.
+
+plt.subplot(1, 2, 1)                                            # Left panel: line movement.
+plt.scatter(x_demo, y_demo, color="black", s=55, label="data")  # Draw the data.
+plt.plot(x_line_demo, X_line_demo @ theta_path_demo[0], "--", color="gray", label="start")  # Draw starting line.
+plt.plot(x_line_demo, X_line_demo @ theta_path_demo[8], color="tab:orange", label="step 8")  # Draw middle line.
+plt.plot(x_line_demo, X_line_demo @ theta_path_demo[-1], color="tab:blue", lw=2, label="final")  # Draw final line.
+plt.xlabel("x"); plt.ylabel("y"); plt.title("LMS lines improve") # Label the left panel.
+plt.legend()                                                     # Explain the line snapshots.
+plt.subplot(1, 2, 2)                                             # Right panel: loss over time.
+plt.plot(losses_demo, marker="o", color="crimson")               # Draw the loss curve.
+plt.xlabel("gradient step"); plt.ylabel("MSE")                   # Label the optimization axes.
+plt.title("Loss decreases")                                      # Title the right panel.
+plt.tight_layout(); plt.show()                                   # Keep panels tidy and render them.
+```
+▶ What you'll see: the line moves toward the data while the loss curve falls step by step.
+
+### Step 4 — Locally weighted regression: fit a nearby line for each query
+
+A single global line can underfit curved data. Locally weighted regression gives nearby
+training points larger Gaussian weights, solves a weighted least-squares problem, and repeats
+that process at each query point to make a flexible curve.
+
+```python
+x_lwr_demo = np.linspace(-3.0, 3.0, 13)                         # Create one-dimensional inputs across a curved shape.
+y_lwr_demo = 0.4 * x_lwr_demo**2 + 0.3 * np.sin(2 * x_lwr_demo) # Create a small synthetic nonlinear target.
+X_lwr_demo = np.column_stack([np.ones_like(x_lwr_demo), x_lwr_demo])  # Build intercept-plus-feature rows.
+tau_demo = 0.9                                                   # Set the bandwidth controlling how local the fit is.
+query_demo = 1.2                                                 # Pick one query location to inspect.
+weights_demo = np.exp(-((x_lwr_demo - query_demo) ** 2) / (2 * tau_demo**2))  # Compute Gaussian weights around the query.
+W_demo = np.diag(weights_demo)                                   # Put weights on a diagonal matrix.
+ridge_demo = 1e-6 * np.eye(2)                                    # Add a tiny ridge guard against singular systems.
+theta_local_demo = np.linalg.solve(X_lwr_demo.T @ W_demo @ X_lwr_demo + ridge_demo, X_lwr_demo.T @ W_demo @ y_lwr_demo)  # Solve weighted OLS.
+prediction_query_demo = np.array([1.0, query_demo]) @ theta_local_demo  # Predict at the query using the local line.
+
+log("query x", query_demo)                                       # Show the query point.
+log("weights near query", np.round(weights_demo, 3))             # Show which data points matter most.
+log("local theta", np.round(theta_local_demo, 4))                # Show the query-specific intercept and slope.
+log("local prediction", round(float(prediction_query_demo), 4))  # Show the prediction at the query.
+
+grid_lwr_demo = np.linspace(-3.1, 3.1, 100)                      # Create many query points to trace the LWR curve.
+curve_lwr_demo = []                                              # Store one local prediction per query.
+for q_demo in grid_lwr_demo:                                     # Fit a separate nearby line for each query.
+    w_q_demo = np.exp(-((x_lwr_demo - q_demo) ** 2) / (2 * tau_demo**2))  # Compute query-specific weights.
+    W_q_demo = np.diag(w_q_demo)                                 # Convert weights to a diagonal matrix.
+    theta_q_demo = np.linalg.solve(X_lwr_demo.T @ W_q_demo @ X_lwr_demo + ridge_demo, X_lwr_demo.T @ W_q_demo @ y_lwr_demo)  # Solve local OLS.
+    curve_lwr_demo.append(np.array([1.0, q_demo]) @ theta_q_demo) # Save the query prediction.
+curve_lwr_demo = np.array(curve_lwr_demo)                        # Convert predictions to an array for plotting.
+
+plt.scatter(x_lwr_demo, y_lwr_demo, c=weights_demo, cmap="viridis", edgecolor="k", s=90, label="data colored by query weight")  # Plot weighted data.
+plt.plot(grid_lwr_demo, curve_lwr_demo, color="tab:purple", lw=2, label="LWR curve")  # Draw the flexible curve.
+plt.axvline(query_demo, color="gray", linestyle="--", label="query")  # Mark the inspected query.
+plt.xlabel("x"); plt.ylabel("y")                                      # Label both axes.
+plt.title("Locally weighted regression bends by solving local lines")  # Add a teaching title.
+plt.legend(); plt.show()                                               # Show the legend and render the plot.
+```
+▶ What you'll see: points near the query are brighter, and the LWR curve bends even though each local fit is linear.
+
+### Step 5 — Logistic regression and sigmoid: scores become probabilities
+
+Logistic regression keeps the linear score $z=\theta^Tx$, then passes it through the sigmoid
+$g(z)=1/(1+e^{-z})$. The result is a probability in $(0,1)$, and the decision boundary is where
+$z=0$ because $g(0)=0.5$.
+
+```python
+x_log_demo = np.array([-2.0, -1.0, -0.2, 0.7, 1.5, 2.2])       # One feature for a tiny binary dataset.
+y_log_demo = np.array([0, 0, 0, 1, 1, 1])                      # Labels where larger x tends to be class 1.
+X_log_demo = np.column_stack([np.ones_like(x_log_demo), x_log_demo])  # Add the intercept column.
+theta_log_demo = np.array([-0.1, 1.4])                         # Choose a simple logistic model.
+z_log_demo = X_log_demo @ theta_log_demo                       # Compute linear logits.
+p_log_demo = 1.0 / (1.0 + np.exp(-z_log_demo))                 # Convert logits to probabilities with sigmoid.
+loss_log_demo = -np.mean(y_log_demo * np.log(p_log_demo) + (1 - y_log_demo) * np.log(1 - p_log_demo))  # Compute average log loss.
+grad_log_demo = (X_log_demo.T @ (p_log_demo - y_log_demo)) / len(y_log_demo)  # Compute the logistic-loss gradient.
+theta_next_log_demo = theta_log_demo - 0.5 * grad_log_demo     # Take one numerical optimization step.
+
+log("logits theta^T x", np.round(z_log_demo, 3))               # Show unbounded linear scores.
+log("sigmoid probabilities", np.round(p_log_demo, 3))          # Show probabilities after the sigmoid.
+log("average logistic loss", round(float(loss_log_demo), 4))   # Show the Bernoulli negative log-likelihood.
+log("theta after one gradient step", np.round(theta_next_log_demo, 4))  # Show the update direction.
+
+z_grid_demo = np.linspace(-6.0, 6.0, 200)                      # Create score values for the sigmoid curve.
+p_grid_demo = 1.0 / (1.0 + np.exp(-z_grid_demo))               # Compute sigmoid probabilities on the grid.
+plt.plot(z_grid_demo, p_grid_demo, color="tab:blue", lw=2, label="sigmoid")  # Draw the S-shaped mapping.
+plt.scatter(z_log_demo, p_log_demo, c=y_log_demo, cmap="coolwarm", edgecolor="k", s=80, label="toy points")  # Place examples on the curve.
+plt.axhline(0.5, color="gray", linestyle="--", label="probability 0.5")  # Mark the probability threshold.
+plt.axvline(0.0, color="gray", linestyle=":", label="score 0 boundary")  # Mark the logit threshold.
+plt.xlabel("linear score z"); plt.ylabel("P(y=1 | x)")         # Label score and probability axes.
+plt.title("Logistic regression: sigmoid turns scores into probabilities")  # Add a teaching title.
+plt.legend(); plt.show()                                       # Show the legend and render the plot.
+```
+▶ What you'll see: negative scores map below 0.5, positive scores map above 0.5, and one gradient step updates the probability model.
+
+### Step 6 — Softmax and GLMs: choose the right response for the target
+
+Softmax regression extends logistic regression to $K$ classes by turning several logits into
+positive probabilities that sum to 1. The broader GLM pattern is the same: use a linear natural
+parameter $\eta=\theta^Tx$, then choose a response function that matches the data type.
+
+```python
+logits_demo = np.array([1.3, 0.2, -0.9])                       # Three class scores for one example.
+shifted_demo = logits_demo - np.max(logits_demo)               # Shift logits for numerical stability.
+exp_scores_demo = np.exp(shifted_demo)                         # Exponentiate to get positive unnormalized scores.
+softmax_demo = exp_scores_demo / np.sum(exp_scores_demo)       # Normalize scores into class probabilities.
+eta_values_demo = np.array([-1.0, 0.0, 1.0, 2.0])              # Example natural parameters for GLM responses.
+gaussian_mean_demo = eta_values_demo                           # Gaussian identity link: mean equals eta.
+bernoulli_mean_demo = 1.0 / (1.0 + np.exp(-eta_values_demo))   # Bernoulli logit link: mean is sigmoid(eta).
+poisson_mean_demo = np.exp(eta_values_demo)                    # Poisson log link: mean is exp(eta).
+
+log("class logits", logits_demo)                               # Show raw multiclass scores.
+log("exp shifted scores", np.round(exp_scores_demo, 4))        # Show positive evidence values.
+log("softmax probabilities", np.round(softmax_demo, 4))        # Show normalized probabilities.
+log("softmax sum", round(float(np.sum(softmax_demo)), 6))      # Verify probabilities sum to one.
+log("eta grid for GLMs", eta_values_demo)                      # Show the natural-parameter values.
+log("Bernoulli means sigmoid(eta)", np.round(bernoulli_mean_demo, 3))  # Show one GLM response.
+
+plt.subplot(1, 2, 1)                                           # Left panel: softmax probabilities.
+plt.bar(["class 0", "class 1", "class 2"], softmax_demo, color=["tab:blue", "tab:orange", "tab:green"])  # Draw class probabilities.
+plt.ylim(0, 1); plt.ylabel("probability")                      # Keep the probability scale readable.
+plt.title("Softmax probabilities")                             # Title the softmax panel.
+plt.subplot(1, 2, 2)                                           # Right panel: GLM response curves.
+plt.plot(eta_values_demo, gaussian_mean_demo, "o-", label="Gaussian identity")  # Plot identity response.
+plt.plot(eta_values_demo, bernoulli_mean_demo, "s-", label="Bernoulli sigmoid") # Plot sigmoid response.
+plt.plot(eta_values_demo, poisson_mean_demo, "^-", label="Poisson exp")         # Plot exponential response.
+plt.xlabel(r"natural parameter $\eta$"); plt.ylabel("mean response")            # Label GLM axes.
+plt.title("GLMs reuse a linear eta")                            # Title the GLM panel.
+plt.legend(); plt.tight_layout(); plt.show()                    # Show legends, tidy panels, and render.
+```
+▶ What you'll see: softmax bars form one probability distribution, while GLM curves show different meanings for the same linear score.
+
+### Recap — what you just ran
+
+- A **linear hypothesis** used an intercept column and one dot product to make predictions.
+- **Least squares** solved the normal equations, while **LMS / gradient descent** reached a similar line by downhill updates.
+- **Locally weighted regression** kept linear fits but made them query-specific, so the final curve could bend.
+- **Logistic regression** used the sigmoid to turn scores into probabilities, and **softmax / GLMs** generalized that response-function idea.
+
+Everything below (starting at **§1 Overview**) develops these same ideas with full derivations,
+more examples, and an interactive experiment.
+
+---
+
 ## 1. Overview
 
 Linear models turn features into one weighted score, $\theta^Tx$. That score can be a real-valued prediction, a log-odds that becomes a probability, a multiclass score in softmax regression, or the natural parameter of a generalized linear model.

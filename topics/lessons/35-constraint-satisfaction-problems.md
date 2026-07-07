@@ -2,6 +2,414 @@
 > **Source:** CS 221 · **Category:** Concept+Method · **Type:** ⚖️ Both · [↑ Full reference](../../ai-ml-cheatsheets.md)
 > 📓 The coded examples form a runnable notebook section; an `.ipynb` will be generated.
 
+## 0. Step-by-Step Worked Example — Start Here (Beginner Friendly)
+
+> 🧑‍🎓 **New to this topic? Start here.** This is a gentle, fully runnable walkthrough that
+> builds up *every* idea in this lesson one tiny step at a time. Each step **prints** the
+> numbers it computes and **draws a picture** so you can *see* what is happening. Run the
+> cells in order from top to bottom. Nothing here needs the internet or any downloaded data.
+
+**What we will build, step by step:**
+1. **Variables, domains, factors, and weights** — a tiny map-coloring factor graph.
+2. **Backtracking search** — trying values recursively until a consistent assignment appears.
+3. **Dependent factors and early pruning** — checking only newly relevant constraints.
+4. **Forward checking** — pruning neighbor domains after one assignment.
+5. **Arc consistency and AC-3** — repeatedly removing unsupported values from directed arcs.
+6. **Dynamic variable and value ordering** — MCV chooses variables; LCV orders values.
+7. **Beam search and approximate assignment** — keeping only the best few partial assignments.
+8. **ICM and Gibbs updates** — greedy versus sampled local updates in a weighted factor graph.
+
+### Step 0 — Set up our tools
+
+We import NumPy (small arrays and scores) and Matplotlib (pictures). We fix a random **seed** so
+all sampling and printed traces are reproducible, and define a tiny `log()` helper.
+
+```python
+import numpy as np                       # NumPy handles small arrays, probabilities, and reproducible sampling.
+import matplotlib.pyplot as plt          # Matplotlib draws CSP graphs, domain bars, and search diagnostics.
+
+np.random.seed(0)                         # Fix the seed so every run prints the same values.
+plt.rcParams["figure.figsize"] = (7, 4)   # Use readable default figure sizes.
+
+
+def log(label, value):                    # Define a tiny logger for labeled beginner-friendly output.
+    print(f"[{label}] {value}")           # Print every value with a clear label.
+
+log("setup", "tools ready — NumPy + Matplotlib imported, seed fixed to 0")  # Confirm setup succeeded.
+```
+▶ What you'll see: one line confirming the tools are ready.
+
+### Step 1 — Variables, domains, factors, and weights
+
+A CSP names variables, gives each variable a domain, and uses factors to score local choices. In a
+hard CSP, factors are $0/1$; in a weighted factor graph, factors may be any nonnegative weight.
+
+```python
+variables_demo = ["A", "B", "C"]  # Name three tiny map regions.
+domain_demo = ["red", "green", "blue"]  # Give each region three possible colors.
+domains_demo = {var_demo: list(domain_demo) for var_demo in variables_demo}  # Store one domain per variable.
+edges_demo = [("A", "B"), ("B", "C"), ("A", "C")]  # Connect every pair in a triangle map.
+positions_demo = {"A": (0.0, 1.0), "B": (-1.0, 0.0), "C": (1.0, 0.0)}  # Place the variables for plotting.
+palette_demo = {"red": "#e74c3c", "green": "#2ecc71", "blue": "#3498db", None: "white"}  # Map values to colors.
+
+def hard_edge_factor_demo(assignment_demo, left_demo, right_demo):  # Define the hard not-equal factor for one edge.
+    if left_demo not in assignment_demo or right_demo not in assignment_demo:  # Incomplete factors cannot fail yet.
+        return 1.0  # Return neutral weight for partial assignments.
+    return 1.0 if assignment_demo[left_demo] != assignment_demo[right_demo] else 0.0  # Return 1 if different, else 0.
+
+def unary_preference_demo(assignment_demo):  # Define one soft unary preference to show weighted factors.
+    if "A" not in assignment_demo:  # Skip the factor if A is not assigned yet.
+        return 1.0  # Return neutral weight for partial assignments.
+    return 1.5 if assignment_demo["A"] == "red" else 1.0  # Prefer A=red without making other colors illegal.
+
+def weight_demo(assignment_demo):  # Multiply all local factor values into one assignment weight.
+    factor_values_demo = [hard_edge_factor_demo(assignment_demo, left_demo, right_demo) for left_demo, right_demo in edges_demo]  # Evaluate binary factors.
+    factor_values_demo.append(unary_preference_demo(assignment_demo))  # Add the unary soft factor.
+    return float(np.prod(factor_values_demo)), factor_values_demo  # Return the product and its pieces.
+
+good_assignment_demo = {"A": "red", "B": "green", "C": "blue"}  # Create one legal coloring.
+bad_assignment_demo = {"A": "red", "B": "red", "C": "blue"}  # Create one coloring that violates A-B.
+for name_demo, assignment_demo in [("good", good_assignment_demo), ("bad", bad_assignment_demo)]:  # Compare legal and illegal assignments.
+    product_demo, factors_demo = weight_demo(assignment_demo)  # Compute the assignment weight.
+    log(f"{name_demo} factors", factors_demo)  # Print local factor values.
+    log(f"{name_demo} weight", product_demo)  # Print their product.
+fig_demo, ax_demo = plt.subplots()  # Create a graph figure.
+for left_demo, right_demo in edges_demo:  # Draw each constraint edge.
+    ax_demo.plot([positions_demo[left_demo][0], positions_demo[right_demo][0]], [positions_demo[left_demo][1], positions_demo[right_demo][1]], color="black")  # Connect neighboring variables.
+for var_demo in variables_demo:  # Draw each variable node.
+    x_demo, y_demo = positions_demo[var_demo]  # Read the node position.
+    ax_demo.scatter(x_demo, y_demo, s=900, color=palette_demo[good_assignment_demo.get(var_demo)], edgecolor="black", zorder=3)  # Draw the assigned color.
+    ax_demo.text(x_demo, y_demo, var_demo, ha="center", va="center", color="white", weight="bold")  # Label the variable.
+ax_demo.set_title("Step 1: variables connected by hard not-equal factors")  # Title the graph.
+ax_demo.axis("off")  # Hide coordinate axes.
+plt.show()  # Display the factor graph.
+```
+▶ What you'll see: the good assignment has nonzero weight, while one violated factor makes the bad assignment weight $0$.
+
+### Step 2 — Backtracking search
+
+Backtracking builds a partial assignment one variable at a time. It tries a value, checks whether
+currently assigned constraints still pass, and recursively continues only on surviving branches.
+
+```python
+def consistent_demo(assignment_demo):  # Check all fully assigned edge factors in a partial assignment.
+    for left_demo, right_demo in edges_demo:  # Inspect every binary factor.
+        if left_demo in assignment_demo and right_demo in assignment_demo:  # Only fully assigned factors can fail.
+            if assignment_demo[left_demo] == assignment_demo[right_demo]:  # Equal colors violate map coloring.
+                return False, (left_demo, right_demo)  # Return the failed edge.
+    return True, None  # Report no visible conflict.
+
+trace_demo = []  # Store a short trace of tried branches.
+tries_demo = {"count": 0}  # Count attempted variable-value choices.
+solution_demo = {"value": None}  # Store the first full solution found.
+
+def backtrack_demo(order_demo, assignment_demo):  # Define recursive backtracking.
+    if len(assignment_demo) == len(order_demo):  # Stop at a complete assignment.
+        solution_demo["value"] = dict(assignment_demo)  # Save the solution.
+        return True  # Signal success.
+    var_demo = order_demo[len(assignment_demo)]  # Choose the next variable in fixed order.
+    for value_demo in domains_demo[var_demo]:  # Try each domain value.
+        tries_demo["count"] += 1  # Count this branch attempt.
+        assignment_demo[var_demo] = value_demo  # Extend the partial assignment.
+        ok_demo, failed_demo = consistent_demo(assignment_demo)  # Check assigned constraints.
+        trace_demo.append((dict(assignment_demo), ok_demo, failed_demo))  # Save the attempt trace.
+        if ok_demo and backtrack_demo(order_demo, assignment_demo):  # Recurse only if no local factor failed.
+            return True  # Stop after the first solution.
+        assignment_demo.pop(var_demo)  # Undo this value before trying the next one.
+    return False  # Report failure below this partial assignment.
+
+found_demo = backtrack_demo(variables_demo, {})  # Run fixed-order backtracking.
+for row_demo in trace_demo[:8]:  # Print the first few attempts.
+    log("try", row_demo)  # Show assignment, consistency flag, and failed edge.
+log("found solution", found_demo)  # Print whether search succeeded.
+log("tries before solution", tries_demo["count"])  # Print how many values were attempted.
+log("solution", solution_demo["value"])  # Print the first legal coloring.
+plt.bar(["tries"], [tries_demo["count"]], color="steelblue", edgecolor="black")  # Plot the amount of search.
+plt.ylabel("value attempts")  # Label the effort axis.
+plt.title("Step 2: backtracking tries values until constraints pass")  # Title the plot.
+plt.show()  # Display the search-effort chart.
+```
+▶ What you'll see: inconsistent partial assignments are rejected, and the first complete legal coloring is printed.
+
+### Step 3 — Dependent factors and early pruning
+
+A factor only needs checking when all variables in its scope are assigned. Once it evaluates to $0$,
+no completion below that branch can become valid, so the branch is pruned immediately.
+
+```python
+partial_one_demo = {"A": "red"}  # Assign only A, leaving every edge involving B or C incomplete.
+partial_bad_demo = {"A": "red", "B": "red"}  # Add B=red, making edge A-B fully assigned and violated.
+partial_good_demo = {"A": "red", "B": "green"}  # Add B=green, making edge A-B fully assigned and satisfied.
+for assignment_demo in [partial_one_demo, partial_bad_demo, partial_good_demo]:  # Compare increasingly informative partial assignments.
+    ok_demo, failed_demo = consistent_demo(assignment_demo)  # Check only dependent factors whose scopes are assigned.
+    log(f"partial {assignment_demo}", f"ok={ok_demo}, failed={failed_demo}")  # Print the local pruning decision.
+candidate_values_demo = domains_demo["B"]  # Test B's domain values against A=red.
+accepted_demo = []  # Store whether each B value survives.
+for value_demo in candidate_values_demo:  # Try each candidate value for B.
+    trial_demo = {"A": "red", "B": value_demo}  # Build a partial assignment.
+    accepted_demo.append(consistent_demo(trial_demo)[0])  # Record whether dependent factors pass.
+    log(f"try B={value_demo}", "keep" if accepted_demo[-1] else "prune")  # Print the branch decision.
+plt.bar(candidate_values_demo, np.array(accepted_demo, dtype=int), color=["seagreen" if ok_demo else "salmon" for ok_demo in accepted_demo], edgecolor="black")  # Plot accepted versus pruned values.
+plt.ylim(0, 1.2)  # Keep the boolean scale readable.
+plt.ylabel("branch kept?")  # Label the y-axis.
+plt.title("Step 3: dependent factor A-B prunes B=red early")  # Title the plot.
+plt.show()  # Display the pruning chart.
+```
+▶ What you'll see: `B=red` is rejected as soon as edge `A-B` becomes fully assigned.
+
+### Step 4 — Forward checking
+
+Forward checking looks one step ahead: after assigning a variable, it deletes incompatible values
+from unassigned neighbors. If a future domain becomes empty, the current branch is impossible.
+
+```python
+fc_domains_demo = {"A": ["red"], "B": ["red", "green"], "C": ["green"]}  # Use tight domains that will expose a wipeout.
+fc_assignment_demo = {}  # Start with no assigned variables.
+
+def forward_check_demo(domains_now_demo, assignment_demo, var_demo, value_demo):  # Assign a value and prune immediate neighbors.
+    new_domains_demo = {name_demo: list(values_demo) for name_demo, values_demo in domains_now_demo.items()}  # Copy domains for this branch.
+    new_domains_demo[var_demo] = [value_demo]  # Collapse the assigned variable's domain.
+    removed_demo = []  # Store removed neighbor values.
+    for left_demo, right_demo in edges_demo:  # Inspect every edge touching the assigned variable.
+        neighbor_demo = right_demo if left_demo == var_demo else left_demo if right_demo == var_demo else None  # Find the neighbor on this edge.
+        if neighbor_demo is not None and neighbor_demo not in assignment_demo:  # Prune only unassigned neighbors.
+            kept_demo = []  # Build the filtered neighbor domain.
+            for candidate_demo in new_domains_demo[neighbor_demo]:  # Test each neighbor value.
+                if candidate_demo != value_demo:  # Not-equal factors keep different colors.
+                    kept_demo.append(candidate_demo)  # Preserve legal values.
+                else:  # Equal colors are incompatible.
+                    removed_demo.append((neighbor_demo, candidate_demo))  # Record the removal.
+            new_domains_demo[neighbor_demo] = kept_demo  # Store the pruned neighbor domain.
+    return new_domains_demo, removed_demo  # Return updated domains and explanation.
+
+fc_assignment_demo["A"] = "red"  # Assign A=red.
+fc_after_a_demo, removed_a_demo = forward_check_demo(fc_domains_demo, fc_assignment_demo, "A", "red")  # Propagate from A.
+log("removed after A=red", removed_a_demo)  # Print removed neighbor values.
+log("domains after A=red", fc_after_a_demo)  # Print pruned domains.
+fc_assignment_demo["B"] = "green"  # Now assign B=green.
+fc_after_b_demo, removed_b_demo = forward_check_demo(fc_after_a_demo, fc_assignment_demo, "B", "green")  # Propagate from B.
+empty_domains_demo = [var_demo for var_demo, values_demo in fc_after_b_demo.items() if len(values_demo) == 0]  # Detect wiped-out domains.
+log("removed after B=green", removed_b_demo)  # Print second propagation.
+log("empty domains", empty_domains_demo)  # Print the contradiction.
+plt.bar(list(fc_after_b_demo.keys()), [len(values_demo) for values_demo in fc_after_b_demo.values()], color=["salmon" if len(values_demo) == 0 else "skyblue" for values_demo in fc_after_b_demo.values()], edgecolor="black")  # Plot final domain sizes.
+plt.ylabel("remaining domain size")  # Label the domain-size axis.
+plt.title("Step 4: forward checking can wipe out a future domain")  # Title the chart.
+plt.show()  # Display the forward-checking result.
+```
+▶ What you'll see: assigning `A=red` and then `B=green` leaves `C` with no legal value.
+
+### Step 5 — Arc consistency and AC-3
+
+Arc consistency asks every remaining value to have support in every neighbor. AC-3 keeps a queue
+of directed arcs; whenever one domain shrinks, neighboring arcs are rechecked.
+
+```python
+ac_domains_demo = {"A": ["red"], "B": ["red", "green"], "C": ["green"]}  # Start from tight domains before search guesses.
+ac_queue_demo = [(left_demo, right_demo) for left_demo, right_demo in edges_demo] + [(right_demo, left_demo) for left_demo, right_demo in edges_demo]  # Add both directions of every edge.
+ac_events_demo = []  # Store domain deletion events.
+
+def neighbors_demo(var_demo):  # List graph neighbors of one variable.
+    return [right_demo if left_demo == var_demo else left_demo for left_demo, right_demo in edges_demo if left_demo == var_demo or right_demo == var_demo]  # Collect adjacent variables.
+
+def revise_demo(domains_now_demo, xi_demo, xj_demo):  # Remove Xi values that have no compatible Xj value.
+    kept_demo = []  # Build revised Xi domain.
+    removed_demo = []  # Store removed values.
+    for value_i_demo in domains_now_demo[xi_demo]:  # Test each value in Xi.
+        supported_demo = any(value_i_demo != value_j_demo for value_j_demo in domains_now_demo[xj_demo])  # Check whether Xj has a different color.
+        if supported_demo:  # Keep values with at least one support.
+            kept_demo.append(value_i_demo)  # Preserve this Xi value.
+        else:  # Remove unsupported values.
+            removed_demo.append(value_i_demo)  # Record this deletion.
+    domains_now_demo[xi_demo] = kept_demo  # Store the revised domain.
+    return removed_demo  # Return deleted values.
+
+while ac_queue_demo:  # Process directed arcs until no work remains or a contradiction appears.
+    xi_demo, xj_demo = ac_queue_demo.pop(0)  # Pop the next arc.
+    removed_demo = revise_demo(ac_domains_demo, xi_demo, xj_demo)  # Enforce support from Xj to Xi.
+    if removed_demo:  # React only to domain shrinkage.
+        ac_events_demo.append((xi_demo, xj_demo, removed_demo, {var_demo: list(values_demo) for var_demo, values_demo in ac_domains_demo.items()}))  # Save the event.
+        log(f"revise {xi_demo}<-{xj_demo}", f"removed={removed_demo}, domains={ac_domains_demo}")  # Print the deletion.
+        if len(ac_domains_demo[xi_demo]) == 0:  # Detect an empty domain.
+            log("AC-3 status", f"failure at {xi_demo}")  # Print the contradiction.
+            break  # Stop because no solution exists under these domains.
+        for xk_demo in neighbors_demo(xi_demo):  # Recheck other incoming arcs affected by the shrink.
+            if xk_demo != xj_demo:  # Do not immediately re-add the arc just used.
+                ac_queue_demo.append((xk_demo, xi_demo))  # Queue the affected arc.
+log("final AC-3 domains", ac_domains_demo)  # Print final domains.
+plt.bar([f"{event_demo[0]}←{event_demo[1]}" for event_demo in ac_events_demo], [len(event_demo[2]) for event_demo in ac_events_demo], color="purple", edgecolor="black")  # Plot deletion count by event.
+plt.ylabel("values removed")  # Label the deletion axis.
+plt.title("Step 5: AC-3 removes unsupported values by arc")  # Title the chart.
+plt.xticks(rotation=25)  # Rotate arc labels.
+plt.show()  # Display the AC-3 event chart.
+```
+▶ What you'll see: unsupported values are removed, and AC-3 can prove failure by emptying a domain.
+
+### Step 6 — Dynamic variable and value ordering
+
+The most-constrained-variable heuristic chooses the unassigned variable with the fewest legal values.
+The least-constraining-value heuristic tries the value that leaves the most options for neighbors.
+
+```python
+heuristic_domains_demo = {"A": ["red"], "B": ["red", "green", "blue"], "C": ["green", "blue"], "D": ["red", "blue"]}  # Define uneven domains.
+heuristic_edges_demo = [("A", "B"), ("A", "C"), ("B", "C"), ("C", "D")]  # Use a four-variable graph for ordering.
+heuristic_assignment_demo = {"A": "red"}  # Pretend A is already assigned.
+unassigned_demo = [var_demo for var_demo in heuristic_domains_demo if var_demo not in heuristic_assignment_demo]  # List variables still open.
+legal_domains_demo = {}  # Store legal values after assigned-neighbor checks.
+for var_demo in unassigned_demo:  # Compute MCV domain sizes.
+    legal_values_demo = []  # Build legal values for this variable.
+    for value_demo in heuristic_domains_demo[var_demo]:  # Test each candidate value.
+        trial_demo = dict(heuristic_assignment_demo)  # Copy the partial assignment.
+        trial_demo[var_demo] = value_demo  # Add the candidate value.
+        ok_demo = all(trial_demo[left_demo] != trial_demo[right_demo] for left_demo, right_demo in heuristic_edges_demo if left_demo in trial_demo and right_demo in trial_demo)  # Check assigned edges.
+        if ok_demo:  # Keep compatible values.
+            legal_values_demo.append(value_demo)  # Save this value.
+    legal_domains_demo[var_demo] = legal_values_demo  # Store the legal domain.
+mcv_choice_demo = min(legal_domains_demo, key=lambda var_demo: len(legal_domains_demo[var_demo]))  # Choose the smallest legal domain.
+lcv_scores_demo = {}  # Store value flexibility scores for the MCV variable.
+for value_demo in legal_domains_demo[mcv_choice_demo]:  # Score each possible value.
+    score_demo = 0  # Count how many neighbor values survive.
+    for left_demo, right_demo in heuristic_edges_demo:  # Inspect edges.
+        neighbor_demo = right_demo if left_demo == mcv_choice_demo else left_demo if right_demo == mcv_choice_demo else None  # Find neighbors of the chosen variable.
+        if neighbor_demo is not None and neighbor_demo not in heuristic_assignment_demo:  # Score only future neighbors.
+            score_demo += sum(candidate_demo != value_demo for candidate_demo in heuristic_domains_demo[neighbor_demo])  # Count compatible neighbor choices.
+    lcv_scores_demo[value_demo] = score_demo  # Store the LCV score.
+lcv_order_demo = sorted(lcv_scores_demo, key=lambda value_demo: -lcv_scores_demo[value_demo])  # Put least-constraining values first.
+log("legal domains", legal_domains_demo)  # Print MCV inputs.
+log("MCV choice", mcv_choice_demo)  # Print selected variable.
+log("LCV scores", lcv_scores_demo)  # Print value-ordering scores.
+log("LCV order", lcv_order_demo)  # Print chosen value order.
+fig_demo, axes_demo = plt.subplots(1, 2, figsize=(9, 3.5))  # Create side-by-side heuristic plots.
+axes_demo[0].bar(list(legal_domains_demo.keys()), [len(values_demo) for values_demo in legal_domains_demo.values()], color=["seagreen" if var_demo == mcv_choice_demo else "lightgray" for var_demo in legal_domains_demo], edgecolor="black")  # Plot remaining domain sizes.
+axes_demo[0].set_title("MCV: fewest legal values")  # Title MCV panel.
+axes_demo[0].set_ylabel("legal values")  # Label MCV axis.
+axes_demo[1].bar(list(lcv_scores_demo.keys()), list(lcv_scores_demo.values()), color="orange", edgecolor="black")  # Plot LCV preservation scores.
+axes_demo[1].set_title("LCV: preserve neighbor options")  # Title LCV panel.
+axes_demo[1].set_ylabel("surviving neighbor values")  # Label LCV axis.
+plt.tight_layout()  # Prevent subplot overlap.
+plt.show()  # Display both heuristic charts.
+```
+▶ What you'll see: MCV picks the variable with the smallest legal domain, and LCV ranks its values by future flexibility.
+
+### Step 7 — Beam search and approximate assignment
+
+Beam search keeps only the top $K$ partial assignments at each layer. Small beams are fast but can
+throw away a partial assignment that would have become best later.
+
+```python
+beam_variables_demo = ["X1", "X2", "X3", "X4"]  # Define an ordered chain of variables.
+beam_domain_demo = [0, 1]  # Give each variable two possible values.
+unary_weight_demo = {"X1": {0: 3.0, 1: 1.0}, "X2": {0: 1.0, 1: 3.0}, "X3": {0: 1.0, 1: 3.0}, "X4": {0: 1.0, 1: 3.0}}  # Prefer X1=0 but later variables=1.
+
+def pair_weight_demo(left_value_demo, right_value_demo):  # Score neighboring chain variables.
+    return 2.0 if left_value_demo == right_value_demo else 0.5  # Reward equal adjacent labels.
+
+def partial_weight_demo(assignment_demo):  # Compute product weight for assigned factors only.
+    total_demo = 1.0  # Start the product at one.
+    for var_demo, value_demo in assignment_demo.items():  # Multiply assigned unary factors.
+        total_demo *= unary_weight_demo[var_demo][value_demo]  # Add local preference.
+    for left_demo, right_demo in zip(beam_variables_demo[:-1], beam_variables_demo[1:]):  # Check adjacent pairs.
+        if left_demo in assignment_demo and right_demo in assignment_demo:  # Use pair factors only when complete.
+            total_demo *= pair_weight_demo(assignment_demo[left_demo], assignment_demo[right_demo])  # Multiply pair compatibility.
+    return total_demo  # Return partial factor product.
+
+def beam_search_demo(width_demo):  # Run beam search with a chosen width.
+    beam_demo = [({}, 1.0)]  # Start with empty assignment.
+    for var_demo in beam_variables_demo:  # Extend one variable per layer.
+        candidates_demo = []  # Store all one-step extensions.
+        for partial_demo, score_demo in beam_demo:  # Expand current beam entries.
+            for value_demo in beam_domain_demo:  # Try every value.
+                extended_demo = dict(partial_demo)  # Copy the partial assignment.
+                extended_demo[var_demo] = value_demo  # Add one variable.
+                candidates_demo.append((extended_demo, partial_weight_demo(extended_demo)))  # Score the extension.
+        beam_demo = sorted(candidates_demo, key=lambda item_demo: item_demo[1], reverse=True)[:width_demo]  # Keep top K candidates.
+        log(f"beam K={width_demo} after {var_demo}", beam_demo)  # Print the surviving partial assignments.
+    return beam_demo[0]  # Return the best final beam entry.
+
+beam_results_demo = {}  # Store best assignments for several widths.
+for width_demo in [1, 2, 8]:  # Compare greedy, narrow beam, and full-enough search.
+    beam_results_demo[width_demo] = beam_search_demo(width_demo)  # Run this beam width.
+    log(f"best K={width_demo}", beam_results_demo[width_demo])  # Print the final assignment and weight.
+plt.bar([str(width_demo) for width_demo in beam_results_demo], [beam_results_demo[width_demo][1] for width_demo in beam_results_demo], color=["gray", "steelblue", "seagreen"], edgecolor="black")  # Plot final weights by beam width.
+plt.xlabel("beam width K")  # Label beam width.
+plt.ylabel("final assignment weight")  # Label quality metric.
+plt.title("Step 7: wider beams keep better alternatives alive")  # Title the plot.
+plt.show()  # Display the beam comparison.
+```
+▶ What you'll see: a wider beam can keep alternatives that greedy $K=1$ may discard too early.
+
+### Step 8 — ICM and Gibbs updates
+
+ICM greedily sets one variable to the locally best value. Gibbs uses the same local weights but
+samples from normalized probabilities, so non-best values can still be tried.
+
+```python
+local_edges_demo = [("A", "B"), ("B", "C")]  # Use a tiny weighted chain.
+local_domain_demo = [0, 1]  # Use binary labels.
+observed_demo = {"A": 0, "B": 1, "C": 1}  # Store unary observations.
+local_assignment_demo = {"A": 1, "B": 0, "C": 0}  # Start from a deliberately imperfect assignment.
+
+def unary_local_weight_demo(var_demo, value_demo):  # Score agreement with the observation.
+    return 2.5 if value_demo == observed_demo[var_demo] else 0.7  # Prefer matching the observed label.
+
+def pair_local_weight_demo(left_value_demo, right_value_demo):  # Score neighboring labels.
+    return 2.0 if left_value_demo == right_value_demo else 0.8  # Prefer smooth equal neighbors.
+
+def total_local_weight_demo(assignment_demo):  # Compute full factor product.
+    product_demo = 1.0  # Start with neutral product.
+    for var_demo, value_demo in assignment_demo.items():  # Multiply unary factors.
+        product_demo *= unary_local_weight_demo(var_demo, value_demo)  # Add observation factor.
+    for left_demo, right_demo in local_edges_demo:  # Multiply pair factors.
+        product_demo *= pair_local_weight_demo(assignment_demo[left_demo], assignment_demo[right_demo])  # Add smoothness factor.
+    return product_demo  # Return total weight.
+
+def local_weights_for_var_demo(assignment_demo, var_demo):  # Compute local conditional weights for one variable.
+    weights_demo = []  # Store one local weight per candidate value.
+    for value_demo in local_domain_demo:  # Try each label.
+        trial_demo = dict(assignment_demo)  # Copy the current assignment.
+        trial_demo[var_demo] = value_demo  # Replace only this variable.
+        weights_demo.append(total_local_weight_demo(trial_demo))  # Score the resulting assignment.
+    return np.array(weights_demo, dtype=float)  # Return weights as an array.
+
+history_icm_demo = [total_local_weight_demo(local_assignment_demo)]  # Track ICM objective values.
+for sweep_demo in range(3):  # Run a few greedy ICM sweeps.
+    for var_demo in ["A", "B", "C"]:  # Update one variable at a time.
+        weights_demo = local_weights_for_var_demo(local_assignment_demo, var_demo)  # Score candidate values.
+        best_value_demo = local_domain_demo[int(np.argmax(weights_demo))]  # Pick the best local value.
+        local_assignment_demo[var_demo] = best_value_demo  # Apply the greedy update.
+        history_icm_demo.append(total_local_weight_demo(local_assignment_demo))  # Save the new total weight.
+        log("ICM update", f"{var_demo}->{best_value_demo}, weight={history_icm_demo[-1]:.3f}")  # Print the greedy step.
+gibbs_var_demo = "B"  # Choose one variable for a Gibbs-style conditional update.
+gibbs_weights_demo = local_weights_for_var_demo(local_assignment_demo, gibbs_var_demo)  # Compute local weights for B.
+gibbs_probs_demo = gibbs_weights_demo / gibbs_weights_demo.sum()  # Normalize into probabilities.
+log("Gibbs P(B=value)", dict(zip(local_domain_demo, np.round(gibbs_probs_demo, 3))))  # Print the sampling distribution.
+fig_demo, axes_demo = plt.subplots(1, 2, figsize=(9, 3.5))  # Create side-by-side local-update plots.
+axes_demo[0].plot(history_icm_demo, marker="o", color="seagreen")  # Plot greedy weight over updates.
+axes_demo[0].set_title("ICM greedily improves weight")  # Title ICM panel.
+axes_demo[0].set_xlabel("local update")  # Label update axis.
+axes_demo[0].set_ylabel("total weight")  # Label objective axis.
+axes_demo[1].bar([str(value_demo) for value_demo in local_domain_demo], gibbs_probs_demo, color="mediumpurple", edgecolor="black")  # Plot Gibbs probabilities.
+axes_demo[1].set_title("Gibbs samples from local weights")  # Title Gibbs panel.
+axes_demo[1].set_xlabel("candidate B value")  # Label candidate values.
+axes_demo[1].set_ylabel("probability")  # Label probability axis.
+plt.tight_layout()  # Prevent overlap.
+plt.show()  # Display both local-update visuals.
+```
+▶ What you'll see: ICM moves to locally best values, while Gibbs assigns probabilities rather than always taking the max.
+
+### Recap — what you just ran
+
+- You represented a tiny CSP as **variables**, **domains**, and local **factors** whose product gives an assignment weight.
+- You used **backtracking** and **dependent-factor pruning** to reject impossible partial assignments early.
+- You used **forward checking** and **AC-3** to shrink domains before deeper search.
+- You computed **MCV** and **LCV** ordering scores.
+- You compared approximate **beam search** widths.
+- You saw **ICM** greedily maximize local factors and **Gibbs** sample from local factor weights.
+
+Everything below (starting at **§1 Overview**) develops these same ideas with full derivations,
+more examples, and larger CSP/factor-graph experiments.
+
+---
+
 ## 1. Overview
 
 A constraint satisfaction problem (CSP) describes a problem by naming variables, listing each variable's domain of possible values, and imposing constraints that rule out incompatible combinations. Instead of searching blindly through every complete assignment, CSP algorithms exploit local structure: as soon as a partial assignment violates a constraint, the entire branch below it can be discarded.

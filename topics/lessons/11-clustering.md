@@ -2,6 +2,220 @@
 > **Source:** CS 229 · **Category:** Method · **Type:** 💻 Colab · [↑ Full reference](../../ai-ml-cheatsheets.md)
 > 📓 This section is written as a runnable notebook; an `.ipynb` will be generated from it. [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](#)
 
+## 0. Step-by-Step Worked Example — Start Here (Beginner Friendly)
+
+> 🧑‍🎓 **New to this topic? Start here.** This is a gentle, fully runnable walkthrough that
+> builds up *every* idea in this lesson one tiny step at a time. Each step **prints** the
+> numbers it computes and **draws a picture** so you can *see* what is happening. Run the
+> cells in order from top to bottom. Nothing here needs the internet or any downloaded data.
+
+**What we will build, step by step:**
+1. **k-means objective and assign → update loop** — hard assignments, centroid updates, and distortion.
+2. **EM as soft assignment** — responsibilities replace all-or-nothing cluster labels.
+3. **Hierarchical linkage** — clusters merge into a tree using different notions of distance.
+4. **Silhouette coefficient** — an internal score for compact, well-separated clusters.
+
+### Step 0 — Set up our tools
+
+We import NumPy (arrays + distances) and Matplotlib (pictures). We fix a random **seed** so the
+printed numbers are reproducible, and we define a tiny `log()` helper so every output line is
+clearly labeled.
+
+```python
+import numpy as np                       # NumPy: arrays, distance matrices, means, and soft probabilities.
+import matplotlib.pyplot as plt          # Matplotlib: draw clusters, centroids, merge trees, and score bars.
+
+np.random.seed(0)                         # Fix the seed so every run prints the SAME numbers.
+plt.rcParams["figure.figsize"] = (7, 4)   # Use a comfortable default plot size.
+
+
+def log(label, value):                    # A tiny logger so each printed line explains itself.
+    print(f"[{label}] {value}")           # Format is: [what this is] the value.
+
+log("setup", "tools ready — NumPy + Matplotlib imported, seed fixed to 0")
+```
+▶ What you'll see: one line confirming the tools are ready.
+
+### Step 1 — k-means: assign points, update centroids, reduce distortion
+
+k-means alternates two simple moves: assign each point to its nearest centroid, then move each
+centroid to the mean of its assigned points. The objective $J$ is the total squared distance from
+points to their assigned centroids, so we print it after every iteration.
+
+```python
+X_kmeans_demo = np.array([[1.0, 1.0], [1.4, 1.2], [1.2, 0.7], [4.8, 4.9], [5.2, 5.1], [5.0, 4.6]])  # Six unlabeled points in two visible blobs.
+centers_kmeans_demo = np.array([[0.0, 0.0], [6.0, 6.0]])  # Start with two centroids that are deliberately off-center.
+distortion_history_demo = []  # Store the k-means objective J after each assign-update iteration.
+assignment_history_demo = []  # Store assignments so the final labels are easy to plot.
+
+for iter_kmeans_demo in range(4):  # Run a few iterations; this tiny example converges quickly.
+    distances_kmeans_demo = np.sum((X_kmeans_demo[:, None, :] - centers_kmeans_demo[None, :, :]) ** 2, axis=2)  # Squared distance from every point to every centroid.
+    labels_kmeans_demo = np.argmin(distances_kmeans_demo, axis=1)  # Assignment step: choose the nearest centroid for each point.
+    new_centers_kmeans_demo = np.vstack([X_kmeans_demo[labels_kmeans_demo == j_demo].mean(axis=0) for j_demo in range(2)])  # Update step: average each cluster.
+    distortion_kmeans_demo = np.sum((X_kmeans_demo - new_centers_kmeans_demo[labels_kmeans_demo]) ** 2)  # Compute J after the update.
+    distortion_history_demo.append(float(distortion_kmeans_demo))  # Save the objective value.
+    assignment_history_demo.append(labels_kmeans_demo.copy())  # Save this iteration's hard assignments.
+    log(f"iteration {iter_kmeans_demo + 1} labels", labels_kmeans_demo)  # Print the cluster chosen by every point.
+    log(f"iteration {iter_kmeans_demo + 1} centers", np.round(new_centers_kmeans_demo, 2))  # Print updated centroid locations.
+    log(f"iteration {iter_kmeans_demo + 1} distortion", round(float(distortion_kmeans_demo), 3))  # Print the current objective.
+    centers_kmeans_demo = new_centers_kmeans_demo  # Use the moved centroids in the next iteration.
+
+fig_kmeans_demo, axes_kmeans_demo = plt.subplots(1, 2, figsize=(10, 3.8))  # Create cluster and objective panels.
+axes_kmeans_demo[0].scatter(X_kmeans_demo[:, 0], X_kmeans_demo[:, 1], c=labels_kmeans_demo, cmap="viridis", s=90)  # Color points by final assignment.
+axes_kmeans_demo[0].scatter(centers_kmeans_demo[:, 0], centers_kmeans_demo[:, 1], marker="X", s=220, color="red", label="centroids")  # Mark final centroids.
+axes_kmeans_demo[0].set_title("k-means final clusters")  # Title the final clustering panel.
+axes_kmeans_demo[0].set_xlabel("feature 1")  # Label the first coordinate.
+axes_kmeans_demo[0].set_ylabel("feature 2")  # Label the second coordinate.
+axes_kmeans_demo[0].legend()  # Identify centroids.
+axes_kmeans_demo[1].plot(np.arange(1, len(distortion_history_demo) + 1), distortion_history_demo, marker="o")  # Plot objective by iteration.
+axes_kmeans_demo[1].set_title("distortion J decreases")  # Title the objective panel.
+axes_kmeans_demo[1].set_xlabel("iteration")  # Label iteration count.
+axes_kmeans_demo[1].set_ylabel("J")  # Label the k-means objective.
+plt.tight_layout()  # Prevent subplot overlap.
+plt.show()  # Render the k-means walkthrough.
+```
+▶ What you'll see: labels stabilize, centroids land in the middle of the blobs, and the distortion curve goes down.
+
+### Step 2 — EM as soft assignment: responsibilities instead of hard labels
+
+EM keeps uncertainty. Instead of forcing a boundary point into exactly one cluster, the E-step
+computes **responsibilities** (membership probabilities), and the M-step uses those probabilities
+as weights when moving cluster centers.
+
+```python
+X_em_demo = np.array([[1.0, 1.0], [1.4, 1.1], [2.8, 2.7], [4.6, 4.7], [5.0, 4.9], [5.3, 5.1]])  # Two blobs plus one middle point.
+centers_em_demo = np.array([[1.2, 1.0], [5.0, 5.0]])  # Initial Gaussian-mixture centers.
+sigma2_em_demo = 1.2  # Shared variance controls how soft or sharp the responsibilities are.
+sqdist_em_demo = np.sum((X_em_demo[:, None, :] - centers_em_demo[None, :, :]) ** 2, axis=2)  # Squared distances to each center.
+weights_em_demo = np.exp(-0.5 * sqdist_em_demo / sigma2_em_demo)  # Gaussian-shaped unnormalized likelihoods.
+resp_em_demo = weights_em_demo / weights_em_demo.sum(axis=1, keepdims=True)  # Normalize each row into probabilities that sum to 1.
+new_centers_em_demo = (resp_em_demo.T @ X_em_demo) / resp_em_demo.sum(axis=0)[:, None]  # M-step: weighted mean for each cluster.
+border_index_demo = 2  # The middle point is intentionally ambiguous.
+
+log("border point", X_em_demo[border_index_demo])  # Print the ambiguous point.
+log("border squared distances", np.round(sqdist_em_demo[border_index_demo], 3))  # Print its distances to both centers.
+log("border responsibilities", np.round(resp_em_demo[border_index_demo], 3))  # Print soft membership probabilities.
+log("hard k-means label", int(np.argmin(sqdist_em_demo[border_index_demo])))  # Print the all-or-nothing alternative.
+log("old centers", np.round(centers_em_demo, 3))  # Print centers before the M-step.
+log("weighted M-step centers", np.round(new_centers_em_demo, 3))  # Print centers after weighted averaging.
+
+plt.scatter(X_em_demo[:, 0], X_em_demo[:, 1], c=resp_em_demo[:, 0], cmap="coolwarm", s=110, edgecolor="black")  # Color points by responsibility for cluster 0.
+plt.scatter(centers_em_demo[:, 0], centers_em_demo[:, 1], marker="X", s=220, color="gray", label="old centers")  # Draw old centers.
+plt.scatter(new_centers_em_demo[:, 0], new_centers_em_demo[:, 1], marker="P", s=220, color="black", label="new weighted centers")  # Draw M-step centers.
+plt.colorbar(label="responsibility for cluster 0")  # Add a probability color scale.
+plt.xlabel("feature 1")  # Label the first coordinate.
+plt.ylabel("feature 2")  # Label the second coordinate.
+plt.title("EM soft assignments fade smoothly near the boundary")  # Title the EM picture.
+plt.legend()  # Identify old and new centers.
+plt.show()  # Render the soft-assignment visualization.
+```
+▶ What you'll see: the middle point has probabilities for both clusters, and the updated centers move by weighted averages rather than hard votes.
+
+### Step 3 — Hierarchical linkage: merge points into a tree
+
+Agglomerative hierarchical clustering starts with one cluster per point and repeatedly merges
+the nearest clusters. The word **nearest** depends on the linkage rule: average uses mean pairwise
+distance, complete uses the farthest pair, and Ward uses the increase in within-cluster spread.
+
+```python
+X_hier_demo = np.array([[0.0, 0.0], [0.3, 0.1], [3.0, 3.0], [3.2, 2.8]])  # Four points arranged as two tight pairs.
+pairwise_hier_demo = np.linalg.norm(X_hier_demo[:, None, :] - X_hier_demo[None, :, :], axis=2)  # Full pairwise distance matrix.
+pairwise_no_self_demo = pairwise_hier_demo.copy()  # Copy so we can ignore self-distances safely.
+np.fill_diagonal(pairwise_no_self_demo, np.inf)  # Replace self-distances with infinity so they cannot be chosen.
+first_i_demo, first_j_demo = np.unravel_index(np.argmin(pairwise_no_self_demo), pairwise_no_self_demo.shape)  # Find the closest pair.
+cluster_A_demo = X_hier_demo[[0, 1]]  # Treat points 0 and 1 as one merged cluster.
+cluster_B_demo = X_hier_demo[[2, 3]]  # Treat points 2 and 3 as the other merged cluster.
+cross_hier_demo = np.linalg.norm(cluster_A_demo[:, None, :] - cluster_B_demo[None, :, :], axis=2)  # Distances between all cross-cluster pairs.
+average_link_demo = cross_hier_demo.mean()  # Average linkage: mean pairwise distance.
+complete_link_demo = cross_hier_demo.max()  # Complete linkage: maximum pairwise distance.
+merged_hier_demo = np.vstack([cluster_A_demo, cluster_B_demo])  # Combined cluster for Ward-cost calculation.
+ward_cost_demo = np.sum((merged_hier_demo - merged_hier_demo.mean(axis=0)) ** 2) - np.sum((cluster_A_demo - cluster_A_demo.mean(axis=0)) ** 2) - np.sum((cluster_B_demo - cluster_B_demo.mean(axis=0)) ** 2)  # Ward: increase in within-cluster squared error.
+
+log("pairwise distance matrix", np.round(pairwise_hier_demo, 2))  # Print all point-to-point distances.
+log("first merge", f"points {first_i_demo} and {first_j_demo}")  # Print the earliest merge.
+log("average linkage between pairs", round(float(average_link_demo), 3))  # Print average-link distance.
+log("complete linkage between pairs", round(float(complete_link_demo), 3))  # Print complete-link distance.
+log("Ward merge cost between pairs", round(float(ward_cost_demo), 3))  # Print Ward's within-spread increase.
+
+fig_hier_demo, axes_hier_demo = plt.subplots(1, 2, figsize=(10, 3.8))  # Create scatter and dendrogram-sketch panels.
+axes_hier_demo[0].scatter(X_hier_demo[:, 0], X_hier_demo[:, 1], s=100)  # Draw the four points.
+for idx_hier_demo, point_hier_demo in enumerate(X_hier_demo):  # Label each point by index.
+    axes_hier_demo[0].text(point_hier_demo[0] + 0.05, point_hier_demo[1] + 0.05, f"p{idx_hier_demo}")  # Add point labels.
+axes_hier_demo[0].set_title("points before merging")  # Title the scatter panel.
+axes_hier_demo[0].set_xlabel("feature 1")  # Label the first coordinate.
+axes_hier_demo[0].set_ylabel("feature 2")  # Label the second coordinate.
+axes_hier_demo[1].plot([0, 0, 1, 1], [0, 0.32, 0.32, 0], color="steelblue")  # Sketch low merge for points 0 and 1.
+axes_hier_demo[1].plot([2, 2, 3, 3], [0, 0.32, 0.32, 0], color="steelblue")  # Sketch low merge for points 2 and 3.
+axes_hier_demo[1].plot([0.5, 0.5, 2.5, 2.5], [0.32, complete_link_demo, complete_link_demo, 0.32], color="crimson")  # Sketch high merge between pairs.
+axes_hier_demo[1].set_xticks([0, 1, 2, 3])  # Place one tick per leaf.
+axes_hier_demo[1].set_xticklabels(["p0", "p1", "p2", "p3"])  # Name dendrogram leaves.
+axes_hier_demo[1].set_ylabel("merge height")  # Label the vertical merge-distance axis.
+axes_hier_demo[1].set_title("dendrogram sketch")  # Title the tree panel.
+plt.tight_layout()  # Keep panels readable.
+plt.show()  # Render the hierarchical visualization.
+```
+▶ What you'll see: nearby pairs merge low in the tree, while the two far-apart groups merge much higher.
+
+### Step 4 — Silhouette coefficient: score compactness and separation
+
+With no labels, we need an internal check. For each point, silhouette compares $a$ (average
+distance to its own cluster) with $b$ (average distance to the nearest other cluster), then uses
+$s=(b-a)/\max(a,b)$ so scores near 1 mean strong assignments.
+
+```python
+X_sil_demo = np.array([[0.0, 0.0], [0.4, 0.2], [0.1, 0.5], [4.0, 4.0], [4.3, 3.8], [3.8, 4.2]])  # Two compact clusters.
+labels_sil_demo = np.array([0, 0, 0, 1, 1, 1])  # Cluster assignments to evaluate.
+scores_sil_demo = []  # Store one silhouette score per point.
+a_values_demo = []  # Store within-cluster distances for logging.
+b_values_demo = []  # Store nearest-other-cluster distances for logging.
+
+for point_idx_demo in range(len(X_sil_demo)):  # Score every point one at a time.
+    own_mask_demo = labels_sil_demo == labels_sil_demo[point_idx_demo]  # Select this point's cluster.
+    other_mask_demo = labels_sil_demo != labels_sil_demo[point_idx_demo]  # Select the other cluster.
+    own_indices_demo = np.where(own_mask_demo)[0]  # Convert own-cluster mask to indices.
+    own_indices_demo = own_indices_demo[own_indices_demo != point_idx_demo]  # Exclude the point itself from a.
+    a_demo = np.mean(np.linalg.norm(X_sil_demo[own_indices_demo] - X_sil_demo[point_idx_demo], axis=1))  # Mean distance to clustermates.
+    b_demo = np.mean(np.linalg.norm(X_sil_demo[other_mask_demo] - X_sil_demo[point_idx_demo], axis=1))  # Mean distance to the other cluster.
+    s_demo = (b_demo - a_demo) / max(a_demo, b_demo)  # Silhouette formula.
+    a_values_demo.append(a_demo)  # Save a for inspection.
+    b_values_demo.append(b_demo)  # Save b for inspection.
+    scores_sil_demo.append(s_demo)  # Save this point's silhouette.
+
+scores_sil_demo = np.array(scores_sil_demo)  # Convert scores to an array for plotting.
+log("point 0 a", round(float(a_values_demo[0]), 3))  # Print own-cluster compactness for point 0.
+log("point 0 b", round(float(b_values_demo[0]), 3))  # Print separation from the other cluster for point 0.
+log("point 0 silhouette", round(float(scores_sil_demo[0]), 3))  # Print point 0 score.
+log("mean silhouette", round(float(scores_sil_demo.mean()), 3))  # Print the overall clustering score.
+
+fig_sil_demo, axes_sil_demo = plt.subplots(1, 2, figsize=(10, 3.8))  # Create cluster and score panels.
+axes_sil_demo[0].scatter(X_sil_demo[:, 0], X_sil_demo[:, 1], c=labels_sil_demo, cmap="viridis", s=100)  # Draw points colored by cluster.
+axes_sil_demo[0].set_title("cluster assignments")  # Title the cluster panel.
+axes_sil_demo[0].set_xlabel("feature 1")  # Label the first coordinate.
+axes_sil_demo[0].set_ylabel("feature 2")  # Label the second coordinate.
+axes_sil_demo[1].bar(np.arange(len(scores_sil_demo)), scores_sil_demo, color="seagreen")  # Draw one silhouette bar per point.
+axes_sil_demo[1].axhline(scores_sil_demo.mean(), color="black", linestyle="--", label="mean")  # Mark the average score.
+axes_sil_demo[1].set_ylim(0, 1)  # Use the good-clustering part of the silhouette scale.
+axes_sil_demo[1].set_xlabel("point index")  # Label point indices.
+axes_sil_demo[1].set_ylabel("silhouette s")  # Label silhouette values.
+axes_sil_demo[1].set_title("compact + separated = high s")  # Title the score panel.
+axes_sil_demo[1].legend()  # Identify the mean line.
+plt.tight_layout()  # Prevent subplot overlap.
+plt.show()  # Render the silhouette visualization.
+```
+▶ What you'll see: all points have high silhouette bars because each cluster is tight and far from the other cluster.
+
+### Recap — what you just ran
+
+- **k-means** alternated hard nearest-centroid assignments and centroid means while reducing distortion.
+- **EM** used soft responsibilities so ambiguous points could partly belong to multiple clusters.
+- **Hierarchical clustering** merged nearby points into a dendrogram, with linkage deciding cluster-to-cluster distance.
+- **Silhouette** gave a label-free score for compact, separated clusters.
+
+Everything below (starting at **§1 Overview**) develops these same ideas with fuller examples,
+model-selection diagnostics, and an interactive experiment.
+
+---
+
 ## 1. Overview
 
 Clustering is the unsupervised-learning task of finding hidden group structure in unlabeled observations $\{x^{(1)},\ldots,x^{(m)}\}$. The key difficulty is that there is no target label to optimize directly, so the algorithm's geometry assumptions decide what counts as a good group.

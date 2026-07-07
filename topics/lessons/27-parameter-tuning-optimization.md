@@ -2,6 +2,347 @@
 > **Source:** CS 230 · **Category:** Method/Tips · **Type:** ⚖️ Both · [↑ Full reference](../../ai-ml-cheatsheets.md)
 > 📓 The coded examples form a runnable notebook section; an `.ipynb` will be generated.
 
+## 0. Step-by-Step Worked Example — Start Here (Beginner Friendly)
+
+> 🧑‍🎓 **New to this topic? Start here.** This is a gentle, fully runnable walkthrough that
+> builds up *every* idea in this lesson one tiny step at a time. Each step **prints** the
+> numbers it computes and **draws a picture** so you can *see* what is happening. Run the
+> cells in order from top to bottom. Nothing here needs the internet or any downloaded data.
+
+**What we will build, step by step:**
+1. **Stochastic gradient descent** — move opposite the gradient on a simple bowl.
+2. **Momentum** — average gradients to damp zig-zags.
+3. **RMSprop** — scale each coordinate by recent squared-gradient size.
+4. **Adam** — combine momentum, RMSprop, and bias correction.
+5. **Learning-rate schedules** — take larger steps early and smaller steps late.
+6. **Xavier / Glorot initialization** — keep activation variance from collapsing or exploding.
+7. **Transfer-learning tuning rule of thumb** — choose how many layers to train based on data size.
+
+### Step 0 — Set up our tools
+
+We import NumPy (vectors + gradients) and Matplotlib (pictures). We fix a random **seed** so the
+optimizer paths are reproducible. We also define a tiny `log()` helper so every step prints a
+clearly labeled line.
+
+```python
+import numpy as np                       # NumPy: vectors, gradients, random weights, and schedules.
+import matplotlib.pyplot as plt          # Matplotlib: draw optimizer paths, curves, and histograms.
+
+np.random.seed(0)                         # Fix the seed so every run prints the SAME numbers.
+plt.rcParams["figure.figsize"] = (7, 4)   # A comfortable default plot size.
+
+def log(label, value):                    # A tiny logger so each printed line explains itself.
+    print(f"[{label}] {value}")           # Format is: [what this is] the value.
+
+log("setup", "tools ready — NumPy + Matplotlib imported, seed fixed to 0")  # Confirm setup ran.
+```
+▶ What you'll see: one line confirming the tools are ready.
+
+### Step 1 — Stochastic gradient descent: step downhill on a bowl
+
+Gradient descent moves parameters opposite the gradient: $w_{t+1}=w_t-\alpha g_t$. We use a
+2-D quadratic bowl because the gradient is exact and the path is easy to see.
+
+```python
+A_sgd_demo = np.array([[8.0, 0.0], [0.0, 1.0]])  # Curvature matrix for J(w)=1/2 w^T A w.
+w_sgd_demo = np.array([2.6, 2.0])  # Start away from the minimum at (0,0).
+alpha_sgd_demo = 0.09  # Learning rate controlling step length.
+path_sgd_demo = [w_sgd_demo.copy()]  # Store every parameter vector for plotting.
+loss_sgd_demo = [0.5 * w_sgd_demo @ A_sgd_demo @ w_sgd_demo]  # Store starting loss.
+log("initial w", w_sgd_demo)  # Print starting point.
+log("initial gradient", A_sgd_demo @ w_sgd_demo)  # Print g=A w at the start.
+for step_sgd_demo in range(28):  # Run a short descent trajectory.
+    grad_sgd_demo = A_sgd_demo @ w_sgd_demo  # Compute the exact gradient.
+    w_sgd_demo = w_sgd_demo - alpha_sgd_demo * grad_sgd_demo  # Apply the SGD update.
+    path_sgd_demo.append(w_sgd_demo.copy())  # Save the new point.
+    loss_sgd_demo.append(0.5 * w_sgd_demo @ A_sgd_demo @ w_sgd_demo)  # Save the new loss.
+log("first three SGD points", np.round(np.array(path_sgd_demo[:3]), 3))  # Show the first updates.
+log("first/last loss", (round(float(loss_sgd_demo[0]), 3), round(float(loss_sgd_demo[-1]), 5)))  # Show loss decreased.
+
+path_sgd_demo = np.array(path_sgd_demo)  # Convert the path to an array.
+x1_sgd_demo = np.linspace(-3.0, 3.0, 160)  # Build contour x-coordinates.
+x2_sgd_demo = np.linspace(-3.0, 3.0, 160)  # Build contour y-coordinates.
+X1_sgd_demo, X2_sgd_demo = np.meshgrid(x1_sgd_demo, x2_sgd_demo)  # Create a grid of parameter values.
+Z_sgd_demo = 0.5 * (8.0 * X1_sgd_demo ** 2 + X2_sgd_demo ** 2)  # Evaluate the quadratic loss.
+plt.contour(X1_sgd_demo, X2_sgd_demo, Z_sgd_demo, levels=24, cmap="Greys")  # Draw equal-loss contours.
+plt.plot(path_sgd_demo[:, 0], path_sgd_demo[:, 1], "o-", color="tab:blue", markersize=3, label="SGD path")  # Draw descent path.
+plt.scatter([0.0], [0.0], marker="*", s=160, color="black", label="minimum")  # Mark the optimum.
+plt.xlabel("w1")  # Label first parameter.
+plt.ylabel("w2")  # Label second parameter.
+plt.title("SGD walks downhill on a quadratic bowl")  # Explain the figure.
+plt.axis("equal")  # Preserve geometry.
+plt.legend()  # Show path and minimum labels.
+plt.show()  # Render the SGD path.
+```
+▶ What you'll see: the path moves downhill toward the center, with larger early corrections in the steeper direction.
+
+### Step 2 — Momentum: accumulate consistent gradients and damp zig-zags
+
+Momentum keeps a moving average of gradients before taking the step. Consistent downhill signals
+build velocity, while alternating left-right gradients partially cancel, reducing zig-zag motion.
+
+```python
+A_mom_demo = np.array([[14.0, 0.0], [0.0, 1.0]])  # Sharper bowl that makes zig-zags visible.
+w0_mom_demo = np.array([2.4, 2.2])  # Shared starting point for plain and momentum updates.
+alpha_mom_demo = 0.12  # Learning rate for both paths.
+beta_mom_demo = 0.80  # Momentum memory parameter.
+w_plain_demo = w0_mom_demo.copy()  # Initialize plain SGD path.
+w_mom_demo = w0_mom_demo.copy()  # Initialize momentum path.
+v_mom_demo = np.zeros_like(w0_mom_demo)  # Start velocity at zero.
+path_plain_demo = [w_plain_demo.copy()]  # Store plain SGD points.
+path_mom_demo = [w_mom_demo.copy()]  # Store momentum points.
+for step_mom_demo in range(34):  # Run both optimizers for the same number of steps.
+    grad_plain_demo = A_mom_demo @ w_plain_demo  # Compute plain SGD gradient.
+    w_plain_demo = w_plain_demo - alpha_mom_demo * grad_plain_demo  # Update plain SGD.
+    grad_mom_demo = A_mom_demo @ w_mom_demo  # Compute current gradient for momentum.
+    v_mom_demo = beta_mom_demo * v_mom_demo + (1.0 - beta_mom_demo) * grad_mom_demo  # Smooth gradients into velocity.
+    w_mom_demo = w_mom_demo - alpha_mom_demo * v_mom_demo  # Update using velocity.
+    path_plain_demo.append(w_plain_demo.copy())  # Store plain point.
+    path_mom_demo.append(w_mom_demo.copy())  # Store momentum point.
+log("first unsmoothed gradient", np.round(A_mom_demo @ w0_mom_demo, 3))  # Print initial gradient.
+log("final plain w", np.round(w_plain_demo, 3))  # Print plain final point.
+log("final momentum w", np.round(w_mom_demo, 3))  # Print momentum final point.
+
+path_plain_demo = np.array(path_plain_demo)  # Convert plain path for plotting.
+path_mom_demo = np.array(path_mom_demo)  # Convert momentum path for plotting.
+x1_mom_demo = np.linspace(-2.8, 2.8, 180)  # Build contour x-coordinates.
+x2_mom_demo = np.linspace(-2.8, 2.8, 180)  # Build contour y-coordinates.
+X1_mom_demo, X2_mom_demo = np.meshgrid(x1_mom_demo, x2_mom_demo)  # Create contour grid.
+Z_mom_demo = 0.5 * (14.0 * X1_mom_demo ** 2 + X2_mom_demo ** 2)  # Evaluate the sharp bowl.
+plt.contour(X1_mom_demo, X2_mom_demo, Z_mom_demo, levels=26, cmap="Greys")  # Draw loss contours.
+plt.plot(path_plain_demo[:, 0], path_plain_demo[:, 1], "o-", markersize=3, label="plain SGD")  # Plot plain path.
+plt.plot(path_mom_demo[:, 0], path_mom_demo[:, 1], "o-", markersize=3, label="momentum")  # Plot momentum path.
+plt.scatter([0.0], [0.0], marker="*", s=160, color="black", label="minimum")  # Mark the optimum.
+plt.xlabel("w1")  # Label steep coordinate.
+plt.ylabel("w2")  # Label shallow coordinate.
+plt.title("Momentum smooths repeated gradient directions")  # Explain the comparison.
+plt.axis("equal")  # Preserve geometry.
+plt.legend()  # Identify paths.
+plt.show()  # Render the momentum comparison.
+```
+▶ What you'll see: plain SGD bounces more across the narrow valley, while momentum uses memory to smooth and accelerate the path.
+
+### Step 3 — RMSprop: scale each coordinate by recent gradient size
+
+RMSprop tracks an average of squared gradients, then divides each coordinate by its recent root
+mean square. Coordinates with consistently huge gradients get smaller effective steps.
+
+```python
+A_rms_demo = np.array([[30.0, 0.0], [0.0, 0.8]])  # Make coordinate 1 much steeper than coordinate 2.
+w_rms_demo = np.array([2.2, 2.2])  # Start both coordinates at the same value.
+s_rms_demo = np.zeros_like(w_rms_demo)  # Initialize squared-gradient memory.
+alpha_rms_demo = 0.18  # Base learning rate before adaptive scaling.
+beta_rms_demo = 0.90  # Decay for squared-gradient memory.
+eps_rms_demo = 1e-8  # Numerical guard for the denominator.
+path_rms_demo = [w_rms_demo.copy()]  # Store RMSprop path.
+denom_rms_demo = []  # Store denominators for inspection.
+log("initial RMSprop gradient", A_rms_demo @ w_rms_demo)  # Show raw gradient scale mismatch.
+for step_rms_demo in range(34):  # Run the adaptive optimizer.
+    grad_rms_demo = A_rms_demo @ w_rms_demo  # Compute the exact gradient.
+    s_rms_demo = beta_rms_demo * s_rms_demo + (1.0 - beta_rms_demo) * grad_rms_demo ** 2  # Update squared-gradient average.
+    scale_rms_demo = np.sqrt(s_rms_demo) + eps_rms_demo  # Convert memory to RMS denominator.
+    w_rms_demo = w_rms_demo - alpha_rms_demo * grad_rms_demo / scale_rms_demo  # Apply coordinate-scaled update.
+    path_rms_demo.append(w_rms_demo.copy())  # Save new point.
+    denom_rms_demo.append(scale_rms_demo.copy())  # Save denominator.
+log("first RMS denominator", np.round(denom_rms_demo[0], 3))  # Print first adaptive scales.
+log("final RMSprop w", np.round(w_rms_demo, 4))  # Print final parameters.
+
+path_rms_demo = np.array(path_rms_demo)  # Convert path to array.
+denom_rms_demo = np.array(denom_rms_demo)  # Convert denominators to array.
+fig_rms_demo, axes_rms_demo = plt.subplots(1, 2, figsize=(11, 4))  # Create path and scale panels.
+x1_rms_demo = np.linspace(-2.6, 2.6, 160)  # Build contour x-coordinates.
+x2_rms_demo = np.linspace(-2.6, 2.6, 160)  # Build contour y-coordinates.
+X1_rms_demo, X2_rms_demo = np.meshgrid(x1_rms_demo, x2_rms_demo)  # Create contour grid.
+Z_rms_demo = 0.5 * (30.0 * X1_rms_demo ** 2 + 0.8 * X2_rms_demo ** 2)  # Evaluate uneven bowl.
+axes_rms_demo[0].contour(X1_rms_demo, X2_rms_demo, Z_rms_demo, levels=25, cmap="Greys")  # Draw contours.
+axes_rms_demo[0].plot(path_rms_demo[:, 0], path_rms_demo[:, 1], "o-", markersize=3, color="tab:green")  # Plot RMSprop path.
+axes_rms_demo[0].scatter([0.0], [0.0], marker="*", s=150, color="black")  # Mark minimum.
+axes_rms_demo[0].set_title("RMSprop path")  # Title path panel.
+axes_rms_demo[0].set_xlabel("w1")  # Label coordinate 1.
+axes_rms_demo[0].set_ylabel("w2")  # Label coordinate 2.
+axes_rms_demo[1].plot(denom_rms_demo[:, 0], label="denominator for w1")  # Plot steep-coordinate denominator.
+axes_rms_demo[1].plot(denom_rms_demo[:, 1], label="denominator for w2")  # Plot shallow-coordinate denominator.
+axes_rms_demo[1].set_title("larger gradients get larger denominators")  # Title scale panel.
+axes_rms_demo[1].set_xlabel("step")  # Label update step.
+axes_rms_demo[1].legend()  # Identify denominators.
+plt.tight_layout()  # Prevent overlap.
+plt.show()  # Render RMSprop diagnostics.
+```
+▶ What you'll see: the steep coordinate receives a much larger denominator, so RMSprop avoids huge jumps along that axis.
+
+### Step 4 — Adam: combine momentum, RMSprop, and bias correction
+
+Adam keeps both a first moment for direction and a second moment for scale. Because both start at
+zero, the first few estimates are biased low, so Adam divides by $1-\beta^t$ before updating.
+
+```python
+A_adam_demo = np.array([[18.0, 0.0], [0.0, 1.2]])  # Shared quadratic bowl for Adam.
+w_adam_demo = np.array([2.5, 2.0])  # Starting point.
+m_adam_demo = np.zeros_like(w_adam_demo)  # First-moment memory.
+s_adam_demo = np.zeros_like(w_adam_demo)  # Second-moment memory.
+alpha_adam_demo = 0.12  # Adam learning rate for this tiny example.
+beta1_adam_demo = 0.90  # First-moment decay.
+beta2_adam_demo = 0.98  # Second-moment decay chosen to adapt visibly in a short run.
+eps_adam_demo = 1e-8  # Numerical guard.
+path_adam_demo = [w_adam_demo.copy()]  # Store Adam path.
+for t_adam_demo in range(1, 37):  # Use one-based t for bias correction.
+    grad_adam_demo = A_adam_demo @ w_adam_demo  # Compute current gradient.
+    m_adam_demo = beta1_adam_demo * m_adam_demo + (1.0 - beta1_adam_demo) * grad_adam_demo  # Update first moment.
+    s_adam_demo = beta2_adam_demo * s_adam_demo + (1.0 - beta2_adam_demo) * grad_adam_demo ** 2  # Update second moment.
+    m_hat_adam_demo = m_adam_demo / (1.0 - beta1_adam_demo ** t_adam_demo)  # Bias-correct first moment.
+    s_hat_adam_demo = s_adam_demo / (1.0 - beta2_adam_demo ** t_adam_demo)  # Bias-correct second moment.
+    if t_adam_demo == 1:  # Print the startup correction once.
+        log("raw first moment at t=1", np.round(m_adam_demo, 3))  # Show zero-biased first moment.
+        log("corrected first moment at t=1", np.round(m_hat_adam_demo, 3))  # Show restored gradient scale.
+        log("corrected second moment at t=1", np.round(s_hat_adam_demo, 3))  # Show squared-gradient scale.
+    w_adam_demo = w_adam_demo - alpha_adam_demo * m_hat_adam_demo / (np.sqrt(s_hat_adam_demo) + eps_adam_demo)  # Apply Adam update.
+    path_adam_demo.append(w_adam_demo.copy())  # Save new point.
+log("final Adam w", np.round(w_adam_demo, 4))  # Print final parameters.
+
+path_adam_demo = np.array(path_adam_demo)  # Convert path to array for plotting.
+x1_adam_demo = np.linspace(-2.8, 2.8, 180)  # Build contour x-coordinates.
+x2_adam_demo = np.linspace(-2.8, 2.8, 180)  # Build contour y-coordinates.
+X1_adam_demo, X2_adam_demo = np.meshgrid(x1_adam_demo, x2_adam_demo)  # Create contour grid.
+Z_adam_demo = 0.5 * (18.0 * X1_adam_demo ** 2 + 1.2 * X2_adam_demo ** 2)  # Evaluate the loss surface.
+plt.contour(X1_adam_demo, X2_adam_demo, Z_adam_demo, levels=28, cmap="Greys")  # Draw contours.
+plt.plot(path_adam_demo[:, 0], path_adam_demo[:, 1], "o-", markersize=3, color="tab:purple", label="Adam")  # Plot Adam path.
+plt.scatter([0.0], [0.0], marker="*", s=160, color="black", label="minimum")  # Mark optimum.
+plt.xlabel("w1")  # Label first coordinate.
+plt.ylabel("w2")  # Label second coordinate.
+plt.title("Adam uses corrected direction and corrected scale")  # Explain the path.
+plt.axis("equal")  # Preserve geometry.
+plt.legend()  # Identify the path.
+plt.show()  # Render Adam path.
+```
+▶ What you'll see: the first raw moment is small because it starts from zero, but bias correction restores the proper scale before Adam takes adaptive steps.
+
+### Step 5 — Learning-rate schedules: large early steps, smaller late steps
+
+A schedule changes the learning rate over time. Large early steps make quick progress; smaller
+late steps reduce noisy bouncing near the minimum.
+
+```python
+T_sched_demo = 60  # Number of toy training steps.
+steps_sched_demo = np.arange(T_sched_demo)  # Step indices.
+alpha0_sched_demo = 0.16  # Initial learning rate.
+alpha_min_sched_demo = 0.015  # Cosine schedule floor.
+fixed_sched_demo = np.full(T_sched_demo, alpha0_sched_demo)  # Fixed learning rate.
+step_sched_demo = alpha0_sched_demo * (0.5 ** (steps_sched_demo // 15))  # Drop by half every 15 steps.
+exp_sched_demo = alpha0_sched_demo * np.exp(-0.04 * steps_sched_demo)  # Smooth exponential decay.
+cos_sched_demo = alpha_min_sched_demo + 0.5 * (alpha0_sched_demo - alpha_min_sched_demo) * (1.0 + np.cos(np.pi * steps_sched_demo / (T_sched_demo - 1)))  # Cosine decay.
+rng_sched_demo = np.random.default_rng(0)  # Seeded noise source for mini-batch-like gradients.
+w_fixed_demo = 2.2  # Initial scalar parameter for fixed-rate training.
+w_cos_demo = 2.2  # Initial scalar parameter for decayed-rate training.
+path_fixed_sched_demo = [w_fixed_demo]  # Store fixed-rate parameter path.
+path_cos_sched_demo = [w_cos_demo]  # Store cosine-rate parameter path.
+for t_sched_demo in range(T_sched_demo):  # Simulate noisy scalar optimization.
+    noise_sched_demo = rng_sched_demo.normal(scale=0.35)  # Shared gradient noise for fair comparison.
+    grad_fixed_sched_demo = 6.0 * w_fixed_demo + noise_sched_demo  # Noisy gradient with fixed learning rate.
+    grad_cos_sched_demo = 6.0 * w_cos_demo + noise_sched_demo  # Same noisy gradient idea for cosine decay.
+    w_fixed_demo = w_fixed_demo - fixed_sched_demo[t_sched_demo] * grad_fixed_sched_demo  # Update with constant step size.
+    w_cos_demo = w_cos_demo - cos_sched_demo[t_sched_demo] * grad_cos_sched_demo  # Update with decayed step size.
+    path_fixed_sched_demo.append(w_fixed_demo)  # Save fixed-rate parameter.
+    path_cos_sched_demo.append(w_cos_demo)  # Save decayed-rate parameter.
+log("first five step-decay lrs", np.round(step_sched_demo[:5], 3))  # Print early schedule values.
+log("last five cosine lrs", np.round(cos_sched_demo[-5:], 3))  # Print late schedule values.
+log("final |w| fixed vs cosine", (round(abs(w_fixed_demo), 4), round(abs(w_cos_demo), 4)))  # Compare final precision.
+
+fig_sched_demo, axes_sched_demo = plt.subplots(1, 2, figsize=(11, 4))  # Create schedule and path panels.
+axes_sched_demo[0].plot(fixed_sched_demo, label="fixed")  # Plot fixed schedule.
+axes_sched_demo[0].plot(step_sched_demo, label="step")  # Plot step decay.
+axes_sched_demo[0].plot(exp_sched_demo, label="exponential")  # Plot exponential decay.
+axes_sched_demo[0].plot(cos_sched_demo, label="cosine")  # Plot cosine decay.
+axes_sched_demo[0].set_title("learning-rate schedules")  # Title schedule panel.
+axes_sched_demo[0].set_xlabel("step")  # Label step axis.
+axes_sched_demo[0].set_ylabel("learning rate")  # Label learning-rate axis.
+axes_sched_demo[0].legend(fontsize=8)  # Identify schedules.
+axes_sched_demo[1].plot(path_fixed_sched_demo, label="fixed large lr")  # Plot fixed-rate noisy path.
+axes_sched_demo[1].plot(path_cos_sched_demo, label="cosine-decayed lr")  # Plot decayed path.
+axes_sched_demo[1].axhline(0.0, color="black", linestyle="--", linewidth=1.0, label="minimum")  # Mark optimum.
+axes_sched_demo[1].set_title("decay reduces late jitter")  # Title convergence panel.
+axes_sched_demo[1].set_xlabel("step")  # Label update step.
+axes_sched_demo[1].set_ylabel("parameter w")  # Label parameter axis.
+axes_sched_demo[1].legend(fontsize=8)  # Identify paths.
+plt.tight_layout()  # Keep panels readable.
+plt.show()  # Render schedules and paths.
+```
+▶ What you'll see: decaying schedules start high and end low; the decayed path jitters less near zero than a permanently large learning rate.
+
+### Step 6 — Xavier / Glorot initialization: keep activations in a healthy range
+
+Xavier initialization chooses weight scale from fan-in and fan-out so signals do not systematically
+vanish or explode across layers. We push random data through tanh layers to see how variance moves.
+
+```python
+fan_in_demo = 60  # Number of input units.
+fan_out_demo = 60  # Number of output units.
+limit_xavier_demo = np.sqrt(6.0 / (fan_in_demo + fan_out_demo))  # Xavier uniform half-width.
+rng_xavier_demo = np.random.default_rng(0)  # Seeded generator for weights and activations.
+X_xavier_demo = rng_xavier_demo.normal(size=(500, fan_in_demo))  # Standardized input activations.
+limits_demo = {"too small": 0.15 * limit_xavier_demo, "Xavier": limit_xavier_demo, "too large": 3.0 * limit_xavier_demo}  # Three initialization ranges.
+variances_demo = {}  # Store layer-by-layer activation variance.
+for label_demo, limit_demo in limits_demo.items():  # Try each initialization scale.
+    activations_demo = X_xavier_demo.copy()  # Start from the same inputs.
+    variances_demo[label_demo] = [float(activations_demo.var())]  # Record input variance.
+    for layer_demo in range(5):  # Propagate through several tanh layers.
+        W_xavier_demo = rng_xavier_demo.uniform(-limit_demo, limit_demo, size=(activations_demo.shape[1], fan_out_demo))  # Sample one dense weight matrix.
+        activations_demo = np.tanh(activations_demo @ W_xavier_demo)  # Apply tanh to expose shrinking or saturation.
+        variances_demo[label_demo].append(float(activations_demo.var()))  # Record activation variance after the layer.
+log("Xavier uniform limit", round(float(limit_xavier_demo), 4))  # Print the recommended sampling range.
+log("variance after 5 layers", {label_demo: round(values_demo[-1], 4) for label_demo, values_demo in variances_demo.items()})  # Compare final variances.
+
+for label_demo, values_demo in variances_demo.items():  # Plot each variance curve.
+    plt.plot(range(len(values_demo)), values_demo, "o-", label=label_demo)  # Draw variance across layers.
+plt.xlabel("layer index (0 = input)")  # Label input and hidden layers.
+plt.ylabel("activation variance")  # Label variance metric.
+plt.title("Xavier keeps tanh activation variance healthier")  # Explain the figure.
+plt.legend()  # Identify initialization scales.
+plt.show()  # Render variance flow.
+```
+▶ What you'll see: tiny weights collapse variance, huge weights distort it through tanh saturation, and Xavier stays more stable across layers.
+
+### Step 7 — Transfer-learning tuning rule of thumb: freeze more when data is small
+
+Transfer learning starts from pretrained features. With little data, training too many parameters
+can overfit; with lots of data, fine-tuning more layers becomes safer and more useful.
+
+```python
+data_sizes_demo = np.array([80, 800, 8000])  # Small, medium, and large synthetic dataset sizes.
+choices_demo = ["freeze body\ntrain head", "freeze early\ntune late+head", "fine-tune\nall layers"]  # Practical tuning choices.
+trainable_params_demo = np.array([1200, 9000, 42000])  # Toy count of trainable parameters for each choice.
+learning_rates_demo = np.array([0.01, 0.003, 0.0008])  # Smaller learning rates for more pretrained layers.
+log("small-data rule", "freeze most layers and train only the head")  # Print first rule.
+log("medium-data rule", "freeze early layers; tune later layers and head")  # Print second rule.
+log("large-data rule", "fine-tune all layers carefully with a small learning rate")  # Print third rule.
+log("trainable parameter counts", trainable_params_demo)  # Print parameter-count tradeoff.
+log("suggested learning rates", learning_rates_demo)  # Print cautious step sizes.
+
+fig_transfer_demo, axes_transfer_demo = plt.subplots(1, 2, figsize=(11, 4))  # Create parameter and learning-rate panels.
+axes_transfer_demo[0].bar(choices_demo, trainable_params_demo, color="steelblue")  # Show how many parameters are updated.
+axes_transfer_demo[0].set_ylabel("trainable parameters")  # Label parameter count.
+axes_transfer_demo[0].set_title("more data can support more tuning")  # Title the count panel.
+axes_transfer_demo[1].bar(choices_demo, learning_rates_demo, color="darkorange")  # Show smaller rates for deeper tuning.
+axes_transfer_demo[1].set_ylabel("suggested learning rate")  # Label learning-rate scale.
+axes_transfer_demo[1].set_title("fine-tuning usually uses smaller steps")  # Title learning-rate panel.
+for ax_transfer_demo in axes_transfer_demo:  # Format both panels.
+    ax_transfer_demo.tick_params(axis="x", rotation=15)  # Rotate long labels.
+plt.tight_layout()  # Keep labels readable.
+plt.show()  # Render transfer-learning rule visuals.
+```
+▶ What you'll see: as data size grows, the recommended strategy trains more of the pretrained model, usually with a smaller learning rate for deeper layers.
+
+### Recap — what you just ran
+
+- **SGD** moved opposite the gradient, and **momentum** smoothed repeated gradient directions.
+- **RMSprop** scaled coordinates by recent squared gradients, while **Adam** combined scaling, momentum, and bias correction.
+- **Learning-rate schedules** reduced late jitter, and **Xavier initialization** kept activation variance healthier.
+- **Transfer-learning rules** connected data size to freezing, partial tuning, or full fine-tuning.
+
+Everything below (starting at **§1 Overview**) develops these same ideas with full derivations,
+more examples, and optimizer experiments.
+
+---
+
 ## 1. Overview
 
 Optimization is the engineering layer that turns a differentiable model into a trained model. The same architecture can converge quickly, crawl slowly, oscillate, or diverge depending on initialization, learning rate, optimizer, schedule, and whether we reuse pretrained weights.

@@ -2,6 +2,351 @@
 > **Source:** CS 230 · **Category:** Model · **Type:** ⚖️ Both · [↑ Full reference](../../ai-ml-cheatsheets.md)
 > 📓 The coded examples form a runnable notebook section; an .ipynb will be generated.
 
+## 0. Step-by-Step Worked Example — Start Here (Beginner Friendly)
+
+> 🧑‍🎓 **New to this topic? Start here.** This is a gentle, fully runnable walkthrough that
+> builds up *every* idea in this lesson one tiny step at a time. Each step **prints** the
+> numbers it computes and **draws a picture** so you can *see* what is happening. Run the
+> cells in order from top to bottom. Nothing here needs the internet or any downloaded data.
+
+**What we will build, step by step:**
+1. **Vanilla RNN recurrence, shared weights, outputs, and sequence loss**.
+2. **Backpropagation through time (BPTT)** — shared-parameter gradients add across unrolled steps.
+3. **Sigmoid gates** — update, reset/relevance, forget, and output gates as soft valves.
+4. **GRU cell** — reset the old state, form a candidate, and update/blend memory.
+5. **LSTM cell** — forget, update, reset/relevance, output, and additive cell memory.
+6. **Vanishing/exploding gradients** — long products, plus why additive memory helps.
+7. **Gradient clipping** — cap a large gradient without changing its direction.
+
+### Step 0 — Set up our tools
+
+We import NumPy (tiny vectors + matrix math) and Matplotlib (pictures). We fix a random **seed**
+so the outputs are reproducible, then define a tiny `log()` helper and a stable sigmoid for gates.
+
+```python
+import numpy as np                       # NumPy: arrays, matrix products, tanh, sigmoid, and tiny synthetic sequences.
+import matplotlib.pyplot as plt          # Matplotlib: draw hidden states, gates, gradients, and clipping.
+
+np.random.seed(0)                         # Fix the seed so every run prints the SAME numbers.
+plt.rcParams["figure.figsize"] = (7, 4)   # A comfortable default plot size.
+
+def log(label, value):                    # A tiny logger so each printed line explains itself.
+    print(f"[{label}] {value}")           # Format is: [what this is] the value.
+
+def sigmoid_demo(logits_demo):            # A stable sigmoid for RNN gates and binary outputs.
+    return 1.0 / (1.0 + np.exp(-np.clip(logits_demo, -40.0, 40.0))) # Clip logits so exponentials stay safe.
+
+log("setup", "tools ready — NumPy + Matplotlib imported, seed fixed to 0")
+```
+▶ What you'll see: one line confirming the tools are ready.
+
+### Step 1 — Vanilla RNN recurrence, shared weights, outputs, and sequence loss
+
+A vanilla RNN reuses the same update at every timestep:
+$a^{<t>}=\tanh(W_{aa}a^{<t-1>}+W_{ax}x^{<t>}+b_a)$. The hidden state carries history forward,
+and an output layer can make a prediction at each timestep; sequence loss adds those timestep losses.
+
+```python
+sequence_demo = np.array([[1.0, 0.0], [0.0, 1.0], [1.0, 1.0]])              # Three timesteps, each with two input features.
+targets_demo = np.array([1.0, 0.0, 1.0])                                   # One binary target per timestep.
+w_ax_demo = np.array([[0.7, -0.2], [0.1, 0.5]])                             # Shared input-to-hidden weights W_ax.
+w_aa_demo = np.array([[0.4, 0.1], [-0.3, 0.6]])                             # Shared hidden-to-hidden weights W_aa.
+b_a_demo = np.array([0.0, 0.05])                                            # Shared hidden bias b_a.
+w_ya_demo = np.array([1.2, -0.7])                                           # Shared hidden-to-output weights W_ya.
+b_y_demo = -0.1                                                             # Shared output bias b_y.
+hidden_demo = np.zeros(2)                                                   # Initial hidden state a<0>.
+hidden_history_demo = []                                                    # Store hidden states for plotting.
+prob_history_demo = []                                                      # Store output probabilities for plotting.
+loss_history_demo = []                                                      # Store per-timestep losses for summing.
+epsilon_demo = 1e-8                                                         # Protect logarithms from log(0).
+
+for t_demo, (x_t_demo, target_t_demo) in enumerate(zip(sequence_demo, targets_demo), start=1): # Unroll the same cell through time.
+    preactivation_demo = w_aa_demo @ hidden_demo + w_ax_demo @ x_t_demo + b_a_demo # Combine old hidden state and current input.
+    hidden_demo = np.tanh(preactivation_demo)                               # Apply tanh to get a<t>.
+    logit_demo = float(w_ya_demo @ hidden_demo + b_y_demo)                  # Compute output logit from the hidden state.
+    prob_demo = float(sigmoid_demo(np.array([logit_demo]))[0])              # Convert logit to probability y_hat<t>.
+    loss_demo = -(target_t_demo * np.log(prob_demo + epsilon_demo) + (1.0 - target_t_demo) * np.log(1.0 - prob_demo + epsilon_demo)) # Binary loss for this step.
+    hidden_history_demo.append(hidden_demo.copy())                          # Save hidden state a<t>.
+    prob_history_demo.append(prob_demo)                                     # Save output probability.
+    loss_history_demo.append(loss_demo)                                     # Save timestep loss.
+    log(f"t={t_demo} hidden", np.round(hidden_demo, 3))                     # Print the hidden state after this input.
+    log(f"t={t_demo} y_hat/loss", (round(prob_demo, 3), round(float(loss_demo), 3))) # Print prediction and loss.
+
+hidden_history_demo = np.array(hidden_history_demo)                         # Convert saved hidden states to a T-by-hidden matrix.
+prob_history_demo = np.array(prob_history_demo)                             # Convert saved probabilities to an array.
+loss_history_demo = np.array(loss_history_demo)                             # Convert saved losses to an array.
+total_loss_demo = float(loss_history_demo.sum())                            # Sum sequence loss over timesteps.
+log("total sequence loss", round(total_loss_demo, 3))                       # Print the total loss over all outputs.
+
+plt.plot(range(1, len(sequence_demo) + 1), hidden_history_demo[:, 0], marker="o", label="hidden coordinate 0") # Plot first hidden coordinate.
+plt.plot(range(1, len(sequence_demo) + 1), hidden_history_demo[:, 1], marker="s", label="hidden coordinate 1") # Plot second hidden coordinate.
+plt.plot(range(1, len(sequence_demo) + 1), prob_history_demo, marker="^", label="output probability") # Plot output probabilities.
+plt.step(range(1, len(sequence_demo) + 1), targets_demo, where="mid", label="target", color="black") # Plot target labels.
+plt.xlabel("timestep")                                                      # Label the time axis.
+plt.ylabel("value")                                                         # Label hidden/probability values.
+plt.title("Vanilla RNN: one shared update rule across time")                # Title the plot.
+plt.legend()                                                                # Explain curves.
+plt.show()                                                                  # Render the RNN trajectory.
+```
+▶ What you'll see: each timestep prints a hidden state and prediction, and the plotted curves show memory evolving through the sequence.
+
+### Step 2 — Backpropagation through time: shared-gradient contributions add
+
+When the same parameter is reused at every unrolled copy, its gradient receives contributions from
+every timestep. Here we track the derivative of each timestep loss with respect to one shared scalar
+recurrent weight and add the contributions.
+
+```python
+sequence_bptt_demo = np.array([0.5, -0.3, 0.8, 0.1])                        # A four-step scalar sequence.
+targets_bptt_demo = np.array([0.2, -0.1, 0.4, 0.3])                         # Tiny regression targets for each hidden state.
+w_rec_demo = 0.6                                                            # The shared recurrent weight W being differentiated.
+w_in_demo = 0.9                                                             # A fixed input weight.
+b_bptt_demo = 0.0                                                           # A simple zero bias.
+hidden_prev_bptt_demo = 0.0                                                 # Start hidden state h0.
+sensitivity_prev_demo = 0.0                                                 # Start dh0/dW at zero.
+grad_contribs_demo = []                                                     # Store dL_t/dW contributions.
+hidden_bptt_demo = []                                                       # Store hidden states.
+
+for t_demo, (x_t_demo, target_t_demo) in enumerate(zip(sequence_bptt_demo, targets_bptt_demo), start=1): # Unroll the scalar cell.
+    preactivation_bptt_demo = w_rec_demo * hidden_prev_bptt_demo + w_in_demo * x_t_demo + b_bptt_demo # Compute scalar pre-activation.
+    hidden_t_demo = float(np.tanh(preactivation_bptt_demo))                 # Compute h_t.
+    sensitivity_t_demo = (1.0 - hidden_t_demo**2) * (hidden_prev_bptt_demo + w_rec_demo * sensitivity_prev_demo) # Chain-rule dh_t/dW.
+    dloss_dhidden_demo = hidden_t_demo - target_t_demo                      # Derivative of 0.5*(h_t-target)^2 with respect to h_t.
+    grad_contrib_demo = dloss_dhidden_demo * sensitivity_t_demo             # Contribution dL_t/dW from this unrolled copy.
+    grad_contribs_demo.append(grad_contrib_demo)                            # Save the contribution.
+    hidden_bptt_demo.append(hidden_t_demo)                                  # Save hidden state.
+    log(f"BPTT contribution at t={t_demo}", round(float(grad_contrib_demo), 5)) # Print contribution from this timestep.
+    hidden_prev_bptt_demo = hidden_t_demo                                   # Carry hidden state forward.
+    sensitivity_prev_demo = sensitivity_t_demo                              # Carry derivative dh_t/dW forward.
+
+grad_contribs_demo = np.array(grad_contribs_demo)                           # Convert gradient contributions to an array.
+cumulative_grad_demo = np.cumsum(grad_contribs_demo)                        # Add contributions as BPTT does for a shared parameter.
+log("total dL/dW from all timesteps", round(float(grad_contribs_demo.sum()), 5)) # Print the shared-parameter gradient.
+
+plt.bar(range(1, len(grad_contribs_demo) + 1), grad_contribs_demo, alpha=0.7, label="per-timestep contribution") # Plot each contribution.
+plt.plot(range(1, len(cumulative_grad_demo) + 1), cumulative_grad_demo, marker="o", color="black", label="running sum") # Plot cumulative gradient.
+plt.axhline(0.0, color="gray", linewidth=1.0)                               # Mark zero contribution.
+plt.xlabel("unrolled timestep")                                             # Label timesteps.
+plt.ylabel("gradient wrt shared W")                                         # Label gradient value.
+plt.title("BPTT sums gradients from every unrolled copy")                   # Title the gradient plot.
+plt.legend()                                                                # Explain bars and line.
+plt.show()                                                                  # Render the BPTT visualization.
+```
+▶ What you'll see: each timestep contributes a signed gradient, and the black running sum is the final gradient for the one shared weight.
+
+### Step 3 — Gates with sigmoid: update, reset, forget, and output valves
+
+RNN gates all have the same basic shape: $\Gamma=\sigma(Wx+Ua+b)$. A gate value near 0 mostly
+closes a coordinate, near 1 mostly keeps it open, and around 0.5 blends information halfway.
+
+```python
+gate_names_demo = np.array(["update", "reset", "forget", "output"])         # The four gate roles named in the lesson.
+gate_logits_demo = np.array([-1.4, 0.0, 2.0, 0.8])                          # Raw gate logits before sigmoid.
+gate_values_demo = sigmoid_demo(gate_logits_demo)                           # Convert logits into soft valve values.
+memory_vector_demo = np.array([1.5, -0.8, 0.6, 2.0])                        # A vector that gates will scale coordinatewise.
+gated_memory_demo = gate_values_demo * memory_vector_demo                   # Apply gates as elementwise keep fractions.
+
+for name_demo, logit_demo, gate_demo, kept_demo in zip(gate_names_demo, gate_logits_demo, gate_values_demo, gated_memory_demo): # Print every gate.
+    log(f"{name_demo} gate logit/value/kept", (round(float(logit_demo), 2), round(float(gate_demo), 3), round(float(kept_demo), 3))) # Show logit, valve, and gated value.
+
+z_curve_demo = np.linspace(-6.0, 6.0, 300)                                  # Create logits for a sigmoid curve.
+sigmoid_curve_demo = sigmoid_demo(z_curve_demo)                             # Convert logits to gate values.
+fig_demo, axes_demo = plt.subplots(1, 2, figsize=(10, 4))                   # Create curve and gate-value panels.
+axes_demo[0].plot(z_curve_demo, sigmoid_curve_demo, color="seagreen", linewidth=2) # Draw the sigmoid gate curve.
+axes_demo[0].scatter(gate_logits_demo, gate_values_demo, color="black", zorder=3) # Mark the example gates.
+axes_demo[0].axhline(0.5, color="gray", linestyle="--")                     # Mark the half-open gate level.
+axes_demo[0].set_xlabel("gate logit")                                       # Label raw gate input.
+axes_demo[0].set_ylabel("sigmoid gate value")                               # Label gate output.
+axes_demo[0].set_title("sigmoid makes soft valves")                         # Title the sigmoid panel.
+axes_demo[1].bar(gate_names_demo, gate_values_demo, color=["steelblue", "orange", "green", "purple"]) # Plot gate openness by role.
+axes_demo[1].set_ylim(0.0, 1.0)                                             # Use the natural gate range.
+axes_demo[1].set_ylabel("gate value")                                       # Label gate value.
+axes_demo[1].set_title("example gate openness")                             # Title the bar panel.
+plt.tight_layout()                                                          # Prevent overlap.
+plt.show()                                                                  # Render the gate visualization.
+```
+▶ What you'll see: positive logits produce open gates, negative logits produce closed gates, and each named gate is just a learned soft valve.
+
+### Step 4 — GRU cell: reset, candidate, and update blend
+
+A GRU keeps one state vector. The reset gate decides how much old state enters the candidate, and
+the update gate blends the candidate with the previous state:
+$c^{<t>}=\Gamma_u\widetilde c^{<t>}+(1-\Gamma_u)c^{<t-1>}$.
+
+```python
+x_gru_demo = np.array([0.4, -0.6])                                          # Current input x<t>.
+c_prev_gru_demo = np.array([0.7, -0.2])                                     # Previous GRU state c<t-1>.
+combo_gru_demo = np.concatenate([x_gru_demo, c_prev_gru_demo])              # Concatenate input and old state for gate calculations.
+w_u_gru_demo = np.array([[0.5, -0.1, 0.3, 0.2], [-0.4, 0.6, 0.1, -0.2]])     # Update-gate weights.
+b_u_gru_demo = np.array([0.0, 0.1])                                         # Update-gate bias.
+w_r_gru_demo = np.array([[0.2, 0.4, -0.3, 0.5], [0.6, -0.2, 0.2, 0.1]])      # Reset-gate weights.
+b_r_gru_demo = np.array([0.1, -0.1])                                        # Reset-gate bias.
+gamma_u_gru_demo = sigmoid_demo(w_u_gru_demo @ combo_gru_demo + b_u_gru_demo) # Compute update gate Γ_u.
+gamma_r_gru_demo = sigmoid_demo(w_r_gru_demo @ combo_gru_demo + b_r_gru_demo) # Compute reset gate Γ_r.
+reset_state_gru_demo = gamma_r_gru_demo * c_prev_gru_demo                   # Apply reset gate to old state before candidate.
+
+candidate_input_gru_demo = np.concatenate([reset_state_gru_demo, x_gru_demo]) # Candidate sees reset-filtered memory plus input.
+w_c_gru_demo = np.array([[0.7, 0.1, 0.3, -0.2], [0.2, 0.6, -0.5, 0.4]])      # Candidate-state weights.
+b_c_gru_demo = np.array([0.0, 0.05])                                        # Candidate-state bias.
+c_tilde_gru_demo = np.tanh(w_c_gru_demo @ candidate_input_gru_demo + b_c_gru_demo) # Compute candidate memory.
+old_part_gru_demo = (1.0 - gamma_u_gru_demo) * c_prev_gru_demo              # Contribution from old state.
+new_part_gru_demo = gamma_u_gru_demo * c_tilde_gru_demo                     # Contribution from candidate state.
+c_gru_demo = old_part_gru_demo + new_part_gru_demo                          # Final GRU state, equal to hidden activation.
+
+log("GRU update gate Γ_u", np.round(gamma_u_gru_demo, 3))                   # Print update gate.
+log("GRU reset gate Γ_r", np.round(gamma_r_gru_demo, 3))                    # Print reset gate.
+log("GRU candidate c_tilde", np.round(c_tilde_gru_demo, 3))                 # Print candidate state.
+log("old contribution", np.round(old_part_gru_demo, 3))                     # Print retained old state.
+log("new contribution", np.round(new_part_gru_demo, 3))                     # Print admitted candidate.
+log("new GRU state", np.round(c_gru_demo, 3))                               # Print final state.
+
+indices_gru_demo = np.arange(len(c_gru_demo))                               # Coordinate indices for bars.
+plt.bar(indices_gru_demo - 0.18, old_part_gru_demo, width=0.36, label="(1-Γu) old") # Draw old-state contribution.
+plt.bar(indices_gru_demo + 0.18, new_part_gru_demo, width=0.36, label="Γu candidate") # Draw candidate contribution.
+plt.plot(indices_gru_demo, c_gru_demo, "ko", label="new state")             # Mark final summed state.
+plt.axhline(0.0, color="gray", linewidth=1.0)                               # Mark zero.
+plt.xlabel("state coordinate")                                              # Label coordinate axis.
+plt.ylabel("value")                                                         # Label contribution value.
+plt.title("GRU update gate blends old state with candidate")                # Title the plot.
+plt.legend()                                                                # Explain bars and markers.
+plt.show()                                                                  # Render the GRU blend.
+```
+▶ What you'll see: reset filters the old state before the candidate, while update controls the coordinatewise old/new blend.
+
+### Step 5 — LSTM cell: forget, update, reset/relevance, output, and additive memory
+
+An LSTM keeps a separate cell memory $c^{<t>}$. The forget gate keeps old memory, the update gate
+writes candidate memory, reset/relevance filters the old hidden state for the candidate, and the
+output gate decides how much memory becomes the exposed activation.
+
+```python
+x_lstm_demo = np.array([0.6, -0.1])                                         # Current input x<t>.
+a_prev_lstm_demo = np.array([0.2, -0.3])                                    # Previous exposed hidden state a<t-1>.
+c_prev_lstm_demo = np.array([0.8, -0.5])                                    # Previous internal cell state c<t-1>.
+combo_lstm_demo = np.concatenate([x_lstm_demo, a_prev_lstm_demo])           # Concatenate input and hidden state for gates.
+w_f_lstm_demo = np.array([[0.7, -0.2, 0.4, 0.1], [-0.3, 0.5, 0.2, 0.6]])     # Forget-gate weights.
+w_u_lstm_demo = np.array([[0.2, 0.4, -0.1, 0.3], [0.5, -0.3, 0.2, -0.2]])    # Update-gate weights.
+w_r_lstm_demo = np.array([[0.4, 0.1, -0.3, 0.2], [0.1, 0.3, 0.2, -0.4]])     # Reset/relevance-gate weights.
+w_o_lstm_demo = np.array([[0.4, -0.5, 0.2, 0.3], [0.1, 0.2, -0.3, 0.5]])     # Output-gate weights.
+b_f_lstm_demo = np.array([0.6, 0.2])                                        # Forget bias encourages keeping memory.
+b_u_lstm_demo = np.array([-0.1, 0.0])                                       # Update bias.
+b_r_lstm_demo = np.array([0.0, 0.1])                                        # Reset/relevance bias.
+b_o_lstm_demo = np.array([0.0, 0.1])                                        # Output bias.
+
+gamma_f_lstm_demo = sigmoid_demo(w_f_lstm_demo @ combo_lstm_demo + b_f_lstm_demo) # Compute forget gate Γ_f.
+gamma_u_lstm_demo = sigmoid_demo(w_u_lstm_demo @ combo_lstm_demo + b_u_lstm_demo) # Compute update gate Γ_u.
+gamma_r_lstm_demo = sigmoid_demo(w_r_lstm_demo @ combo_lstm_demo + b_r_lstm_demo) # Compute reset/relevance gate Γ_r.
+gamma_o_lstm_demo = sigmoid_demo(w_o_lstm_demo @ combo_lstm_demo + b_o_lstm_demo) # Compute output gate Γ_o.
+candidate_input_lstm_demo = np.concatenate([gamma_r_lstm_demo * a_prev_lstm_demo, x_lstm_demo]) # Candidate uses relevance-filtered old hidden state.
+w_c_lstm_demo = np.array([[0.3, 0.2, 0.5, -0.4], [-0.4, 0.6, 0.1, 0.2]])     # Candidate-memory weights.
+b_c_lstm_demo = np.array([0.0, 0.05])                                       # Candidate-memory bias.
+c_tilde_lstm_demo = np.tanh(w_c_lstm_demo @ candidate_input_lstm_demo + b_c_lstm_demo) # Candidate cell memory.
+kept_memory_lstm_demo = gamma_f_lstm_demo * c_prev_lstm_demo                # Old memory retained by forget gate.
+written_memory_lstm_demo = gamma_u_lstm_demo * c_tilde_lstm_demo            # New candidate written by update gate.
+c_lstm_demo = kept_memory_lstm_demo + written_memory_lstm_demo              # Additive cell-state update.
+a_lstm_demo = gamma_o_lstm_demo * c_lstm_demo                               # Exposed activation using CS230's a=Γ_o*c form.
+
+log("LSTM forget/update/reset/output", np.round(np.vstack([gamma_f_lstm_demo, gamma_u_lstm_demo, gamma_r_lstm_demo, gamma_o_lstm_demo]), 3)) # Print all gates.
+log("LSTM candidate c_tilde", np.round(c_tilde_lstm_demo, 3))               # Print candidate memory.
+log("kept old memory", np.round(kept_memory_lstm_demo, 3))                  # Print forget-path term.
+log("written new memory", np.round(written_memory_lstm_demo, 3))            # Print update-path term.
+log("new cell c", np.round(c_lstm_demo, 3))                                 # Print new cell state.
+log("new hidden a", np.round(a_lstm_demo, 3))                               # Print exposed hidden activation.
+
+gate_labels_lstm_demo = ["forget", "update", "reset", "output"]            # Labels for the four gates.
+gate_means_lstm_demo = [gamma_f_lstm_demo.mean(), gamma_u_lstm_demo.mean(), gamma_r_lstm_demo.mean(), gamma_o_lstm_demo.mean()] # Mean gate openness.
+fig_demo, axes_demo = plt.subplots(1, 2, figsize=(10, 4))                   # Create gate and memory panels.
+axes_demo[0].bar(gate_labels_lstm_demo, gate_means_lstm_demo, color=["steelblue", "orange", "green", "purple"]) # Plot mean gates.
+axes_demo[0].set_ylim(0.0, 1.0)                                             # Gate values live in [0,1].
+axes_demo[0].set_ylabel("mean gate value")                                  # Label gate openness.
+axes_demo[0].set_title("LSTM gates")                                        # Title gate panel.
+axes_demo[1].bar(["kept old", "written new"], [kept_memory_lstm_demo.mean(), written_memory_lstm_demo.mean()], color=["steelblue", "salmon"]) # Compare cell update terms.
+axes_demo[1].axhline(0.0, color="gray", linewidth=1.0)                      # Mark zero for signed memory.
+axes_demo[1].set_title("additive cell update pieces")                       # Title memory panel.
+axes_demo[1].set_ylabel("mean contribution")                                # Label contribution scale.
+plt.tight_layout()                                                          # Prevent overlap.
+plt.show()                                                                  # Render the LSTM visualization.
+```
+▶ What you'll see: the LSTM prints four gates, adds kept old memory to written new memory, and exposes only a gated part as hidden state.
+
+### Step 6 — Vanishing/exploding gradients and the additive memory path
+
+Long vanilla-RNN gradients contain products of repeated factors. If the typical factor has magnitude
+below 1, gradients vanish; above 1, they explode. LSTM-style memory helps because an additive path
+with a forget gate near 1 can retain signal much longer.
+
+```python
+steps_grad_demo = np.arange(0, 31)                                          # Measure gradient/memory over 30 repeated steps.
+rho_vanish_demo = 0.70                                                       # A typical recurrent factor below 1.
+rho_explode_demo = 1.12                                                      # A typical recurrent factor above 1.
+forget_gate_demo = 0.98                                                      # An LSTM-style forget gate close to 1.
+vanish_curve_demo = rho_vanish_demo ** steps_grad_demo                      # Product that shrinks toward zero.
+explode_curve_demo = rho_explode_demo ** steps_grad_demo                    # Product that grows quickly.
+memory_curve_demo = forget_gate_demo ** steps_grad_demo                     # Additive-cell retention when Γ_f is near 1.
+
+log("vanishing product after 30 steps", round(float(vanish_curve_demo[-1]), 6)) # Print small product.
+log("exploding product after 30 steps", round(float(explode_curve_demo[-1]), 3)) # Print large product.
+log("LSTM memory retained after 30 steps", round(float(memory_curve_demo[-1]), 3)) # Print retained memory fraction.
+
+plt.semilogy(steps_grad_demo, vanish_curve_demo, marker="o", label="0.70^steps: vanishing") # Plot shrinking product.
+plt.semilogy(steps_grad_demo, explode_curve_demo, marker="s", label="1.12^steps: exploding") # Plot growing product.
+plt.semilogy(steps_grad_demo, memory_curve_demo, marker="^", label="0.98^steps: LSTM-style keep") # Plot slow memory decay.
+plt.xlabel("number of repeated steps")                                      # Label depth/time axis.
+plt.ylabel("product magnitude (log scale)")                                 # Label product magnitude.
+plt.title("Long products vanish/explode; additive memory decays slowly")    # Title the plot.
+plt.legend()                                                                # Explain curves.
+plt.show()                                                                  # Render gradient-product visualization.
+```
+▶ What you'll see: the sub-unit product falls near zero, the above-unit product grows, and a forget gate near 1 keeps memory much longer.
+
+### Step 7 — Gradient clipping
+
+Clipping handles exploding gradients by preserving direction but capping norm:
+$g_{\text{clipped}}=Cg/\lVert g\rVert$ when $\lVert g\rVert>C$. It is a safety brake on update
+size; it does not by itself solve long-memory learning.
+
+```python
+gradient_demo = np.array([4.0, -3.0, 12.0])                                 # A raw gradient vector with a large norm.
+clip_threshold_demo = 5.0                                                   # Maximum allowed gradient norm C.
+gradient_norm_demo = float(np.linalg.norm(gradient_demo))                   # Compute raw L2 norm.
+scale_demo = min(1.0, clip_threshold_demo / gradient_norm_demo)             # Compute clipping scale factor.
+clipped_gradient_demo = scale_demo * gradient_demo                          # Apply norm clipping.
+clipped_norm_demo = float(np.linalg.norm(clipped_gradient_demo))            # Compute clipped norm.
+learning_rate_demo = 0.1                                                    # A small learning rate for update comparison.
+raw_update_demo = -learning_rate_demo * gradient_demo                       # Parameter update from raw gradient.
+clipped_update_demo = -learning_rate_demo * clipped_gradient_demo           # Parameter update from clipped gradient.
+
+log("raw gradient", gradient_demo)                                          # Print original gradient.
+log("raw norm", round(gradient_norm_demo, 3))                               # Print original norm.
+log("clip scale", round(float(scale_demo), 3))                               # Print scale used for clipping.
+log("clipped gradient", np.round(clipped_gradient_demo, 3))                 # Print clipped gradient.
+log("clipped norm", round(clipped_norm_demo, 3))                            # Print clipped norm.
+log("raw vs clipped update", (np.round(raw_update_demo, 3), np.round(clipped_update_demo, 3))) # Print update sizes.
+
+indices_clip_demo = np.arange(len(gradient_demo))                           # Coordinate indices.
+plt.bar(indices_clip_demo - 0.18, gradient_demo, width=0.36, label="raw gradient", color="salmon") # Draw raw components.
+plt.bar(indices_clip_demo + 0.18, clipped_gradient_demo, width=0.36, label="clipped gradient", color="seagreen") # Draw clipped components.
+plt.axhline(0.0, color="gray", linewidth=1.0)                               # Mark zero.
+plt.xlabel("gradient coordinate")                                           # Label coordinates.
+plt.ylabel("component value")                                               # Label gradient values.
+plt.title("Gradient clipping caps magnitude but keeps direction")           # Title clipping plot.
+plt.legend()                                                                # Explain bars.
+plt.show()                                                                  # Render clipping visualization.
+```
+▶ What you'll see: clipped components are scaled down together so the norm equals the threshold while direction is preserved.
+
+### Recap — what you just ran
+
+- A **vanilla RNN** reused one hidden-state update, produced outputs, and summed sequence loss.
+- **BPTT** added gradient contributions from every unrolled timestep that shared a parameter.
+- **Gates** acted as sigmoid soft valves; **GRU** used update/reset gates; **LSTM** used forget/update/reset/output gates and additive cell memory.
+- Long recurrent products can **vanish or explode**, and **gradient clipping** caps exploding update sizes.
+
+Everything below (starting at **§1 Overview**) develops these same ideas with more worked examples,
+toy tasks, and sequence visualizations.
+
+---
+
 ## 1. Overview
 
 Recurrent neural networks process ordered data by reusing one learned update rule across timesteps. The hidden state is a running summary: it lets a model decide today using information it saw yesterday, ten tokens ago, or at the start of a sequence.

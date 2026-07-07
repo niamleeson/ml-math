@@ -2,6 +2,429 @@
 > **Source:** CS 221 · **Category:** Method/Algorithm · **Type:** 💻 Colab · [↑ Full reference](../../ai-ml-cheatsheets.md)
 > 📓 Runnable notebook section; an `.ipynb` will be generated. [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](#)
 
+## 0. Step-by-Step Worked Example — Start Here (Beginner Friendly)
+
+> 🧑‍🎓 **New to this topic? Start here.** This is a gentle, fully runnable walkthrough that
+> builds up *every* idea in this lesson one tiny step at a time. Each step **prints** the
+> numbers it computes and **draws a picture** so you can *see* what is happening. Run the
+> cells in order from top to bottom. Nothing here needs the internet or any downloaded data.
+
+**What we will build, step by step:**
+1. **Search problem ingredients** — define states, actions, costs, successors, and the goal test.
+2. **Tree search versus graph search** — see why remembering states avoids repeated work.
+3. **Breadth-first search (BFS)** — use a FIFO queue to find a shortest path in equal-cost steps.
+4. **Depth-first search (DFS)** — use a LIFO stack to dive down one path before trying another.
+5. **Dynamic programming on an acyclic graph** — memoize future costs on a DAG.
+6. **Uniform cost search (UCS)** — use a priority queue ordered by past path cost.
+7. **A* search and heuristics** — add a consistent heuristic to guide the priority queue.
+8. **Relaxation-derived heuristics** — remove constraints to get valid lower-bound heuristics.
+
+### Step 0 — Set up our tools
+
+We import small standard-library queues, NumPy, and Matplotlib. We fix a random **seed** so every
+run gives the same printed numbers, then define a tiny `log()` helper for clearly labeled output.
+
+```python
+from collections import deque             # Deque gives BFS a simple first-in-first-out queue.
+import heapq                              # heapq gives UCS and A* a tiny priority queue.
+import numpy as np                        # NumPy helps build grids and compact numeric summaries.
+import matplotlib.pyplot as plt           # Matplotlib draws graphs, paths, and heuristic pictures.
+
+np.random.seed(0)                          # Fix the seed so every run prints the same numbers.
+plt.rcParams["figure.figsize"] = (7, 4)    # Use a comfortable default plot size.
+
+
+def log(label, value):                     # Define one small logger used in every worked-example cell.
+    print(f"[{label}] {value}")            # Print each value with a readable label.
+
+log("setup", "tools ready — queues, NumPy, and Matplotlib imported")  # Confirm setup finished.
+```
+▶ What you'll see: one line confirming the tools are ready.
+
+### Step 1 — Search problem ingredients: states, actions, costs, successors, goal
+
+A deterministic search problem needs a start state, available actions, action costs, successor states, and a goal test.
+We encode all five pieces in a tiny graph and print exactly what an agent can do from each state.
+
+```python
+start_demo = "S"                                                                    # Choose the starting state.
+goal_demo = "G"                                                                     # Choose the end state.
+graph_demo = {}                                                                      # Create a dictionary for Actions, Succ, and Cost.
+graph_demo["S"] = [("go to A", "A", 1.0), ("go to B", "B", 4.0)]                  # Store actions from S as (action, successor, cost).
+graph_demo["A"] = [("go to C", "C", 2.0), ("go to G", "G", 7.0)]                  # Store actions from A.
+graph_demo["B"] = [("go to C", "C", 1.0), ("go to G", "G", 6.0)]                  # Store actions from B.
+graph_demo["C"] = [("go to G", "G", 2.0)]                                          # Store actions from C.
+graph_demo["G"] = []                                                                # The goal has no outgoing actions.
+positions_demo = {"S": (0.0, 0.0), "A": (1.0, 0.8), "B": (1.0, -0.8), "C": (2.2, 0.0), "G": (3.3, 0.0)}  # Fix node positions.
+
+log("start state", start_demo)                                                       # Print the starting state.
+log("goal test IsEnd(S)", start_demo == goal_demo)                                   # Show that S is not the goal.
+log("goal test IsEnd(G)", goal_demo == goal_demo)                                    # Show that G is the goal.
+for state_demo, edges_demo in graph_demo.items():                                    # Loop through every state.
+    action_text_demo = [f"{action_demo}->{succ_demo} cost {cost_demo}" for action_demo, succ_demo, cost_demo in edges_demo]  # Summarize actions.
+    log(f"Actions({state_demo})", action_text_demo)                                  # Print actions, successors, and costs.
+
+for state_demo, pos_demo in positions_demo.items():                                  # Loop over node positions.
+    plt.scatter(pos_demo[0], pos_demo[1], s=700, color="lightsteelblue", edgecolor="black")  # Draw one state node.
+    plt.text(pos_demo[0], pos_demo[1], state_demo, ha="center", va="center", fontsize=12)     # Label the node.
+for state_demo, edges_demo in graph_demo.items():                                    # Loop over outgoing edges.
+    for action_demo, succ_demo, cost_demo in edges_demo:                              # Loop over actions from this state.
+        x0_demo, y0_demo = positions_demo[state_demo]                                 # Read the source position.
+        x1_demo, y1_demo = positions_demo[succ_demo]                                  # Read the successor position.
+        plt.annotate("", xy=(x1_demo, y1_demo), xytext=(x0_demo, y0_demo), arrowprops={"arrowstyle": "->", "color": "gray"})  # Draw the transition.
+        plt.text((x0_demo + x1_demo) / 2.0, (y0_demo + y1_demo) / 2.0, str(cost_demo), color="darkred")  # Label the cost.
+plt.axis("off")                                                                      # Hide numeric axes for the graph sketch.
+plt.title("A deterministic search problem: states, actions, successors, costs")       # Title the graph.
+plt.show()                                                                            # Render the search problem.
+```
+▶ What you'll see: each state lists its available actions, successors, and costs, and the graph shows the same transitions.
+
+### Step 2 — Tree search versus graph search: repeated states waste work
+
+Tree search explores action sequences, so the same state can appear multiple times through different paths. Graph search
+remembers states in explored/frontier sets, so it can avoid re-enqueuing a state it has already seen.
+
+```python
+repeat_graph_demo = {}                                                                 # Build a graph where C is reachable two ways.
+repeat_graph_demo["S"] = ["A", "B"]                                                   # S branches to A and B.
+repeat_graph_demo["A"] = ["C"]                                                        # A reaches C.
+repeat_graph_demo["B"] = ["C"]                                                        # B also reaches C.
+repeat_graph_demo["C"] = ["G"]                                                        # C reaches the goal.
+repeat_graph_demo["G"] = []                                                           # G has no children.
+tree_frontier_demo = [("S", ["S"])]                                                   # Tree search stores paths, not just states.
+tree_generated_demo = []                                                               # Record every generated child in tree search.
+for depth_demo in range(3):                                                            # Expand three shallow layers.
+    next_frontier_demo = []                                                            # Prepare the next tree layer.
+    for state_demo, path_demo in tree_frontier_demo:                                   # Loop over paths at this depth.
+        for child_demo in repeat_graph_demo[state_demo]:                               # Generate every child action sequence.
+            tree_generated_demo.append(child_demo)                                     # Record generated child, duplicates included.
+            next_frontier_demo.append((child_demo, path_demo + [child_demo]))           # Keep the child path for later expansion.
+    tree_frontier_demo = next_frontier_demo                                             # Move to the next depth layer.
+graph_frontier_demo = deque(["S"])                                                    # Graph search stores states in a queue.
+graph_seen_demo = {"S"}                                                               # Track explored/frontier states already seen.
+graph_generated_demo = []                                                              # Record each newly discovered state.
+while graph_frontier_demo:                                                             # Continue until no seen state needs expansion.
+    state_demo = graph_frontier_demo.popleft()                                         # Pop the next frontier state.
+    for child_demo in repeat_graph_demo[state_demo]:                                   # Inspect successors.
+        if child_demo not in graph_seen_demo:                                          # Skip states already explored or in frontier.
+            graph_seen_demo.add(child_demo)                                            # Remember the new state.
+            graph_generated_demo.append(child_demo)                                    # Record the unique discovery.
+            graph_frontier_demo.append(child_demo)                                     # Add it to the frontier.
+
+states_count_demo = ["A", "B", "C", "G"]                                             # Pick states to count in both strategies.
+tree_counts_demo = [tree_generated_demo.count(state_demo) for state_demo in states_count_demo]  # Count tree-generated duplicates.
+graph_counts_demo = [graph_generated_demo.count(state_demo) for state_demo in states_count_demo] # Count graph-search discoveries.
+log("tree generated states", tree_generated_demo)                                     # Print generated states with repeats.
+log("graph generated states", graph_generated_demo)                                   # Print unique graph discoveries.
+log("C generated by tree vs graph", (tree_counts_demo[2], graph_counts_demo[2]))       # Highlight the repeated state.
+
+x_demo = np.arange(len(states_count_demo))                                             # Create x positions for bars.
+plt.bar(x_demo - 0.18, tree_counts_demo, width=0.36, label="tree search")              # Plot tree-search generation counts.
+plt.bar(x_demo + 0.18, graph_counts_demo, width=0.36, label="graph search")            # Plot graph-search discovery counts.
+plt.xticks(x_demo, states_count_demo)                                                   # Label each state.
+plt.ylabel("times generated")                                                          # Label duplicate counts.
+plt.title("Graph search avoids repeated states")                                       # Title the comparison.
+plt.legend()                                                                            # Show strategy labels.
+plt.show()                                                                              # Render the duplicate-work chart.
+```
+▶ What you'll see: tree search generates state `C` twice, while graph search discovers it once and avoids repeated work.
+
+### Step 3 — Breadth-first search (BFS): FIFO queue explores by levels
+
+BFS uses a queue, so older frontier states are expanded first. With equal action costs, this level-by-level order returns
+a shortest path in number of steps.
+
+```python
+bfs_graph_demo = {"S": ["A", "B"], "A": ["C", "D"], "B": ["E"], "C": ["G"], "D": ["G"], "E": ["G"], "G": []}  # Define an unweighted graph.
+frontier_demo = deque([("S", ["S"])])                                                 # Store (state, path) pairs in FIFO order.
+seen_demo = {"S"}                                                                       # Remember states already in explored/frontier.
+pop_order_demo = []                                                                      # Record BFS expansion order.
+path_bfs_demo = None                                                                      # Reserve space for the goal path.
+while frontier_demo:                                                                      # Keep expanding while the queue is nonempty.
+    state_demo, path_demo = frontier_demo.popleft()                                       # Pop the oldest queued state.
+    pop_order_demo.append(state_demo)                                                     # Record which state was expanded.
+    if state_demo == "G":                                                                # Stop when the goal is reached.
+        path_bfs_demo = path_demo                                                         # Store the discovered shortest path.
+        break                                                                             # Exit the BFS loop.
+    for child_demo in bfs_graph_demo[state_demo]:                                         # Visit successors in listed order.
+        if child_demo not in seen_demo:                                                   # Avoid adding duplicates to the queue.
+            seen_demo.add(child_demo)                                                     # Mark the child as seen.
+            frontier_demo.append((child_demo, path_demo + [child_demo]))                  # Push the child at the back of the queue.
+
+log("BFS pop order", pop_order_demo)                                                     # Print level-by-level expansion order.
+log("BFS path", path_bfs_demo)                                                           # Print the shortest equal-cost path.
+log("BFS path length", len(path_bfs_demo) - 1)                                           # Print number of edges in the path.
+levels_demo = {"S": 0, "A": 1, "B": 1, "C": 2, "D": 2, "E": 2, "G": 3}             # Store each node's BFS level for plotting.
+plt.scatter(list(levels_demo.values()), np.zeros(len(levels_demo)), s=650, color="lightgreen", edgecolor="black")  # Draw nodes by level.
+for node_demo, level_demo in levels_demo.items():                                        # Loop over nodes to label them.
+    plt.text(level_demo, 0.0, node_demo, ha="center", va="center")                     # Place each node label.
+for index_demo, node_demo in enumerate(pop_order_demo):                                  # Loop through pop order for annotations.
+    plt.text(levels_demo[node_demo], 0.18 + 0.08 * index_demo, str(index_demo + 1), ha="center", color="darkblue")  # Mark expansion rank.
+plt.yticks([])                                                                           # Hide the unused y-axis ticks.
+plt.xlabel("BFS level from start")                                                       # Label levels.
+plt.title("BFS pops all level-1 states before level-2 states")                           # Title the BFS plot.
+plt.show()                                                                               # Render the BFS level picture.
+```
+▶ What you'll see: BFS expands `S`, then its neighbors, then deeper nodes, and returns a shortest three-edge path.
+
+### Step 4 — Depth-first search (DFS): LIFO stack dives deep
+
+DFS uses a stack, so the most recently added frontier state is expanded first. This can find a goal quickly on one branch,
+but it does not guarantee the shallowest path in a general graph.
+
+```python
+dfs_graph_demo = {"S": ["A", "B"], "A": ["C", "D"], "B": ["E"], "C": ["G"], "D": ["G"], "E": ["G"], "G": []}  # Define the same graph.
+stack_demo = [("S", ["S"])]                                                             # Store (state, path) pairs in LIFO order.
+seen_demo = {"S"}                                                                        # Remember states already pushed.
+pop_order_demo = []                                                                      # Record DFS expansion order.
+path_dfs_demo = None                                                                      # Reserve space for the found path.
+while stack_demo:                                                                         # Keep expanding while the stack is nonempty.
+    state_demo, path_demo = stack_demo.pop()                                              # Pop the newest pushed state.
+    pop_order_demo.append(state_demo)                                                     # Record the DFS expansion.
+    if state_demo == "G":                                                                # Stop if the goal is reached.
+        path_dfs_demo = path_demo                                                         # Store the path DFS found.
+        break                                                                             # Exit the DFS loop.
+    for child_demo in reversed(dfs_graph_demo[state_demo]):                               # Reverse action order to visit left branch first.
+        if child_demo not in seen_demo:                                                   # Avoid pushing repeated states.
+            seen_demo.add(child_demo)                                                     # Mark the child as seen.
+            stack_demo.append((child_demo, path_demo + [child_demo]))                     # Push the child onto the stack.
+
+log("DFS pop order", pop_order_demo)                                                     # Print deep-first expansion order.
+log("DFS path", path_dfs_demo)                                                           # Print the path DFS found.
+log("DFS path length", len(path_dfs_demo) - 1)                                           # Print number of edges in that path.
+plt.plot(np.arange(len(pop_order_demo)), np.arange(len(pop_order_demo)), alpha=0.0)       # Create axes for ordered labels.
+for index_demo, node_demo in enumerate(pop_order_demo):                                  # Loop over expanded nodes.
+    plt.scatter(index_demo, 0.0, s=650, color="plum", edgecolor="black")                # Draw one expansion bubble.
+    plt.text(index_demo, 0.0, node_demo, ha="center", va="center")                      # Label the expanded node.
+plt.yticks([])                                                                           # Hide the unused y-axis ticks.
+plt.xlabel("pop number")                                                                 # Label expansion order.
+plt.title("DFS follows the newest frontier path first")                                  # Title the DFS expansion plot.
+plt.show()                                                                               # Render the DFS order picture.
+```
+▶ What you'll see: DFS follows one branch down to `G` before exploring every node at the same depth.
+
+### Step 5 — Dynamic programming on an acyclic graph: memoize future cost
+
+On a DAG, the best future cost satisfies a recursion: goal cost is zero, and every other state chooses the cheapest
+action cost plus successor future cost. Memoization saves repeated subproblems.
+
+```python
+dag_demo = {}                                                                            # Build a small acyclic weighted graph.
+dag_demo["S"] = [("A", 2.0), ("B", 1.0)]                                                # Store successors and costs from S.
+dag_demo["A"] = [("C", 2.0), ("G", 7.0)]                                                # Store successors and costs from A.
+dag_demo["B"] = [("C", 2.0), ("G", 6.0)]                                                # Store successors and costs from B.
+dag_demo["C"] = [("G", 1.0)]                                                            # Store successors and costs from C.
+dag_demo["G"] = []                                                                       # The end state has future cost zero.
+memo_demo = {}                                                                            # Cache FutureCost values.
+choice_demo = {}                                                                          # Remember the best next state for path recovery.
+
+def future_cost_demo(state_demo):                                                        # Define the memoized DP recursion.
+    if state_demo in memo_demo:                                                          # Reuse a cached value if available.
+        return memo_demo[state_demo]                                                     # Return the saved future cost.
+    if state_demo == "G":                                                               # Handle the end state base case.
+        memo_demo[state_demo] = 0.0                                                       # FutureCost(G)=0.
+        return 0.0                                                                        # Return the base-case value.
+    options_demo = []                                                                     # Store candidate action costs.
+    for succ_demo, cost_demo in dag_demo[state_demo]:                                    # Try each available action.
+        options_demo.append(cost_demo + future_cost_demo(succ_demo))                     # Add immediate cost plus future cost.
+    best_index_demo = int(np.argmin(options_demo))                                       # Find the cheapest action index.
+    choice_demo[state_demo] = dag_demo[state_demo][best_index_demo][0]                   # Remember the best successor.
+    memo_demo[state_demo] = float(options_demo[best_index_demo])                         # Cache the best future cost.
+    return memo_demo[state_demo]                                                         # Return the computed value.
+
+start_cost_demo = future_cost_demo("S")                                                  # Compute FutureCost from the start.
+path_dp_demo = ["S"]                                                                     # Begin reconstructing the optimal path.
+while path_dp_demo[-1] != "G":                                                          # Follow remembered choices until the goal.
+    path_dp_demo.append(choice_demo[path_dp_demo[-1]])                                   # Append the best successor.
+for state_demo in ["G", "C", "A", "B", "S"]:                                         # Print values in a bottom-up-friendly order.
+    log(f"FutureCost({state_demo})", memo_demo[state_demo])                              # Show each memoized future cost.
+log("DP optimal path", path_dp_demo)                                                     # Print the minimum-cost path.
+log("DP start cost", start_cost_demo)                                                     # Print the optimal total cost.
+plt.bar(list(memo_demo.keys()), list(memo_demo.values()), color="lightseagreen", edgecolor="black")  # Plot future costs by state.
+plt.ylabel("minimum future cost")                                                        # Label the DP value axis.
+plt.title("DAG dynamic programming stores FutureCost(s)")                                # Title the DP plot.
+plt.show()                                                                                # Render the memoized values.
+```
+▶ What you'll see: each state's future cost is computed once, cached, and used to recover the cheapest path.
+
+### Step 6 — Uniform cost search (UCS): pop the cheapest past cost
+
+UCS handles non-negative, unequal action costs by prioritizing the frontier state with smallest past cost so far. When a
+state is popped and explored, that popped cost is the optimal cost from the start to that state.
+
+```python
+ucs_graph_demo = {}                                                                       # Build a non-negative weighted graph.
+ucs_graph_demo["S"] = [("A", 1.0), ("B", 4.0)]                                          # Store weighted edges from S.
+ucs_graph_demo["A"] = [("C", 2.0), ("G", 7.0)]                                          # Store weighted edges from A.
+ucs_graph_demo["B"] = [("C", 1.0), ("G", 6.0)]                                          # Store weighted edges from B.
+ucs_graph_demo["C"] = [("G", 2.0)]                                                       # Store weighted edges from C.
+ucs_graph_demo["G"] = []                                                                  # The goal has no outgoing edges.
+frontier_demo = [(0.0, "S", ["S"])]                                                      # Push (past cost, state, path) for the start.
+best_cost_demo = {"S": 0.0}                                                             # Store the best known path cost to each state.
+explored_demo = set()                                                                     # Store states whose optimal cost is finalized.
+pop_order_demo = []                                                                       # Record popped states and costs.
+path_ucs_demo = None                                                                      # Reserve space for the optimal path.
+while frontier_demo:                                                                      # Continue while the priority queue has candidates.
+    past_cost_demo, state_demo, path_demo = heapq.heappop(frontier_demo)                  # Pop the lowest-past-cost state.
+    if state_demo in explored_demo:                                                       # Skip stale queue entries.
+        continue                                                                          # Move to the next heap item.
+    explored_demo.add(state_demo)                                                         # Finalize this state's optimal past cost.
+    pop_order_demo.append((state_demo, past_cost_demo))                                   # Record the correctness-theorem moment.
+    if state_demo == "G":                                                                # Stop when the goal is finalized.
+        path_ucs_demo = path_demo                                                         # Store the optimal path.
+        break                                                                             # Exit the UCS loop.
+    for succ_demo, cost_demo in ucs_graph_demo[state_demo]:                               # Relax every outgoing edge.
+        new_cost_demo = past_cost_demo + cost_demo                                        # Compute candidate path cost to successor.
+        if new_cost_demo < best_cost_demo.get(succ_demo, float("inf")):                  # Keep only cost improvements.
+            best_cost_demo[succ_demo] = new_cost_demo                                     # Save the improved best known cost.
+            heapq.heappush(frontier_demo, (new_cost_demo, succ_demo, path_demo + [succ_demo]))  # Push the successor with priority past cost.
+
+log("UCS pop order", pop_order_demo)                                                     # Print states in increasing finalized cost.
+log("UCS optimal path", path_ucs_demo)                                                   # Print the minimum-cost path.
+log("UCS optimal cost", best_cost_demo["G"])                                             # Print the path cost to the goal.
+plt.step(np.arange(len(pop_order_demo)), [cost_demo for state_demo, cost_demo in pop_order_demo], where="post", marker="o")  # Plot finalized costs.
+plt.xticks(np.arange(len(pop_order_demo)), [state_demo for state_demo, cost_demo in pop_order_demo])  # Label popped states.
+plt.ylabel("finalized PastCost")                                                         # Label the priority value.
+plt.title("UCS pops states in nondecreasing optimal past cost")                          # Title the UCS plot.
+plt.show()                                                                                # Render the pop-cost trace.
+```
+▶ What you'll see: the popped costs never decrease, and the goal path has the minimum total cost.
+
+### Step 7 — A* search and heuristics: prioritize past cost plus future estimate
+
+A* changes the priority from $g(s)$ to $g(s)+h(s)$. With a consistent heuristic, the first time the goal is popped,
+the path is optimal, but the search usually explores fewer irrelevant states.
+
+```python
+start_astar_demo = (0, 0)                                                                 # Choose a grid start state.
+goal_astar_demo = (3, 2)                                                                  # Choose a grid goal state.
+blocked_demo = {(1, 1)}                                                                    # Add one blocked cell as an obstacle.
+width_demo = 4                                                                             # Set grid width.
+height_demo = 3                                                                            # Set grid height.
+
+def h_demo(state_demo):                                                                    # Define a Manhattan-distance heuristic.
+    return abs(goal_astar_demo[0] - state_demo[0]) + abs(goal_astar_demo[1] - state_demo[1])  # Count remaining horizontal+vertical steps.
+
+def neighbors_demo(state_demo):                                                            # Define legal grid successors.
+    moves_demo = [(1, 0), (-1, 0), (0, 1), (0, -1)]                                         # Allow four-neighbor moves.
+    result_demo = []                                                                        # Store legal successors.
+    for dx_demo, dy_demo in moves_demo:                                                     # Try each move direction.
+        nxt_demo = (state_demo[0] + dx_demo, state_demo[1] + dy_demo)                       # Compute the candidate successor.
+        inside_demo = 0 <= nxt_demo[0] < width_demo and 0 <= nxt_demo[1] < height_demo       # Check grid boundaries.
+        if inside_demo and nxt_demo not in blocked_demo:                                    # Keep only unblocked in-bounds states.
+            result_demo.append(nxt_demo)                                                    # Add the legal successor.
+    return result_demo                                                                      # Return the successor list.
+
+consistent_demo = True                                                                      # Start assuming the heuristic is consistent.
+for x_demo in range(width_demo):                                                            # Loop over grid x-coordinates.
+    for y_demo in range(height_demo):                                                        # Loop over grid y-coordinates.
+        state_demo = (x_demo, y_demo)                                                       # Create one state.
+        if state_demo in blocked_demo:                                                      # Skip blocked states.
+            continue                                                                        # Move to the next grid cell.
+        for succ_demo in neighbors_demo(state_demo):                                        # Check each action.
+            consistent_demo = consistent_demo and h_demo(state_demo) <= 1.0 + h_demo(succ_demo)  # Verify h(s)<=cost+h(t).
+frontier_demo = [(h_demo(start_astar_demo), 0.0, start_astar_demo, [start_astar_demo])]      # Push (f, g, state, path).
+best_g_demo = {start_astar_demo: 0.0}                                                       # Store best known past costs.
+explored_demo = set()                                                                       # Store popped states.
+pop_order_demo = []                                                                         # Record A* pop order.
+path_astar_demo = None                                                                       # Reserve space for the found path.
+while frontier_demo:                                                                        # Continue while candidates remain.
+    f_demo, g_demo, state_demo, path_demo = heapq.heappop(frontier_demo)                     # Pop the smallest g+h priority.
+    if state_demo in explored_demo:                                                         # Skip stale entries.
+        continue                                                                            # Move to the next heap item.
+    explored_demo.add(state_demo)                                                           # Mark the state explored.
+    pop_order_demo.append((state_demo, g_demo, h_demo(state_demo), f_demo))                  # Record g, h, and f.
+    if state_demo == goal_astar_demo:                                                       # Stop when the goal is popped.
+        path_astar_demo = path_demo                                                         # Store the optimal path.
+        break                                                                               # Exit the A* loop.
+    for succ_demo in neighbors_demo(state_demo):                                            # Relax each grid successor.
+        new_g_demo = g_demo + 1.0                                                           # Every grid move costs one.
+        if new_g_demo < best_g_demo.get(succ_demo, float("inf")):                          # Keep improved paths only.
+            best_g_demo[succ_demo] = new_g_demo                                             # Save the best g-cost.
+            heapq.heappush(frontier_demo, (new_g_demo + h_demo(succ_demo), new_g_demo, succ_demo, path_demo + [succ_demo]))  # Push priority g+h.
+
+log("heuristic consistent?", consistent_demo)                                              # Print the consistency check.
+log("A* pop order (state,g,h,f)", pop_order_demo)                                          # Print priority details.
+log("A* path", path_astar_demo)                                                            # Print the path returned by A*.
+log("A* path cost", best_g_demo[goal_astar_demo])                                          # Print the optimal path cost.
+for x_demo in range(width_demo):                                                            # Loop over grid columns for drawing.
+    for y_demo in range(height_demo):                                                        # Loop over grid rows for drawing.
+        cell_demo = (x_demo, y_demo)                                                        # Create the cell state.
+        color_demo = "black" if cell_demo in blocked_demo else "white"                     # Color obstacles black.
+        plt.scatter(x_demo, y_demo, s=600, color=color_demo, edgecolor="black")             # Draw the grid cell.
+        if cell_demo not in blocked_demo:                                                   # Label only open cells.
+            plt.text(x_demo, y_demo, str(h_demo(cell_demo)), ha="center", va="center", color="purple")  # Show h(s).
+path_x_demo = [state_demo[0] for state_demo in path_astar_demo]                             # Extract path x-coordinates.
+path_y_demo = [state_demo[1] for state_demo in path_astar_demo]                             # Extract path y-coordinates.
+plt.plot(path_x_demo, path_y_demo, color="seagreen", linewidth=3, marker="o", label="A* path")  # Draw the found path.
+plt.gca().set_aspect("equal")                                                              # Keep grid cells square.
+plt.xticks(range(width_demo))                                                               # Show integer x ticks.
+plt.yticks(range(height_demo))                                                              # Show integer y ticks.
+plt.title("A*: cell labels are heuristic h(s), priority is g+h")                            # Title the A* grid.
+plt.legend()                                                                                # Show the path label.
+plt.show()                                                                                  # Render the A* search picture.
+```
+▶ What you'll see: the heuristic passes the consistency check, and A* follows a shortest grid path while printing `g`, `h`, and `f`.
+
+### Step 8 — Relaxation-derived heuristics: lower bounds from easier problems
+
+A relaxation removes constraints, so its optimal future cost cannot exceed the original future cost. On a grid,
+ignoring vertical distance gives $h_1$, ignoring horizontal distance gives $h_2$, and `max(h1,h2)` is still consistent.
+
+```python
+goal_relax_demo = (4, 3)                                                                   # Choose a goal for the heuristic table.
+states_relax_demo = [(x_demo, y_demo) for x_demo in range(5) for y_demo in range(4)]        # Enumerate a small grid of states.
+true_cost_demo = {}                                                                         # Store original Manhattan future costs.
+h1_demo = {}                                                                                # Store relaxation that ignores vertical distance.
+h2_demo = {}                                                                                # Store relaxation that ignores horizontal distance.
+hmax_demo = {}                                                                              # Store the max of two relaxed heuristics.
+for state_demo in states_relax_demo:                                                        # Compute all heuristic values.
+    true_cost_demo[state_demo] = abs(goal_relax_demo[0] - state_demo[0]) + abs(goal_relax_demo[1] - state_demo[1])  # Original grid distance.
+    h1_demo[state_demo] = abs(goal_relax_demo[0] - state_demo[0])                           # Relaxed problem: only horizontal progress matters.
+    h2_demo[state_demo] = abs(goal_relax_demo[1] - state_demo[1])                           # Relaxed problem: only vertical progress matters.
+    hmax_demo[state_demo] = max(h1_demo[state_demo], h2_demo[state_demo])                    # Combine consistent heuristics by max.
+consistent_max_demo = True                                                                  # Start assuming max heuristic is consistent.
+for state_demo in states_relax_demo:                                                        # Check every grid state.
+    x_demo, y_demo = state_demo                                                             # Unpack the state.
+    neighbors_relax_demo = [(x_demo + 1, y_demo), (x_demo - 1, y_demo), (x_demo, y_demo + 1), (x_demo, y_demo - 1)]  # List possible moves.
+    for succ_demo in neighbors_relax_demo:                                                  # Check each neighbor.
+        if succ_demo in hmax_demo:                                                          # Keep in-grid neighbors only.
+            consistent_max_demo = consistent_max_demo and hmax_demo[state_demo] <= 1.0 + hmax_demo[succ_demo]  # Verify consistency inequality.
+
+sample_states_demo = [(0, 0), (2, 1), (4, 0), goal_relax_demo]                              # Pick states for a small printed table.
+for state_demo in sample_states_demo:                                                       # Print heuristic comparisons.
+    values_demo = (true_cost_demo[state_demo], h1_demo[state_demo], h2_demo[state_demo], hmax_demo[state_demo])  # Bundle true and relaxed costs.
+    log(f"state {state_demo}: true,h1,h2,max", values_demo)                                 # Show lower-bound relationships.
+log("max heuristic consistent?", consistent_max_demo)                                       # Print the consistency result.
+heat_demo = np.zeros((4, 5))                                                                # Allocate a heatmap array for hmax values.
+for state_demo, value_demo in hmax_demo.items():                                            # Fill the heatmap by state.
+    heat_demo[state_demo[1], state_demo[0]] = value_demo                                    # Store hmax at row y and column x.
+plt.imshow(heat_demo[::-1], cmap="YlGnBu", extent=(-0.5, 4.5, -0.5, 3.5))                  # Draw hmax values with y increasing upward.
+plt.colorbar(label="h(s)=max(h1,h2)")                                                       # Add a color scale for heuristic values.
+plt.scatter(goal_relax_demo[0], goal_relax_demo[1], marker="*", s=220, color="gold", edgecolor="black", label="goal")  # Mark the goal.
+plt.xticks(range(5))                                                                        # Show grid x-coordinates.
+plt.yticks(range(4))                                                                        # Show grid y-coordinates.
+plt.title("Relaxed future costs are valid heuristic lower bounds")                         # Title the relaxation picture.
+plt.legend()                                                                                # Show the goal label.
+plt.show()                                                                                  # Render the heuristic heatmap.
+```
+▶ What you'll see: every relaxed heuristic value is at most the true future cost, and the max heuristic remains consistent.
+
+### Recap — what you just ran
+
+- **Search problem ingredients** defined start, actions, costs, successors, and the goal test.
+- **Tree search versus graph search** showed repeated states and how explored/frontier memory avoids them.
+- **BFS and DFS** used queue versus stack frontier discipline for level-order versus deep-first search.
+- **Dynamic programming on a DAG** memoized `FutureCost(s)` and recovered a cheapest path.
+- **UCS** popped states by minimum past cost and returned the non-negative-cost shortest path.
+- **A*** used a consistent heuristic in the priority `g+h` and still returned an optimal path.
+- **Relaxation-derived heuristics** produced admissible, consistent lower bounds and combined them with `max`.
+
+Everything below (starting at **§1 Overview**) develops these same ideas with full derivations,
+more examples, and an interactive experiment.
+
+---
+
 ## 1. Overview
 
 Search optimization turns planning into a precise question: from a starting state, which sequence of actions reaches an end state with minimum total cost? The same maze, road map, or planning problem can look easy or impossible depending on what the algorithm stores in its frontier and how that frontier is prioritized.

@@ -2,6 +2,433 @@
 > **Source:** CS 229 · **Category:** Model · **Type:** 💻 Colab · [↑ Full reference](../../ai-ml-cheatsheets.md)
 > 📓 Runnable notebook section; an `.ipynb` will be generated.
 
+## 0. Step-by-Step Worked Example — Start Here (Beginner Friendly)
+
+> 🧑‍🎓 **New to this topic? Start here.** This is a gentle, fully runnable walkthrough that
+> builds up *every* idea in this lesson one tiny step at a time. Each step **prints** the
+> numbers it computes and **draws a picture** so you can *see* what is happening. Run the
+> cells in order from top to bottom. Nothing here needs the internet or any downloaded data.
+
+**What we will build, step by step:**
+1. **Neuron scores and activations** — affine evidence $w^Tx+b$ followed by sigmoid, tanh, ReLU, or leaky ReLU.
+2. **MLP forward pass** — hidden layer scores, hidden activations, output score, and predicted probability.
+3. **Binary cross-entropy loss** — a scalar penalty for probability predictions.
+4. **Backpropagation** — chain-rule factors for one logistic neuron.
+5. **Gradient descent** — repeated parameter updates that lower loss.
+6. **CNN local filters and output size** — convolution arithmetic with $N=(W-F+2P)/S+1$.
+7. **Batch normalization** — normalize a mini-batch, then rescale and shift.
+8. **RNNs and LSTM gates** — reuse weights over time and gate memory.
+9. **MDPs and value iteration** — Bellman backups for state values.
+10. **Q-learning** — temporal-difference updates for action values.
+
+### Step 0 — Set up our tools
+
+We import NumPy (arrays + math) and Matplotlib (pictures). We fix a random **seed** so the
+printed values are reproducible, then define a tiny `log()` helper so every line says what it is.
+
+```python
+import numpy as np                       # NumPy: vectors, matrices, gradients, convolutions, and tiny RL tables.
+import matplotlib.pyplot as plt          # Matplotlib: draw activations, losses, filters, gates, and value tables.
+
+np.random.seed(0)                         # Fix the seed so every run prints the SAME numbers.
+plt.rcParams["figure.figsize"] = (7, 4)   # Use a comfortable default plot size.
+
+
+def log(label, value):                    # A tiny logger so each printed line explains itself.
+    print(f"[{label}] {value}")           # Format is: [what this is] the value.
+
+log("setup", "tools ready — NumPy + Matplotlib imported, seed fixed to 0")
+```
+▶ What you'll see: one line confirming the tools are ready.
+
+### Step 1 — Neuron scores and activations
+
+A neuron first adds weighted input evidence, $z=w^Tx+b$. An activation then transforms that raw
+score; sigmoid makes probabilities, tanh centers outputs, ReLU keeps positives, and leaky ReLU
+keeps a small negative slope.
+
+```python
+def sigmoid_demo(z_demo):                                                     # Define a stable sigmoid helper used throughout this walkthrough.
+    return 1.0 / (1.0 + np.exp(-np.clip(z_demo, -50.0, 50.0)))                 # Clip large scores so exponentials stay safe.
+
+x_neuron_demo = np.array([1.2, -0.7, 0.5])                                     # One tiny three-feature input vector.
+w_neuron_demo = np.array([0.8, -1.1, 0.4])                                     # One learnable weight per input feature.
+b_neuron_demo = -0.2                                                           # One learnable bias/intercept.
+parts_neuron_demo = w_neuron_demo * x_neuron_demo                              # Feature-by-feature contributions to the score.
+z_neuron_demo = float(parts_neuron_demo.sum() + b_neuron_demo)                 # Affine score z = w^T x + b.
+sigmoid_neuron_demo = float(sigmoid_demo(z_neuron_demo))                       # Sigmoid activation for probability-like output.
+tanh_neuron_demo = float(np.tanh(z_neuron_demo))                               # Tanh activation for centered output.
+relu_neuron_demo = float(np.maximum(0.0, z_neuron_demo))                       # ReLU activation keeps positive scores.
+leaky_neuron_demo = float(np.maximum(0.05 * z_neuron_demo, z_neuron_demo))      # Leaky ReLU keeps a small negative slope.
+
+log("feature contributions", np.round(parts_neuron_demo, 3))                  # Print each weighted input term.
+log("bias", round(float(b_neuron_demo), 3))                                   # Print the bias term.
+log("affine score z", round(z_neuron_demo, 3))                                # Print the raw neuron score.
+log("sigmoid/tanh/ReLU/leaky", np.round([sigmoid_neuron_demo, tanh_neuron_demo, relu_neuron_demo, leaky_neuron_demo], 3))  # Print activations.
+
+z_grid_demo = np.linspace(-6.0, 6.0, 300)                                      # Create scores for activation curves.
+plt.plot(z_grid_demo, sigmoid_demo(z_grid_demo), label="sigmoid", linewidth=2) # Draw sigmoid curve.
+plt.plot(z_grid_demo, np.tanh(z_grid_demo), label="tanh", linewidth=2)         # Draw tanh curve.
+plt.plot(z_grid_demo, np.maximum(0.0, z_grid_demo), label="ReLU", linewidth=2) # Draw ReLU curve.
+plt.plot(z_grid_demo, np.maximum(0.05 * z_grid_demo, z_grid_demo), label="leaky ReLU", linewidth=2)  # Draw leaky ReLU curve.
+plt.scatter([z_neuron_demo], [sigmoid_neuron_demo], color="black", s=70, label="our sigmoid output")  # Mark our computed neuron.
+plt.xlabel("affine score z")                                                   # Label score axis.
+plt.ylabel("activation g(z)")                                                  # Label activation axis.
+plt.title("One affine score can feed many activation functions")               # Title the activation plot.
+plt.legend()                                                                   # Identify activation curves.
+plt.show()                                                                     # Render the neuron visualization.
+```
+▶ What you'll see: the printed score is one number, but different activation curves transform it in different ways.
+
+### Step 2 — MLP forward pass: layer by layer
+
+A small MLP evaluates many neurons at once. The hidden layer computes $z_1=xW_1+b_1$, applies a
+nonlinearity to get $a_1$, then the output neuron computes a score and sigmoid probability.
+
+```python
+x_mlp_demo = np.array([[0.6, -1.0]])                                           # One example stored as a 1-by-2 row.
+W1_mlp_demo = np.array([[0.7, -0.4, 0.2], [-0.5, 0.9, 0.8]])                   # Input-to-hidden weights with shape 2-by-3.
+b1_mlp_demo = np.array([[0.1, -0.2, 0.05]])                                    # One hidden bias per hidden unit.
+W2_mlp_demo = np.array([[1.1], [-0.8], [0.6]])                                 # Hidden-to-output weights with shape 3-by-1.
+b2_mlp_demo = np.array([[-0.1]])                                               # One output bias.
+z1_mlp_demo = x_mlp_demo @ W1_mlp_demo + b1_mlp_demo                           # Hidden affine scores.
+a1_mlp_demo = np.maximum(0.0, z1_mlp_demo)                                     # Hidden ReLU activations.
+z2_mlp_demo = a1_mlp_demo @ W2_mlp_demo + b2_mlp_demo                          # Output affine score.
+yhat_mlp_demo = sigmoid_demo(z2_mlp_demo)                                      # Output probability.
+
+log("x shape", x_mlp_demo.shape)                                               # Print input shape.
+log("W1 shape", W1_mlp_demo.shape)                                             # Print first weight-matrix shape.
+log("hidden scores z1", np.round(z1_mlp_demo, 3))                              # Print hidden pre-activations.
+log("hidden activations a1", np.round(a1_mlp_demo, 3))                         # Print hidden activations after ReLU.
+log("output score z2", np.round(z2_mlp_demo, 3))                               # Print final score.
+log("predicted probability", np.round(yhat_mlp_demo, 3))                       # Print final probability.
+
+plt.bar(["h1", "h2", "h3"], a1_mlp_demo.ravel(), color="slateblue")          # Draw one bar per hidden unit.
+plt.ylabel("ReLU activation")                                                  # Label activation magnitude.
+plt.title("Hidden units become learned intermediate features")                 # Title the hidden-layer plot.
+plt.ylim(0.0, max(1.0, float(a1_mlp_demo.max()) + 0.2))                         # Keep the y-axis readable.
+plt.show()                                                                     # Render hidden activations.
+```
+▶ What you'll see: matrix shapes line up, negative hidden scores become zero, and the output sigmoid produces one probability.
+
+### Step 3 — Binary cross-entropy loss: penalize probability mistakes
+
+For binary labels, cross-entropy is $-[y\log(\hat y)+(1-y)\log(1-\hat y)]$. It gives small loss to
+confident correct probabilities and very large loss to confident wrong probabilities.
+
+```python
+y_loss_demo = np.array([1.0, 0.0, 1.0, 0.0])                                  # Four binary labels.
+yhat_loss_demo = np.array([0.92, 0.25, 0.40, 0.85])                            # Four predicted class-one probabilities.
+p_loss_demo = np.clip(yhat_loss_demo, 1e-9, 1.0 - 1e-9)                        # Clip probabilities so logs are safe.
+terms_loss_demo = -(y_loss_demo * np.log(p_loss_demo) + (1.0 - y_loss_demo) * np.log(1.0 - p_loss_demo))  # Per-example BCE terms.
+mean_loss_demo = terms_loss_demo.mean()                                        # Average loss over the mini-batch.
+
+log("labels", y_loss_demo.astype(int))                                         # Print true labels.
+log("predicted probabilities", yhat_loss_demo)                                 # Print predictions.
+log("per-example BCE", np.round(terms_loss_demo, 3))                           # Print each example's loss.
+log("mean BCE", round(float(mean_loss_demo), 3))                               # Print the batch loss.
+
+prob_grid_demo = np.linspace(0.001, 0.999, 300)                                # Safe probability grid for plotting.
+plt.plot(prob_grid_demo, -np.log(prob_grid_demo), label="loss if y=1", linewidth=2)  # Draw positive-label loss.
+plt.plot(prob_grid_demo, -np.log(1.0 - prob_grid_demo), label="loss if y=0", linewidth=2)  # Draw negative-label loss.
+plt.scatter(yhat_loss_demo, terms_loss_demo, color="black", s=65, label="our examples")  # Mark the batch examples.
+plt.ylim(0.0, 7.0)                                                             # Focus on the readable loss range.
+plt.xlabel(r"predicted probability $\hat y$")                                 # Label probability axis.
+plt.ylabel("binary cross-entropy")                                             # Label loss axis.
+plt.title("Cross-entropy grows when confidence points the wrong way")          # Title the loss plot.
+plt.legend()                                                                   # Identify curves and examples.
+plt.show()                                                                     # Render the cross-entropy visualization.
+```
+▶ What you'll see: the wrong confident prediction near 0.85 for a true 0 has a tall loss marker.
+
+### Step 4 — Backpropagation: multiply local chain-rule factors
+
+Backpropagation reuses local derivatives. For one logistic neuron, changing a weight changes
+$z$, changing $z$ changes $\hat y$, and changing $\hat y$ changes the loss, so the factors multiply.
+
+```python
+x_back_demo = np.array([1.5, -0.5])                                            # One two-feature training example.
+y_back_demo = 1.0                                                              # Positive target label.
+w_back_demo = np.array([0.4, -0.3])                                            # Current weights.
+b_back_demo = 0.1                                                              # Current bias.
+z_back_demo = float(w_back_demo @ x_back_demo + b_back_demo)                   # Affine score.
+yhat_back_demo = float(sigmoid_demo(z_back_demo))                              # Sigmoid prediction.
+loss_back_demo = -np.log(np.clip(yhat_back_demo, 1e-9, 1.0))                   # BCE loss for y=1.
+dL_dyhat_demo = -y_back_demo / np.clip(yhat_back_demo, 1e-9, 1.0) + (1.0 - y_back_demo) / np.clip(1.0 - yhat_back_demo, 1e-9, 1.0)  # dL/dyhat.
+dyhat_dz_demo = yhat_back_demo * (1.0 - yhat_back_demo)                        # Sigmoid derivative.
+dz_dw_demo = x_back_demo.copy()                                                # dz/dw equals the input vector.
+dL_dw_demo = dL_dyhat_demo * dyhat_dz_demo * dz_dw_demo                        # Chain-rule gradient for both weights.
+
+eps_back_demo = 1e-5                                                           # Tiny finite-difference step.
+w_plus_back_demo = w_back_demo.copy()                                          # Copy weights for a perturbation check.
+w_plus_back_demo[0] = w_plus_back_demo[0] + eps_back_demo                      # Nudge the first weight upward.
+yhat_plus_back_demo = float(sigmoid_demo(w_plus_back_demo @ x_back_demo + b_back_demo))  # Recompute prediction after the nudge.
+loss_plus_back_demo = -np.log(np.clip(yhat_plus_back_demo, 1e-9, 1.0))          # Recompute loss after the nudge.
+finite_diff_back_demo = (loss_plus_back_demo - loss_back_demo) / eps_back_demo # Numeric gradient estimate for weight 0.
+
+log("z / yhat / loss", np.round([z_back_demo, yhat_back_demo, loss_back_demo], 3))  # Print forward values.
+log("dL/dyhat", round(float(dL_dyhat_demo), 3))                               # Print loss-to-prediction derivative.
+log("dyhat/dz", round(float(dyhat_dz_demo), 3))                               # Print sigmoid local derivative.
+log("dz/dw", np.round(dz_dw_demo, 3))                                          # Print score-to-weight derivative.
+log("dL/dw", np.round(dL_dw_demo, 3))                                          # Print final chain-rule gradient.
+log("finite diff dL/dw0", round(float(finite_diff_back_demo), 5))              # Print numerical gradient check.
+
+factor_names_demo = ["dL/dŷ", "dŷ/dz", "dz/dw0", "dL/dw0"]                  # Names for first-weight chain factors.
+factor_values_demo = [float(dL_dyhat_demo), float(dyhat_dz_demo), float(dz_dw_demo[0]), float(dL_dw_demo[0])]  # Values for those factors.
+plt.bar(factor_names_demo, factor_values_demo, color=["tab:red", "tab:green", "tab:blue", "tab:purple"])  # Draw derivative factors.
+plt.axhline(0.0, color="black", linewidth=1.0)                                # Mark zero for sign interpretation.
+plt.ylabel("value")                                                            # Label derivative value axis.
+plt.title("Backprop is local derivatives multiplied together")                # Title the backprop plot.
+plt.show()                                                                     # Render the chain-rule visualization.
+```
+▶ What you'll see: the analytic gradient for weight 0 matches the finite-difference check, confirming the chain rule.
+
+### Step 5 — Gradient descent: update parameters downhill
+
+The gradient points uphill in loss, so gradient descent subtracts it: $w\leftarrow w-\eta\nabla_wL$.
+Repeating forward pass, loss, backprop, and update is the basic training loop.
+
+```python
+x_gd_demo = np.array([1.0, 2.0])                                               # One tiny training input.
+y_gd_demo = 1.0                                                               # Positive target label.
+w_gd_demo = np.array([-0.6, 0.2])                                             # Initial weights.
+b_gd_demo = -0.1                                                              # Initial bias.
+eta_gd_demo = 0.35                                                            # Learning rate.
+losses_gd_demo = []                                                           # Store loss before each update.
+
+for step_gd_demo in range(14):                                                 # Run several gradient-descent steps.
+    z_gd_demo = float(w_gd_demo @ x_gd_demo + b_gd_demo)                       # Compute current score.
+    yhat_gd_demo = float(sigmoid_demo(z_gd_demo))                              # Compute current probability.
+    loss_gd_demo = -np.log(np.clip(yhat_gd_demo, 1e-9, 1.0))                   # Compute BCE for y=1.
+    grad_w_gd_demo = (yhat_gd_demo - y_gd_demo) * x_gd_demo                    # Sigmoid+BCE weight gradient.
+    grad_b_gd_demo = yhat_gd_demo - y_gd_demo                                  # Sigmoid+BCE bias gradient.
+    losses_gd_demo.append(float(loss_gd_demo))                                 # Save current loss.
+    if step_gd_demo in [0, 1, 13]:                                             # Log a few representative steps.
+        log(f"step {step_gd_demo} yhat/loss", np.round([yhat_gd_demo, loss_gd_demo], 3))  # Print probability and loss.
+    w_gd_demo = w_gd_demo - eta_gd_demo * grad_w_gd_demo                       # Update weights downhill.
+    b_gd_demo = b_gd_demo - eta_gd_demo * grad_b_gd_demo                       # Update bias downhill.
+
+log("final weights", np.round(w_gd_demo, 3))                                  # Print trained weights.
+log("final bias", round(float(b_gd_demo), 3))                                 # Print trained bias.
+log("loss trace", np.round(losses_gd_demo, 3))                                # Print all losses.
+
+plt.plot(np.arange(len(losses_gd_demo)), losses_gd_demo, marker="o", color="darkorange", linewidth=2)  # Plot loss by update step.
+plt.xlabel("gradient-descent step")                                           # Label step axis.
+plt.ylabel("binary cross-entropy")                                            # Label loss axis.
+plt.title("Repeated gradient updates lower the loss")                         # Title the update plot.
+plt.show()                                                                     # Render the loss curve.
+```
+▶ What you'll see: the probability moves toward the positive label and the loss curve slopes downward.
+
+### Step 6 — CNN local filters and output size
+
+A convolutional filter reuses the same small weight patch at every spatial location. In one spatial
+dimension, the output width is $N=(W-F+2P)/S+1$, where $W$ is input width, $F$ filter width,
+$P$ padding, and $S$ stride.
+
+```python
+image_cnn_demo = np.zeros((6, 6))                                               # Create a tiny 6-by-6 image.
+image_cnn_demo[:, 3:] = 1.0                                                     # Make the right half bright to create a vertical edge.
+kernel_cnn_demo = np.array([[-1.0, 0.0, 1.0], [-1.0, 0.0, 1.0], [-1.0, 0.0, 1.0]])  # Vertical-edge filter.
+W_cnn_demo = image_cnn_demo.shape[0]                                            # Input width W.
+F_cnn_demo = kernel_cnn_demo.shape[0]                                           # Filter width F.
+P_cnn_demo = 1                                                                  # Padding P.
+S_cnn_demo = 1                                                                  # Stride S.
+N_cnn_demo = int((W_cnn_demo - F_cnn_demo + 2 * P_cnn_demo) / S_cnn_demo + 1)   # Output width formula.
+padded_cnn_demo = np.pad(image_cnn_demo, pad_width=P_cnn_demo, mode="constant")  # Zero-pad the image.
+feature_cnn_demo = np.zeros((N_cnn_demo, N_cnn_demo))                           # Allocate the convolution feature map.
+
+for row_cnn_demo in range(N_cnn_demo):                                          # Loop over output rows.
+    for col_cnn_demo in range(N_cnn_demo):                                      # Loop over output columns.
+        patch_cnn_demo = padded_cnn_demo[row_cnn_demo:row_cnn_demo + F_cnn_demo, col_cnn_demo:col_cnn_demo + F_cnn_demo]  # Extract one receptive field.
+        feature_cnn_demo[row_cnn_demo, col_cnn_demo] = np.sum(patch_cnn_demo * kernel_cnn_demo)  # Multiply filter by patch and sum.
+
+activated_cnn_demo = np.maximum(0.0, feature_cnn_demo)                          # Apply ReLU to keep positive edge evidence.
+log("output width formula N", N_cnn_demo)                                      # Print formula result.
+log("feature map shape", feature_cnn_demo.shape)                               # Print actual map shape.
+log("example raw conv score", round(float(feature_cnn_demo[2, 3]), 3))          # Print one local weighted sum.
+
+fig_cnn_demo, axes_cnn_demo = plt.subplots(1, 3, figsize=(10, 3.2))             # Create input/filter/feature panels.
+axes_cnn_demo[0].imshow(image_cnn_demo, cmap="gray", vmin=0.0, vmax=1.0)       # Show the input image.
+axes_cnn_demo[0].set_title("input image")                                      # Title input panel.
+axes_cnn_demo[1].imshow(kernel_cnn_demo, cmap="coolwarm")                     # Show filter weights.
+axes_cnn_demo[1].set_title("shared filter")                                    # Title filter panel.
+axes_cnn_demo[2].imshow(activated_cnn_demo, cmap="magma")                     # Show activated feature map.
+axes_cnn_demo[2].set_title("conv + ReLU map")                                  # Title feature panel.
+for ax_cnn_demo in axes_cnn_demo:                                               # Clean image-style panels.
+    ax_cnn_demo.set_xticks([])                                                  # Hide x ticks.
+    ax_cnn_demo.set_yticks([])                                                  # Hide y ticks.
+plt.tight_layout()                                                              # Prevent panel overlap.
+plt.show()                                                                      # Render CNN arithmetic.
+```
+▶ What you'll see: the filter lights up near the vertical edge, and the output shape matches the formula.
+
+### Step 7 — Batch normalization: normalize, then rescale and shift
+
+Batch normalization computes mini-batch mean and variance, standardizes activations, then applies
+learned scale $\gamma$ and shift $\beta$. This keeps layer inputs in a numerically friendly range
+while preserving flexibility.
+
+```python
+batch_bn_demo = np.array([[2.0, 10.0], [4.0, 14.0], [6.0, 18.0], [8.0, 22.0]])  # Four examples with two features on different scales.
+mu_bn_demo = batch_bn_demo.mean(axis=0)                                         # Batch mean per feature.
+var_bn_demo = batch_bn_demo.var(axis=0)                                         # Batch variance per feature.
+eps_bn_demo = 1e-5                                                              # Small constant for numerical stability.
+gamma_bn_demo = np.array([1.5, 0.6])                                            # Learned scale parameters.
+beta_bn_demo = np.array([-0.2, 0.3])                                            # Learned shift parameters.
+standard_bn_demo = (batch_bn_demo - mu_bn_demo) / np.sqrt(var_bn_demo + eps_bn_demo)  # Normalize to mean 0 and variance 1.
+out_bn_demo = gamma_bn_demo * standard_bn_demo + beta_bn_demo                   # Rescale and shift normalized values.
+
+log("batch mean", np.round(mu_bn_demo, 3))                                      # Print batch means.
+log("batch variance", np.round(var_bn_demo, 3))                                # Print batch variances.
+log("normalized mean", np.round(standard_bn_demo.mean(axis=0), 6))             # Verify mean approximately 0.
+log("normalized variance", np.round(standard_bn_demo.var(axis=0), 6))          # Verify variance approximately 1.
+log("first BN output row", np.round(out_bn_demo[0], 3))                        # Print one transformed row.
+
+fig_bn_demo, axes_bn_demo = plt.subplots(1, 2, figsize=(10, 3.6))               # Create before/after panels.
+axes_bn_demo[0].plot(batch_bn_demo, marker="o")                                # Plot raw batch feature columns.
+axes_bn_demo[0].set_title("raw batch activations")                              # Title raw panel.
+axes_bn_demo[0].set_xlabel("example")                                           # Label example axis.
+axes_bn_demo[0].set_ylabel("value")                                             # Label raw values.
+axes_bn_demo[1].plot(out_bn_demo, marker="o")                                  # Plot batch-normalized outputs.
+axes_bn_demo[1].set_title("after BN scale + shift")                             # Title BN panel.
+axes_bn_demo[1].set_xlabel("example")                                           # Label example axis.
+axes_bn_demo[1].set_ylabel("value")                                             # Label transformed values.
+plt.tight_layout()                                                              # Keep panels readable.
+plt.show()                                                                      # Render batch-normalization visualization.
+```
+▶ What you'll see: raw feature scales differ a lot, while normalized outputs are centered and controlled before the learned scale/shift.
+
+### Step 8 — RNNs and LSTM gates: reuse weights and control memory
+
+RNNs apply the same recurrence at every time step, so one set of weights processes a whole sequence.
+LSTMs add gates: forget old cell state, write candidate memory, and expose part of the memory as hidden state.
+
+```python
+x_seq_demo = np.array([0.2, 0.8, -0.1, 0.5])[:, None]                          # A length-4 one-feature sequence.
+Wx_rnn_demo = np.array([[0.7, -0.4]])                                           # Shared input-to-hidden weights.
+Wh_rnn_demo = np.array([[0.5, 0.1], [-0.3, 0.4]])                               # Shared hidden-to-hidden weights.
+b_rnn_demo = np.array([0.0, 0.1])                                               # Shared hidden bias.
+h_rnn_demo = np.zeros(2)                                                        # Initial hidden state.
+states_rnn_demo = []                                                            # Store hidden state at every time step.
+
+for t_rnn_demo, x_t_demo in enumerate(x_seq_demo):                              # Unroll the same recurrence over time.
+    h_rnn_demo = np.tanh(x_t_demo @ Wx_rnn_demo + h_rnn_demo @ Wh_rnn_demo + b_rnn_demo)  # Reuse weights to update hidden state.
+    states_rnn_demo.append(h_rnn_demo.copy())                                   # Save the hidden state for plotting.
+    log(f"RNN hidden at t={t_rnn_demo}", np.round(h_rnn_demo, 3))              # Print each hidden state.
+
+states_rnn_demo = np.array(states_rnn_demo)                                     # Convert hidden trace to an array.
+c_prev_lstm_demo = np.array([0.3, -0.2])                                        # Previous LSTM cell state.
+forget_gate_demo = sigmoid_demo(np.array([1.0, -0.4]))                          # Forget gate: how much old memory to keep.
+input_gate_demo = sigmoid_demo(np.array([0.2, 0.9]))                            # Input gate: how much candidate memory to write.
+output_gate_demo = sigmoid_demo(np.array([0.7, -0.1]))                          # Output gate: how much cell state to reveal.
+candidate_lstm_demo = np.tanh(np.array([0.5, -0.8]))                            # Candidate memory values.
+c_new_lstm_demo = forget_gate_demo * c_prev_lstm_demo + input_gate_demo * candidate_lstm_demo  # New LSTM cell state.
+h_new_lstm_demo = output_gate_demo * np.tanh(c_new_lstm_demo)                  # New LSTM hidden state.
+
+log("forget/input/output gates", np.round([forget_gate_demo, input_gate_demo, output_gate_demo], 3))  # Print gate vectors.
+log("candidate memory", np.round(candidate_lstm_demo, 3))                      # Print candidate memory.
+log("new cell state", np.round(c_new_lstm_demo, 3))                            # Print updated cell state.
+log("new hidden state", np.round(h_new_lstm_demo, 3))                          # Print gated hidden output.
+
+fig_rnn_demo, axes_rnn_demo = plt.subplots(1, 2, figsize=(10, 3.6))             # Create RNN and LSTM panels.
+axes_rnn_demo[0].plot(states_rnn_demo[:, 0], marker="o", label="hidden 1")    # Plot first hidden unit over time.
+axes_rnn_demo[0].plot(states_rnn_demo[:, 1], marker="o", label="hidden 2")    # Plot second hidden unit over time.
+axes_rnn_demo[0].set_title("RNN hidden state evolves over time")               # Title recurrent trace panel.
+axes_rnn_demo[0].set_xlabel("time step")                                       # Label time axis.
+axes_rnn_demo[0].legend()                                                       # Identify hidden units.
+axes_rnn_demo[1].bar(["forget", "input", "output"], [forget_gate_demo.mean(), input_gate_demo.mean(), output_gate_demo.mean()], color=["gray", "steelblue", "darkorange"])  # Plot average gate strengths.
+axes_rnn_demo[1].set_ylim(0.0, 1.0)                                             # Gates live between 0 and 1.
+axes_rnn_demo[1].set_title("LSTM gates control memory flow")                   # Title gate panel.
+plt.tight_layout()                                                              # Keep panels readable.
+plt.show()                                                                      # Render sequence-memory visualization.
+```
+▶ What you'll see: RNN hidden units change at each time step, while LSTM gates choose how much memory to keep, write, and reveal.
+
+### Step 9 — MDPs and value iteration: Bellman backups
+
+A Markov Decision Process has states, actions, transitions, rewards, and a discount. Value iteration
+repeatedly applies a Bellman backup: each state asks, "which action gives the best immediate reward
+plus discounted next-state value?"
+
+```python
+states_vi_demo = np.array([0, 1, 2])                                            # Three states: start, middle, goal.
+actions_vi_demo = np.array([0, 1])                                              # Two actions: 0=stay/left-ish, 1=move right-ish.
+next_vi_demo = np.array([[0, 1], [0, 2], [2, 2]])                               # Deterministic next state for each state-action pair.
+reward_vi_demo = np.array([[-0.04, -0.04], [-0.04, 1.0], [0.0, 0.0]])           # Step costs and reward for reaching the goal.
+gamma_vi_demo = 0.9                                                             # Discount factor.
+V_vi_demo = np.zeros(len(states_vi_demo))                                       # Start with zero value estimates.
+history_vi_demo = []                                                            # Store value estimates after each sweep.
+
+for sweep_vi_demo in range(6):                                                  # Run several synchronous Bellman sweeps.
+    V_new_vi_demo = V_vi_demo.copy()                                            # Copy old values for a clean sweep.
+    for state_vi_demo in [0, 1]:                                                # Update nonterminal states only.
+        scores_vi_demo = reward_vi_demo[state_vi_demo] + gamma_vi_demo * V_vi_demo[next_vi_demo[state_vi_demo]]  # Bellman action scores.
+        V_new_vi_demo[state_vi_demo] = np.max(scores_vi_demo)                   # Keep the best action score.
+    V_new_vi_demo[2] = 0.0                                                       # Keep terminal goal value fixed at zero future value.
+    V_vi_demo = V_new_vi_demo                                                   # Accept the sweep update.
+    history_vi_demo.append(V_vi_demo.copy())                                    # Save values for plotting.
+    log(f"value sweep {sweep_vi_demo + 1}", np.round(V_vi_demo, 3))            # Print values after this sweep.
+
+history_vi_demo = np.array(history_vi_demo)                                     # Convert value history to an array.
+plt.plot(history_vi_demo[:, 0], marker="o", label="V(start)")                 # Plot value propagation to the start state.
+plt.plot(history_vi_demo[:, 1], marker="o", label="V(middle)")                # Plot value for the middle state.
+plt.axhline(0.0, color="gray", linestyle="--", linewidth=1)                   # Mark terminal future value baseline.
+plt.xlabel("Bellman sweep")                                                     # Label sweep axis.
+plt.ylabel("state value")                                                       # Label value axis.
+plt.title("Value iteration propagates reward backward")                        # Title value-iteration plot.
+plt.legend()                                                                    # Identify states.
+plt.show()                                                                      # Render Bellman backup visualization.
+```
+▶ What you'll see: the middle state's value jumps first because it can reach the goal, then the start state's value rises after more sweeps.
+
+### Step 10 — Q-learning: update one state-action value from experience
+
+Q-learning learns action values from sampled transitions. The update moves $Q(s,a)$ toward
+$r+\gamma\max_{a'}Q(s',a')$, so it can learn without knowing the full transition table in advance.
+
+```python
+Q_q_demo = np.zeros((3, 2))                                                     # Initialize Q(s,a) for three states and two actions.
+alpha_q_demo = 0.6                                                              # Learning rate for temporal-difference updates.
+gamma_q_demo = 0.9                                                              # Discount factor.
+experience_q_demo = [(0, 1), (1, 1), (0, 1), (1, 1), (0, 1), (1, 1)]            # Repeated sampled actions: move right from start, then right to goal.
+
+for update_q_demo, (state_q_demo, action_q_demo) in enumerate(experience_q_demo, start=1):  # Process sampled transitions.
+    next_state_q_demo = int(next_vi_demo[state_q_demo, action_q_demo])           # Look up next state for this toy experience.
+    reward_q_demo = float(reward_vi_demo[state_q_demo, action_q_demo])           # Look up observed reward for this transition.
+    future_q_demo = 0.0 if next_state_q_demo == 2 else gamma_q_demo * np.max(Q_q_demo[next_state_q_demo])  # Discounted future value.
+    target_q_demo = reward_q_demo + future_q_demo                                # Q-learning target.
+    td_error_q_demo = target_q_demo - Q_q_demo[state_q_demo, action_q_demo]      # Temporal-difference error.
+    Q_q_demo[state_q_demo, action_q_demo] = Q_q_demo[state_q_demo, action_q_demo] + alpha_q_demo * td_error_q_demo  # Update Q(s,a).
+    log(f"update {update_q_demo} target/error", np.round([target_q_demo, td_error_q_demo], 3))  # Print target and correction.
+
+log("learned Q table", np.round(Q_q_demo, 3))                                  # Print final action-value table.
+log("greedy actions", np.argmax(Q_q_demo, axis=1))                             # Print best action per state.
+
+plt.imshow(Q_q_demo, cmap="viridis")                                           # Draw Q table as a heatmap.
+plt.colorbar(label="Q(s,a)")                                                   # Add value scale.
+plt.xticks([0, 1], ["action 0", "action 1"])                                  # Label action columns.
+plt.yticks([0, 1, 2], ["start", "middle", "goal"])                           # Label state rows.
+plt.title("Q-learning fills action values from experience")                    # Title Q-learning heatmap.
+for state_plot_demo in range(Q_q_demo.shape[0]):                                # Loop over state rows for annotations.
+    for action_plot_demo in range(Q_q_demo.shape[1]):                           # Loop over action columns for annotations.
+        plt.text(action_plot_demo, state_plot_demo, f"{Q_q_demo[state_plot_demo, action_plot_demo]:.2f}", ha="center", va="center", color="white")  # Write Q value in each cell.
+plt.show()                                                                      # Render action-value visualization.
+```
+▶ What you'll see: the action that reaches the goal gets high value, and that value backs up to the start action after repeated experience.
+
+### Recap — what you just ran
+
+- **Neurons, activations, MLP forward passes, and cross-entropy** built predictions from layered differentiable pieces.
+- **Backpropagation and gradient descent** computed local slopes, checked them, and used them to reduce loss.
+- **CNNs, batch norm, and RNN/LSTM memory** showed common deep-learning layer patterns beyond dense MLPs.
+- **Value iteration and Q-learning** showed reinforcement learning updates for state values and action values.
+
+Everything below (starting at **§1 Overview**) develops these same ideas with fuller examples,
+from-scratch training loops, CNN/RNN/RL demos, and an interactive MLP experiment.
+
+---
+
 ## 1. Overview
 
 Deep learning stacks differentiable layers so models learn features and predictors together. In this lesson, one tiny network will learn a nonlinear decision boundary by repeating forward pass → loss → backpropagation → update.

@@ -2,6 +2,300 @@
 > **Source:** CS 230 · **Category:** Function · **Type:** ⚖️ Both · [↑ Full reference](../../ai-ml-cheatsheets.md)
 > 📓 The coded examples form a runnable notebook section; an .ipynb will be generated.
 
+## 0. Step-by-Step Worked Example — Start Here (Beginner Friendly)
+
+> 🧑‍🎓 **New to this topic? Start here.** This is a gentle, fully runnable walkthrough that
+> builds up *every* idea in this lesson one tiny step at a time. Each step **prints** the
+> numbers it computes and **draws a picture** so you can *see* what is happening. Run the
+> cells in order from top to bottom. Nothing here needs the internet or any downloaded data.
+
+**What we will build, step by step:**
+1. **Sigmoid** — a probability-shaped S-curve and its saturating derivative.
+2. **Hyperbolic tangent** — a zero-centered S-curve with similar tail saturation.
+3. **ReLU** — a simple positive-side gate and the dying-ReLU risk.
+4. **Leaky ReLU** — a ReLU variant with a small negative-side gradient.
+5. **ELU** — a smooth negative branch with a linear positive branch.
+6. **Softmax** — stable normalized exponentials for multiclass probabilities.
+7. **Vanishing gradients** — products of small derivatives through many layers.
+
+### Step 0 — Set up our tools
+
+We import NumPy (vectorized formulas) and Matplotlib (curves and bar charts). We fix a random
+**seed** so every printed value is reproducible, then define tiny activation helpers so later
+cells can focus on the ideas instead of repeated formulas.
+
+```python
+import numpy as np                       # NumPy: vectorized exponentials, maxima, and probability calculations.
+import matplotlib.pyplot as plt          # Matplotlib: draw activation curves and gradient products.
+
+np.random.seed(0)                         # Fix the seed so every run prints the SAME numbers.
+plt.rcParams["figure.figsize"] = (7, 4)   # Use a comfortable default plot size.
+
+
+def log(label, value):                    # A tiny logger so each printed line explains itself.
+    print(f"[{label}] {value}")           # Format is: [what this is] the value.
+
+
+def sigmoid_demo(z_demo):                 # Define sigmoid for scalar or array inputs.
+    return 1.0 / (1.0 + np.exp(-z_demo))  # Apply sigma(z)=1/(1+exp(-z)).
+
+
+def sigmoid_grad_demo(z_demo):            # Define the sigmoid derivative.
+    s_demo = sigmoid_demo(z_demo)          # Reuse sigma(z) in the derivative formula.
+    return s_demo * (1.0 - s_demo)         # Return sigma(z)(1-sigma(z)).
+
+
+def tanh_grad_demo(z_demo):               # Define the tanh derivative.
+    t_demo = np.tanh(z_demo)               # Compute tanh(z) once.
+    return 1.0 - t_demo**2                 # Return 1-tanh(z)^2.
+
+
+def relu_demo(z_demo):                    # Define ReLU.
+    return np.maximum(0.0, z_demo)         # Return max(0,z) element by element.
+
+
+def relu_grad_demo(z_demo):               # Define a practical ReLU subgradient.
+    return (z_demo > 0.0).astype(float)    # Use slope 1 on the right and 0 otherwise.
+
+
+def leaky_relu_demo(z_demo, eps_demo=0.05):  # Define Leaky ReLU with a visible demo slope.
+    return np.where(z_demo > 0.0, z_demo, eps_demo * z_demo)  # Use eps*z on the negative side.
+
+
+def leaky_relu_grad_demo(z_demo, eps_demo=0.05):  # Define the Leaky ReLU derivative.
+    return np.where(z_demo > 0.0, 1.0, eps_demo)  # Use slope eps on the left and 1 on the right.
+
+
+def elu_demo(z_demo, alpha_demo=1.0):      # Define ELU with configurable alpha.
+    return np.where(z_demo >= 0.0, z_demo, alpha_demo * (np.exp(z_demo) - 1.0))  # Use exponential left branch.
+
+
+def elu_grad_demo(z_demo, alpha_demo=1.0): # Define the ELU derivative.
+    return np.where(z_demo >= 0.0, 1.0, alpha_demo * np.exp(z_demo))  # Use alpha*exp(z) on the left.
+
+
+def softmax_demo(logits_demo):             # Define stable softmax for one vector.
+    shifted_demo = logits_demo - np.max(logits_demo)  # Subtract the max logit for numerical stability.
+    exp_demo = np.exp(shifted_demo)         # Exponentiate shifted logits whose largest value is zero.
+    probs_demo = exp_demo / np.sum(exp_demo)  # Normalize exponentials into probabilities.
+    return probs_demo, shifted_demo, exp_demo  # Return intermediates for teaching logs.
+
+log("setup", "activation helpers ready — seed fixed to 0")  # Confirm setup.
+```
+▶ What you'll see: one line confirming the activation helpers are ready.
+
+### Step 1 — Sigmoid: probability-shaped output with small tail gradients
+
+Sigmoid maps any real number into $(0,1)$, so it is natural for binary probabilities. Its
+derivative $\sigma(z)(1-\sigma(z))$ peaks at $0.25$ and becomes tiny in the tails, which
+can shrink backpropagated gradients.
+
+```python
+z_sig_demo = np.array([-8.0, -2.0, 0.0, 2.0, 8.0])                  # Choose tail and center pre-activation values.
+sig_values_demo = sigmoid_demo(z_sig_demo)                          # Compute sigmoid outputs.
+sig_grads_demo = sigmoid_grad_demo(z_sig_demo)                      # Compute sigmoid derivatives.
+log("z values", z_sig_demo.tolist())                                # Print inspected inputs.
+log("sigmoid(z)", np.round(sig_values_demo, 4).tolist())            # Print probability-like outputs.
+log("sigmoid'(z)", np.round(sig_grads_demo, 6).tolist())            # Print gradient multipliers.
+log("max sigmoid derivative", round(float(sigmoid_grad_demo(np.array([0.0]))[0]), 3))  # Print the peak derivative.
+
+grid_sig_demo = np.linspace(-8.0, 8.0, 500)                         # Build a smooth grid for curves.
+plt.plot(grid_sig_demo, sigmoid_demo(grid_sig_demo), label="sigmoid")  # Draw the forward sigmoid curve.
+plt.plot(grid_sig_demo, sigmoid_grad_demo(grid_sig_demo), "--", label="sigmoid derivative")  # Draw the derivative curve.
+plt.scatter(z_sig_demo, sig_values_demo, color="steelblue", zorder=3, label="sample outputs")  # Mark printed outputs.
+plt.title("Sigmoid saturates toward 0 and 1")                       # Title the plot.
+plt.xlabel("z")                                                     # Label the pre-activation axis.
+plt.ylabel("value")                                                 # Label the output/derivative axis.
+plt.legend()                                                        # Show curve labels.
+plt.show()                                                          # Render the sigmoid visualization.
+```
+▶ What you'll see: the sigmoid curve flattens near 0 and 1, and the dashed derivative is tiny in those flat regions.
+
+### Step 2 — Hyperbolic tangent: zero-centered but still saturating
+
+Tanh maps real numbers into $(-1,1)$ and is centered at zero, which often makes hidden features
+easier to optimize than always-positive sigmoid features. But tanh still saturates in both tails,
+so its derivative also goes to zero for large $|z|$.
+
+```python
+z_tanh_demo = np.array([-4.0, -1.0, 0.0, 1.0, 4.0])                 # Choose tail and center values for tanh.
+tanh_values_demo = np.tanh(z_tanh_demo)                             # Compute tanh outputs.
+tanh_grads_demo = tanh_grad_demo(z_tanh_demo)                       # Compute tanh derivatives.
+log("tanh(z)", np.round(tanh_values_demo, 4).tolist())              # Print zero-centered activation values.
+log("tanh'(z)", np.round(tanh_grads_demo, 6).tolist())              # Print derivative values.
+log("tanh'(0)", float(tanh_grad_demo(np.array([0.0]))[0]))          # Print the slope at the origin.
+
+grid_tanh_demo = np.linspace(-5.0, 5.0, 500)                        # Build a smooth grid for tanh curves.
+plt.plot(grid_tanh_demo, np.tanh(grid_tanh_demo), label="tanh")     # Draw the forward tanh curve.
+plt.plot(grid_tanh_demo, tanh_grad_demo(grid_tanh_demo), "--", label="tanh derivative")  # Draw tanh slopes.
+plt.axhline(0.0, color="black", linewidth=0.8)                      # Mark zero to emphasize centering.
+plt.title("Tanh is zero-centered but still saturates")              # Title the plot.
+plt.xlabel("z")                                                     # Label the pre-activation axis.
+plt.ylabel("value")                                                 # Label the output/derivative axis.
+plt.legend()                                                        # Show curve labels.
+plt.show()                                                          # Render the tanh visualization.
+```
+▶ What you'll see: tanh crosses the origin and has slope 1 there, but its derivative collapses in both tails.
+
+### Step 3 — ReLU: a positive-side gate with a zero-gradient danger
+
+ReLU computes $\max(0,z)$, so positive inputs pass through with derivative $1$. Negative inputs
+become exactly zero with derivative $0$, which is fast and useful but can create a **dying ReLU**
+if a unit stays negative for all relevant examples.
+
+```python
+z_relu_demo = np.array([-3.0, -0.5, 0.0, 0.5, 3.0])                 # Choose negative, zero, and positive branch examples.
+relu_values_demo = relu_demo(z_relu_demo)                           # Compute ReLU outputs.
+relu_grads_demo = relu_grad_demo(z_relu_demo)                       # Compute practical ReLU derivatives.
+unit_inputs_demo = np.random.normal(loc=-2.0, scale=0.4, size=12)   # Simulate one badly biased unit's pre-activations.
+unit_active_demo = relu_demo(unit_inputs_demo) > 0.0                # Check whether the unit activates on any example.
+log("ReLU(z)", relu_values_demo.tolist())                          # Print ReLU outputs.
+log("ReLU'(z)", relu_grads_demo.tolist())                          # Print ReLU gradient multipliers.
+log("bad unit pre-activation max", round(float(unit_inputs_demo.max()), 3))  # Print the largest biased pre-activation.
+log("bad unit ever active?", bool(np.any(unit_active_demo)))        # Print whether this unit escapes zero.
+
+grid_relu_demo = np.linspace(-4.0, 4.0, 500)                        # Build a smooth grid for ReLU.
+plt.plot(grid_relu_demo, relu_demo(grid_relu_demo), label="ReLU")   # Draw the forward ReLU curve.
+plt.plot(grid_relu_demo, relu_grad_demo(grid_relu_demo), "--", label="ReLU derivative")  # Draw the derivative step.
+plt.axvline(0.0, color="black", linewidth=0.8)                      # Mark the branch point.
+plt.title("ReLU passes positives and kills negatives")              # Title the plot.
+plt.xlabel("z")                                                     # Label the pre-activation axis.
+plt.ylabel("value")                                                 # Label the output/derivative axis.
+plt.legend()                                                        # Show curve labels.
+plt.show()                                                          # Render the ReLU visualization.
+```
+▶ What you'll see: the negative side is flat at zero, and the simulated biased unit never activates.
+
+### Step 4 — Leaky ReLU: keep a small gradient on the negative side
+
+Leaky ReLU changes only the negative branch: instead of outputting exactly $0$, it outputs
+$\epsilon z$. That tiny slope means a negative unit can still receive a gradient and potentially
+move back toward useful pre-activation values.
+
+```python
+eps_leaky_demo = 0.05                                                # Choose a visible negative-side slope.
+z_leaky_demo = np.array([-3.0, -1.0, 0.0, 1.0, 3.0])                 # Choose branch-test inputs.
+leaky_values_demo = leaky_relu_demo(z_leaky_demo, eps_leaky_demo)    # Compute Leaky ReLU outputs.
+leaky_grads_demo = leaky_relu_grad_demo(z_leaky_demo, eps_leaky_demo)  # Compute Leaky ReLU derivatives.
+relu_compare_demo = relu_demo(z_leaky_demo)                          # Compute ordinary ReLU outputs for comparison.
+log("epsilon", eps_leaky_demo)                                      # Print the leak slope.
+log("LeakyReLU(z)", np.round(leaky_values_demo, 3).tolist())        # Print leaky outputs.
+log("LeakyReLU'(z)", np.round(leaky_grads_demo, 3).tolist())        # Print leaky derivatives.
+log("ordinary ReLU at z=-3", float(relu_compare_demo[0]))           # Print the clipped ReLU comparison.
+
+grid_leaky_demo = np.linspace(-4.0, 4.0, 500)                       # Build a smooth grid for comparison.
+plt.plot(grid_leaky_demo, relu_demo(grid_leaky_demo), label="ReLU") # Draw ordinary ReLU.
+plt.plot(grid_leaky_demo, leaky_relu_demo(grid_leaky_demo, eps_leaky_demo), label="Leaky ReLU")  # Draw Leaky ReLU.
+plt.plot(grid_leaky_demo, leaky_relu_grad_demo(grid_leaky_demo, eps_leaky_demo), "--", label="Leaky derivative")  # Draw leaky slopes.
+plt.title("Leaky ReLU keeps a small negative-side slope")           # Title the plot.
+plt.xlabel("z")                                                     # Label the pre-activation axis.
+plt.ylabel("value")                                                 # Label outputs and derivative.
+plt.legend()                                                        # Show curve labels.
+plt.show()                                                          # Render the Leaky ReLU visualization.
+```
+▶ What you'll see: Leaky ReLU is almost ReLU on the right, but it has a small slanted line and nonzero derivative on the left.
+
+### Step 5 — ELU: a smooth negative branch plus a linear positive branch
+
+ELU uses the same linear positive branch as ReLU, but its negative side is $\alpha(e^z-1)$.
+For $\alpha=1$, the curve is smooth at zero; far left it saturates near $-1$ instead of going
+unbounded downward.
+
+```python
+alpha_elu_demo = 1.0                                                 # Use the common alpha value.
+z_elu_demo = np.array([-4.0, -1.0, 0.0, 1.0, 4.0])                  # Choose negative, zero, and positive inputs.
+elu_values_demo = elu_demo(z_elu_demo, alpha_elu_demo)               # Compute ELU outputs.
+elu_grads_demo = elu_grad_demo(z_elu_demo, alpha_elu_demo)           # Compute ELU derivatives.
+log("ELU(z)", np.round(elu_values_demo, 4).tolist())                # Print ELU activation values.
+log("ELU'(z)", np.round(elu_grads_demo, 4).tolist())                # Print ELU gradient multipliers.
+log("left saturation level", -alpha_elu_demo)                       # Print the negative lower limit.
+
+grid_elu_demo = np.linspace(-5.0, 5.0, 500)                         # Build a smooth grid for ELU.
+plt.plot(grid_elu_demo, elu_demo(grid_elu_demo, alpha_elu_demo), label="ELU")  # Draw the ELU activation.
+plt.plot(grid_elu_demo, elu_grad_demo(grid_elu_demo, alpha_elu_demo), "--", label="ELU derivative")  # Draw ELU slopes.
+plt.axhline(-alpha_elu_demo, color="gray", linestyle=":", label="-alpha")  # Mark the left saturation level.
+plt.title("ELU smooths the negative branch")                        # Title the plot.
+plt.xlabel("z")                                                     # Label the pre-activation axis.
+plt.ylabel("value")                                                 # Label output and derivative values.
+plt.legend()                                                        # Show curve labels.
+plt.show()                                                          # Render the ELU visualization.
+```
+▶ What you'll see: the ELU curve bends smoothly below zero, approaches $-\alpha$, and has derivative 1 on the positive side.
+
+### Step 6 — Softmax: stable normalized exponentials
+
+Softmax turns logits into positive probabilities that sum to one. Subtracting the largest logit
+before exponentiating changes none of the probabilities, but it prevents overflow; the Jacobian
+then shows how every probability depends on every logit.
+
+```python
+logits_soft_demo = np.array([12.0, 8.0, 3.0, -2.0])                 # Create four class scores with one clear winner.
+probs_soft_demo, shifted_soft_demo, exp_soft_demo = softmax_demo(logits_soft_demo)  # Compute stable softmax and intermediates.
+probs_shifted_demo, shifted_again_demo, exp_again_demo = softmax_demo(logits_soft_demo + 1000.0)  # Recompute after a huge constant shift.
+jacobian_soft_demo = np.diag(probs_soft_demo) - np.outer(probs_soft_demo, probs_soft_demo)  # Build the softmax Jacobian.
+log("logits", logits_soft_demo.tolist())                           # Print original class scores.
+log("shifted logits", shifted_soft_demo.tolist())                   # Print max-subtracted logits.
+log("exp(shifted)", np.round(exp_soft_demo, 6).tolist())            # Print bounded exponentials.
+log("softmax probabilities", np.round(probs_soft_demo, 6).tolist()) # Print probabilities.
+log("probability sum", round(float(probs_soft_demo.sum()), 6))      # Print the normalization check.
+log("shift-invariance max diff", float(np.max(np.abs(probs_soft_demo - probs_shifted_demo))))  # Print invariance check.
+log("Jacobian row sums", np.round(jacobian_soft_demo.sum(axis=1), 8).tolist())  # Print row sums, which should be zero.
+
+fig_soft_demo, axes_soft_demo = plt.subplots(1, 2, figsize=(10, 4))  # Create probability and Jacobian panels.
+axes_soft_demo[0].bar(["class 0", "class 1", "class 2", "class 3"], probs_soft_demo, color="slateblue")  # Plot class probabilities.
+axes_soft_demo[0].set_ylim(0.0, 1.0)                                # Use probability-scale limits.
+axes_soft_demo[0].set_title("softmax probabilities")                # Title the probability panel.
+image_soft_demo = axes_soft_demo[1].imshow(jacobian_soft_demo, cmap="coolwarm", vmin=-0.25, vmax=0.25)  # Show signed derivatives.
+axes_soft_demo[1].set_title("softmax Jacobian")                     # Title the Jacobian panel.
+plt.colorbar(image_soft_demo, ax=axes_soft_demo[1])                 # Add a derivative color scale.
+plt.tight_layout()                                                  # Keep panels readable.
+plt.show()                                                          # Render the softmax visualization.
+```
+▶ What you'll see: the probabilities are positive and sum to 1, adding 1000 changes nothing, and the Jacobian has coupled positive/negative entries.
+
+### Step 7 — Vanishing gradients: products of small slopes get tiny fast
+
+Backpropagation multiplies local derivatives. If each derivative is at most $0.25$ (as with the
+best-case sigmoid slope), then depth $L$ can shrink the signal like $(0.25)^L$; active ReLU paths
+with derivative $1$ do not shrink in this idealized comparison.
+
+```python
+depths_vanish_demo = np.arange(1, 31)                               # Track depths from 1 through 30.
+sigmoid_best_demo = 0.25 ** depths_vanish_demo                      # Compute the best-case sigmoid derivative product.
+tanh_tail_slope_demo = float(tanh_grad_demo(np.array([3.0]))[0])     # Pick one saturated tanh tail slope.
+tanh_tail_demo = tanh_tail_slope_demo ** depths_vanish_demo          # Compute repeated tanh-tail products.
+relu_active_demo = np.ones_like(depths_vanish_demo, dtype=float)     # Compute the all-active ReLU product.
+leaky_left_demo = 0.05 ** depths_vanish_demo                         # Compute repeated negative-side Leaky ReLU products.
+log("sigmoid product depth 5", float(sigmoid_best_demo[4]))          # Print moderate-depth sigmoid shrinkage.
+log("sigmoid product depth 30", float(sigmoid_best_demo[-1]))        # Print deep sigmoid shrinkage.
+log("tanh tail slope at z=3", round(tanh_tail_slope_demo, 6))        # Print the repeated tanh slope.
+log("active ReLU product depth 30", float(relu_active_demo[-1]))     # Print the non-shrinking active-ReLU product.
+
+plt.semilogy(depths_vanish_demo, sigmoid_best_demo, marker="o", label="sigmoid best case (0.25)^L")  # Plot sigmoid products.
+plt.semilogy(depths_vanish_demo, tanh_tail_demo, marker="s", label="tanh tail slope^L")  # Plot tanh tail products.
+plt.semilogy(depths_vanish_demo, leaky_left_demo, marker="^", label="leaky negative slope^L")  # Plot repeated leaky-left products.
+plt.semilogy(depths_vanish_demo, relu_active_demo, marker=".", label="active ReLU product")  # Plot active ReLU comparison.
+plt.title("Vanishing gradients are products of local slopes")        # Title the log-scale plot.
+plt.xlabel("depth L")                                                # Label the depth axis.
+plt.ylabel("gradient multiplier")                                   # Label the chain-rule product.
+plt.legend()                                                         # Show curve labels.
+plt.show()                                                           # Render the vanishing-gradient plot.
+```
+▶ What you'll see: products of small slopes dive toward zero on a log scale, while the active ReLU product stays at 1.
+
+### Recap — what you just ran
+
+- **Sigmoid** and **tanh** are smooth S-curves whose derivatives vanish in the tails.
+- **ReLU** keeps positive gradients strong but can kill negative-side gradients completely.
+- **Leaky ReLU** and **ELU** keep modified negative branches so learning signal can still pass.
+- **Softmax** converts logits to stable probabilities and has a coupled Jacobian.
+- **Vanishing gradients** happen because backprop multiplies many small local derivatives.
+
+Everything below (starting at **§1 Overview**) develops these same ideas with full derivations,
+more examples, and activation-function experiments.
+
+---
+
 ## 1. Overview
 
 Activation functions are the elementwise nonlinear functions that turn a stack of affine maps into a neural network capable of representing curved decision boundaries, saturating probabilities, and multiclass outputs. They matter twice: in the forward pass they shape the representation, and in the backward pass their derivatives decide how much gradient reaches earlier layers.

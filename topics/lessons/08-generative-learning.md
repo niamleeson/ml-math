@@ -2,6 +2,208 @@
 > **Source:** CS 229 · **Category:** Model · **Type:** ⚖️ Both · [↑ Full reference](../../ai-ml-cheatsheets.md)
 > 📓 The coded examples form a runnable notebook section; an .ipynb will be generated.
 
+## 0. Step-by-Step Worked Example — Start Here (Beginner Friendly)
+
+> 🧑‍🎓 **New to this topic? Start here.** This is a gentle, fully runnable walkthrough that
+> builds up *every* idea in this lesson one tiny step at a time. Each step **prints** the
+> numbers it computes and **draws a picture** so you can *see* what is happening. Run the
+> cells in order from top to bottom. Nothing here needs the internet or any downloaded data.
+
+**What we will build, step by step:**
+1. **Generative versus discriminative** — build $P(x\mid y)P(y)$, then normalize with Bayes' rule.
+2. **Gaussian Discriminant Analysis (GDA)** — estimate priors, means, one shared covariance, likelihoods, and a linear boundary.
+3. **Naive Bayes** — multiply feature likelihoods, use Laplace smoothing, and score a document in log space.
+
+### Step 0 — Set up our tools
+
+We import NumPy (arrays, probabilities, linear algebra) and Matplotlib (density and probability
+pictures). We fix a random **seed** so the printed numbers are reproducible, and define a tiny
+`log()` helper so every output line has a label.
+
+```python
+import numpy as np                       # NumPy: arrays, exponentials, counts, and linear algebra.
+import matplotlib.pyplot as plt          # Matplotlib: draw densities, boundaries, and probability bars.
+
+np.random.seed(0)                         # Fix the seed so every run prints the SAME numbers.
+plt.rcParams["figure.figsize"] = (7, 4)   # A comfortable default plot size.
+
+def log(label, value):                    # A tiny logger so each printed line explains itself.
+    print(f"[{label}] {value}")           # Format is: [what this is] the value.
+
+log("setup", "tools ready — NumPy + Matplotlib imported, seed fixed to 0")
+```
+▶ What you'll see: one line confirming the tools are ready.
+
+### Step 1 — Generative versus discriminative: model how each class produced x
+
+A discriminative model tries to learn $P(y\mid x)$ or the boundary directly. A generative model
+first learns a class prior $P(y)$ and class-conditional likelihood $P(x\mid y)$, then uses
+Bayes' rule to normalize the prior-weighted likelihoods into posteriors.
+
+```python
+def normal_pdf_demo(x_value_demo, mean_demo, var_demo):                         # Define a 1-D Gaussian density helper.
+    safe_var_demo = max(float(var_demo), 1e-12)                                 # Guard against zero variance.
+    return np.exp(-0.5 * (x_value_demo - mean_demo) ** 2 / safe_var_demo) / np.sqrt(2.0 * np.pi * safe_var_demo)  # Evaluate the density.
+
+x_gen_demo = np.array([-2.2, -1.4, -0.9, 0.8, 1.4, 2.1])                       # Tiny one-feature observations.
+y_gen_demo = np.array([0, 0, 0, 1, 1, 1])                                      # Class labels for the observations.
+means_gen_demo = np.array([x_gen_demo[y_gen_demo == 0].mean(), x_gen_demo[y_gen_demo == 1].mean()])  # Class means.
+vars_gen_demo = np.array([x_gen_demo[y_gen_demo == 0].var(), x_gen_demo[y_gen_demo == 1].var()]) + 1e-6  # Class variances.
+priors_gen_demo = np.array([np.mean(y_gen_demo == 0), np.mean(y_gen_demo == 1)])  # Class priors from label counts.
+x_new_gen_demo = 0.2                                                           # New point to classify.
+likelihoods_gen_demo = np.array([normal_pdf_demo(x_new_gen_demo, means_gen_demo[k_demo], vars_gen_demo[k_demo]) for k_demo in [0, 1]])  # P(x|y=k).
+scores_gen_demo = likelihoods_gen_demo * priors_gen_demo                       # Unnormalized posterior weights P(x|y)P(y).
+posterior_gen_demo = scores_gen_demo / scores_gen_demo.sum()                   # Bayes normalization into P(y|x).
+
+log("class means", np.round(means_gen_demo, 3))                                # Show where each class density is centered.
+log("class variances", np.round(vars_gen_demo, 3))                             # Show within-class spread.
+log("class priors", np.round(priors_gen_demo, 3))                              # Show P(y=0), P(y=1).
+log("likelihoods P(x_new|y)", np.round(likelihoods_gen_demo, 4))               # Show class-conditional evidence.
+log("scores P(x|y)P(y)", np.round(scores_gen_demo, 4))                         # Show prior-weighted evidence.
+log("posterior P(y|x)", np.round(posterior_gen_demo, 4))                       # Show normalized probabilities.
+
+grid_gen_demo = np.linspace(-3.0, 3.0, 300)                                    # Grid for density curves.
+density0_gen_demo = normal_pdf_demo(grid_gen_demo, means_gen_demo[0], vars_gen_demo[0])  # Class-0 likelihood curve.
+density1_gen_demo = normal_pdf_demo(grid_gen_demo, means_gen_demo[1], vars_gen_demo[1])  # Class-1 likelihood curve.
+score0_gen_demo = density0_gen_demo * priors_gen_demo[0]                      # Class-0 prior-weighted score curve.
+score1_gen_demo = density1_gen_demo * priors_gen_demo[1]                      # Class-1 prior-weighted score curve.
+boundary_gen_demo = grid_gen_demo[np.argmin(np.abs(score0_gen_demo - score1_gen_demo))]  # Approximate Bayes boundary.
+
+plt.subplot(1, 2, 1)                                                           # Left panel: likelihood curves.
+plt.plot(grid_gen_demo, density0_gen_demo, label="P(x|y=0)", color="tab:blue") # Draw class-0 likelihood.
+plt.plot(grid_gen_demo, density1_gen_demo, label="P(x|y=1)", color="tab:orange")  # Draw class-1 likelihood.
+plt.axvline(boundary_gen_demo, color="black", linestyle="--", label="Bayes boundary")  # Mark the score-tie point.
+plt.scatter(x_gen_demo[y_gen_demo == 0], np.zeros(np.sum(y_gen_demo == 0)), color="tab:blue", edgecolor="k", s=55)  # Plot class-0 samples.
+plt.scatter(x_gen_demo[y_gen_demo == 1], np.zeros(np.sum(y_gen_demo == 1)), color="tab:orange", edgecolor="k", s=55)  # Plot class-1 samples.
+plt.xlabel("one feature x")                                                   # Label the feature axis.
+plt.ylabel("density")                                                         # Label the density axis.
+plt.title("Generative likelihoods")                                           # Title the likelihood panel.
+plt.legend()                                                                  # Show curve labels.
+plt.subplot(1, 2, 2)                                                          # Right panel: posterior for one point.
+plt.bar(["class 0", "class 1"], posterior_gen_demo, color=["tab:blue", "tab:orange"])  # Draw posterior probabilities.
+plt.ylim(0.0, 1.0)                                                            # Use a probability scale.
+plt.ylabel("posterior probability")                                           # Label the posterior axis.
+plt.title(f"Bayes posterior at x={x_new_gen_demo}")                           # Title the posterior panel.
+plt.tight_layout()                                                            # Keep the two panels readable.
+plt.show()                                                                    # Render both plots.
+```
+▶ What you'll see: two class likelihood curves, a Bayes boundary, and posterior bars for the new point.
+
+### Step 2 — Gaussian Discriminant Analysis: shared Gaussian shape, linear boundary
+
+GDA assumes each class is Gaussian, but both classes share one covariance matrix $\Sigma$.
+We estimate the class prior, class means, shared covariance, and Gaussian likelihoods from a
+tiny 2-D dataset; because $\Sigma$ is shared, the decision boundary is linear.
+
+```python
+X_gda_demo = np.array([[-2.0, -1.0], [-1.2, -0.4], [-0.8, -1.4], [0.9, 0.8], [1.5, 1.0], [1.9, 1.8]])  # Tiny 2-D data.
+y_gda_demo = np.array([0, 0, 0, 1, 1, 1])                                      # Binary labels for GDA.
+priors_gda_demo = np.array([np.mean(y_gda_demo == 0), np.mean(y_gda_demo == 1)])  # Estimate P(y=0), P(y=1).
+means_gda_demo = np.vstack([X_gda_demo[y_gda_demo == k_demo].mean(axis=0) for k_demo in [0, 1]])  # Estimate mu_0 and mu_1.
+residuals_gda_demo = X_gda_demo - means_gda_demo[y_gda_demo]                    # Center each point by its own class mean.
+Sigma_gda_demo = residuals_gda_demo.T @ residuals_gda_demo / X_gda_demo.shape[0] # Shared covariance MLE.
+Sigma_gda_demo = Sigma_gda_demo + 1e-6 * np.eye(2)                               # Tiny jitter for safe inversion.
+inv_gda_demo = np.linalg.inv(Sigma_gda_demo)                                     # Invert shared covariance.
+sign_gda_demo, logdet_gda_demo = np.linalg.slogdet(Sigma_gda_demo)               # Compute log determinant stably.
+
+log("GDA priors", np.round(priors_gda_demo, 3))                                  # Show class frequencies.
+log("GDA means", np.round(means_gda_demo, 3))                                    # Show fitted class centers.
+log("GDA shared covariance", np.round(Sigma_gda_demo, 3))                        # Show pooled class shape.
+
+x_new_gda_demo = np.array([0.2, 0.1])                                            # New 2-D point to classify.
+diff_new_gda_demo = x_new_gda_demo - means_gda_demo                              # Center new point at each class mean.
+quad_new_gda_demo = np.sum((diff_new_gda_demo @ inv_gda_demo) * diff_new_gda_demo, axis=1)  # Mahalanobis distances.
+loglik_new_gda_demo = -0.5 * (2.0 * np.log(2.0 * np.pi) + logdet_gda_demo + quad_new_gda_demo)  # Gaussian log likelihoods.
+logscore_new_gda_demo = loglik_new_gda_demo + np.log(priors_gda_demo)            # Add log priors.
+weights_new_gda_demo = np.exp(logscore_new_gda_demo - np.max(logscore_new_gda_demo))  # Stabilize and exponentiate.
+posterior_new_gda_demo = weights_new_gda_demo / weights_new_gda_demo.sum()       # Normalize into class posteriors.
+
+log("new point", x_new_gda_demo)                                                 # Show the point being classified.
+log("Mahalanobis distances", np.round(quad_new_gda_demo, 3))                     # Show class-distance terms.
+log("GDA log scores", np.round(logscore_new_gda_demo, 3))                        # Show log P(x|y)+log P(y).
+log("GDA posterior", np.round(posterior_new_gda_demo, 4))                        # Show normalized probabilities.
+
+grid_x_gda_demo = np.linspace(-3.0, 3.0, 180)                                    # Create x coordinates for plotting.
+grid_y_gda_demo = np.linspace(-2.5, 2.7, 180)                                    # Create y coordinates for plotting.
+xx_gda_demo, yy_gda_demo = np.meshgrid(grid_x_gda_demo, grid_y_gda_demo)         # Build a 2-D grid.
+grid_gda_demo = np.column_stack([xx_gda_demo.ravel(), yy_gda_demo.ravel()])      # Flatten grid coordinates.
+diff0_gda_demo = grid_gda_demo - means_gda_demo[0]                               # Center grid points at class 0.
+diff1_gda_demo = grid_gda_demo - means_gda_demo[1]                               # Center grid points at class 1.
+quad0_gda_demo = np.sum((diff0_gda_demo @ inv_gda_demo) * diff0_gda_demo, axis=1) # Class-0 Mahalanobis distances.
+quad1_gda_demo = np.sum((diff1_gda_demo @ inv_gda_demo) * diff1_gda_demo, axis=1) # Class-1 Mahalanobis distances.
+logodds_gda_demo = np.log(priors_gda_demo[1] / priors_gda_demo[0]) - 0.5 * quad1_gda_demo + 0.5 * quad0_gda_demo  # Log score ratio.
+logodds_gda_demo = logodds_gda_demo.reshape(xx_gda_demo.shape)                   # Reshape scores back to grid shape.
+
+plt.scatter(X_gda_demo[y_gda_demo == 0, 0], X_gda_demo[y_gda_demo == 0, 1], color="tab:blue", edgecolor="k", s=70, label="class 0")  # Draw class 0.
+plt.scatter(X_gda_demo[y_gda_demo == 1, 0], X_gda_demo[y_gda_demo == 1, 1], color="tab:orange", edgecolor="k", s=70, label="class 1")  # Draw class 1.
+plt.scatter(means_gda_demo[:, 0], means_gda_demo[:, 1], color="black", marker="X", s=150, label="means")  # Mark fitted means.
+plt.scatter([x_new_gda_demo[0]], [x_new_gda_demo[1]], color="lime", edgecolor="k", s=90, label="new point")  # Mark new point.
+plt.contour(xx_gda_demo, yy_gda_demo, logodds_gda_demo, levels=[0.0], colors="black", linewidths=2.0)  # Draw log-odds-zero boundary.
+plt.xlabel("feature 1")                                                       # Label first coordinate.
+plt.ylabel("feature 2")                                                       # Label second coordinate.
+plt.title("GDA: shared covariance makes the boundary linear")                 # Add a teaching title.
+plt.legend()                                                                  # Show data, means, and new-point labels.
+plt.show()                                                                    # Render the GDA plot.
+```
+▶ What you'll see: class points, fitted means, a new point, and a straight boundary where GDA is undecided.
+
+### Step 3 — Naive Bayes: independent feature likelihoods plus smoothing
+
+Naive Bayes avoids estimating the full joint distribution by assuming
+$P(x\mid y)=\prod_j P(x_j\mid y)$. For sparse counts, Laplace smoothing adds one pseudo-count
+so unseen words get small nonzero probabilities, and log scores prevent tiny products from
+underflowing.
+
+```python
+vocab_nb_demo = np.array(["win", "cash", "meeting", "project"])                # Tiny vocabulary in fixed column order.
+counts_nb_demo = np.array([[0, 0, 3, 2], [3, 2, 0, 1]], dtype=float)           # Rows: class 0=ham, class 1=spam word counts.
+doc_counts_nb_demo = np.array([2, 2], dtype=float)                             # Number of documents per class.
+priors_nb_demo = doc_counts_nb_demo / doc_counts_nb_demo.sum()                 # Estimate P(y=k) from document counts.
+query_counts_nb_demo = np.array([1, 1, 1, 0], dtype=float)                     # Query contains "win cash meeting".
+raw_probs_nb_demo = counts_nb_demo / counts_nb_demo.sum(axis=1, keepdims=True) # Unsmoothed P(word|class), with zeros.
+smooth_probs_nb_demo = (counts_nb_demo + 1.0) / (counts_nb_demo.sum(axis=1, keepdims=True) + len(vocab_nb_demo))  # Laplace smoothing.
+raw_scores_nb_demo = priors_nb_demo * np.prod(raw_probs_nb_demo ** query_counts_nb_demo, axis=1)  # Raw Naive Bayes product scores.
+log_scores_nb_demo = np.log(priors_nb_demo) + np.sum(query_counts_nb_demo * np.log(smooth_probs_nb_demo), axis=1) # Smoothed log scores.
+weights_nb_demo = np.exp(log_scores_nb_demo - np.max(log_scores_nb_demo))      # Stabilize log scores before exponentiating.
+posterior_nb_demo = weights_nb_demo / weights_nb_demo.sum()                    # Normalize into posterior probabilities.
+
+log("vocabulary", vocab_nb_demo)                                               # Show the column order.
+log("class priors [ham, spam]", np.round(priors_nb_demo, 3))                   # Show class priors.
+log("raw P(word|class)", np.round(raw_probs_nb_demo, 3))                       # Show unsmoothed word probabilities.
+log("raw scores for query", np.round(raw_scores_nb_demo, 6))                   # Show zero-probability collapse.
+log("Laplace P(word|class)", np.round(smooth_probs_nb_demo, 3))                # Show smoothed nonzero probabilities.
+log("smoothed log scores", np.round(log_scores_nb_demo, 3))                    # Show additive log-space scores.
+log("smoothed posterior [ham, spam]", np.round(posterior_nb_demo, 4))          # Show final class probabilities.
+
+positions_nb_demo = np.arange(len(vocab_nb_demo))                              # Bar positions for vocabulary words.
+plt.subplot(1, 2, 1)                                                           # Left panel: smoothed word probabilities.
+plt.bar(positions_nb_demo - 0.18, smooth_probs_nb_demo[0], width=0.36, color="tab:blue", label="ham")  # Plot ham word probabilities.
+plt.bar(positions_nb_demo + 0.18, smooth_probs_nb_demo[1], width=0.36, color="tab:orange", label="spam")  # Plot spam word probabilities.
+plt.xticks(positions_nb_demo, vocab_nb_demo, rotation=20)                      # Label vocabulary bars.
+plt.ylabel("Laplace P(word | class)")                                          # Label likelihood axis.
+plt.title("Naive Bayes word likelihoods")                                      # Title likelihood panel.
+plt.legend()                                                                   # Show ham/spam labels.
+plt.subplot(1, 2, 2)                                                           # Right panel: posterior for query.
+plt.bar(["ham", "spam"], posterior_nb_demo, color=["tab:blue", "tab:orange"])  # Plot posterior probabilities.
+plt.ylim(0.0, 1.0)                                                             # Use probability scale.
+plt.ylabel("posterior probability")                                            # Label posterior axis.
+plt.title("Posterior for 'win cash meeting'")                                 # Title posterior panel.
+plt.tight_layout()                                                             # Keep panels readable.
+plt.show()                                                                     # Render both Naive Bayes plots.
+```
+▶ What you'll see: unsmoothed scores collapse to zero, while Laplace-smoothed log scores produce a usable posterior.
+
+### Recap — what you just ran
+
+- A **generative classifier** estimated $P(x\mid y)$ and $P(y)$, then used Bayes' rule to get $P(y\mid x)$.
+- **GDA** estimated Gaussian class means plus one shared covariance; the shared covariance made the boundary linear.
+- **Naive Bayes** multiplied feature likelihoods, used **Laplace smoothing** to avoid zeros, and scored text in log space.
+
+Everything below (starting at **§1 Overview**) develops these same ideas with full derivations,
+more examples, and an interactive experiment.
+
+---
+
 ## 1. Overview
 
 Generative learning models how data is produced inside each class. Instead of drawing a boundary first, it estimates the prior $P(y)$ and the class-conditional likelihood $P(x\mid y)$, then applies Bayes' rule to classify.

@@ -2,6 +2,226 @@
 > **Source:** CS 229 · **Category:** Method · **Type:** ⚖️ Both · [↑ Full reference](../../ai-ml-cheatsheets.md)
 > 📓 The coded examples form a runnable notebook section; an .ipynb will be generated.
 
+## 0. Step-by-Step Worked Example — Start Here (Beginner Friendly)
+
+> 🧑‍🎓 **New to this topic? Start here.** This is a gentle, fully runnable walkthrough that
+> builds up *every* idea in this lesson one tiny step at a time. Each step **prints** the
+> numbers it computes and **draws a picture** so you can *see* what is happening. Run the
+> cells in order from top to bottom. Nothing here needs the internet or any downloaded data.
+
+**What we will build, step by step:**
+1. **PCA centering, scaling, and covariance** — prepare the data cloud and measure feature spread.
+2. **PCA eigenvectors as principal directions** — find the axes that capture the most variance.
+3. **PCA projection, reconstruction, and explained variance** — compress points and measure what was kept.
+4. **ICA source separation** — unmix blended non-Gaussian signals into independent-looking sources.
+
+### Step 0 — Set up our tools
+
+We import NumPy (arrays + linear algebra) and Matplotlib (pictures). We fix a random **seed**
+so every run gives the same numbers, then define a tiny `log()` helper so printed output is
+self-explanatory.
+
+```python
+import numpy as np                       # NumPy: arrays, centering, covariance, eigenvectors, and signal mixing.
+import matplotlib.pyplot as plt          # Matplotlib: draw PCA geometry and ICA signal separation.
+
+np.random.seed(0)                         # Fix the seed so every run prints the SAME numbers.
+plt.rcParams["figure.figsize"] = (7, 4)   # Use a comfortable default plot size.
+
+
+def log(label, value):                    # A tiny logger so each printed line explains itself.
+    print(f"[{label}] {value}")           # Format is: [what this is] the value.
+
+log("setup", "tools ready — NumPy + Matplotlib imported, seed fixed to 0")
+```
+▶ What you'll see: one line confirming the tools are ready.
+
+### Step 1 — PCA starts with centering, optional scaling, and covariance
+
+PCA studies **spread around the data's own center**, so we subtract each feature mean before
+measuring variance. If feature scales are very different, standardizing also prevents a large-unit
+feature from dominating the covariance matrix.
+
+```python
+X_pca_demo = np.array([[1.0, 1.1], [2.0, 1.5], [2.8, 2.1], [3.6, 2.6], [4.5, 3.2], [5.1, 3.7]])  # Tiny tilted 2-D dataset.
+mean_pca_demo = X_pca_demo.mean(axis=0)  # Compute one mean per feature column.
+X_centered_demo = X_pca_demo - mean_pca_demo  # Center the data so PCA measures shape, not location.
+std_pca_demo = X_centered_demo.std(axis=0)  # Compute feature standard deviations for optional scaling.
+X_scaled_demo = X_centered_demo / std_pca_demo  # Standardize columns to unit scale when units are incomparable.
+m_pca_demo = X_centered_demo.shape[0]  # Count examples for the CS 229 covariance normalization.
+cov_pca_demo = (X_centered_demo.T @ X_centered_demo) / m_pca_demo  # Compute Sigma = X_centered^T X_centered / m.
+cov_scaled_demo = (X_scaled_demo.T @ X_scaled_demo) / m_pca_demo  # Compute covariance after standardizing scales.
+
+log("feature means", np.round(mean_pca_demo, 3))  # Print the center being subtracted.
+log("centered column means", np.round(X_centered_demo.mean(axis=0), 10))  # Verify centering worked.
+log("feature stds", np.round(std_pca_demo, 3))  # Print scales before optional standardization.
+log("covariance matrix", np.round(cov_pca_demo, 3))  # Print variances and covariance on centered data.
+log("scaled covariance", np.round(cov_scaled_demo, 3))  # Print the standardized covariance for comparison.
+
+fig_center_demo, axes_center_demo = plt.subplots(1, 2, figsize=(10, 3.8))  # Create raw and centered panels.
+axes_center_demo[0].scatter(X_pca_demo[:, 0], X_pca_demo[:, 1], s=90, color="slateblue")  # Draw original points.
+axes_center_demo[0].scatter(mean_pca_demo[0], mean_pca_demo[1], s=130, color="black", marker="X", label="mean")  # Mark the data mean.
+axes_center_demo[0].set_title("raw data with mean")  # Title the raw panel.
+axes_center_demo[0].set_xlabel("feature 1")  # Label the first feature.
+axes_center_demo[0].set_ylabel("feature 2")  # Label the second feature.
+axes_center_demo[0].legend()  # Identify the mean marker.
+axes_center_demo[1].scatter(X_centered_demo[:, 0], X_centered_demo[:, 1], s=90, color="seagreen")  # Draw centered points.
+axes_center_demo[1].axhline(0, color="gray", linestyle="--")  # Draw centered horizontal axis.
+axes_center_demo[1].axvline(0, color="gray", linestyle="--")  # Draw centered vertical axis.
+axes_center_demo[1].set_title("centered cloud")  # Title the centered panel.
+axes_center_demo[1].set_xlabel("centered feature 1")  # Label centered feature 1.
+axes_center_demo[1].set_ylabel("centered feature 2")  # Label centered feature 2.
+plt.tight_layout()  # Keep panel labels readable.
+plt.show()  # Render the centering visualization.
+```
+▶ What you'll see: the same tilted cloud moves to mean zero, and the covariance matrix records its diagonal spread and off-diagonal co-movement.
+
+### Step 2 — PCA eigenvectors: principal directions are variance-maximizing axes
+
+For any unit direction $u$, projected variance is $u^T\Sigma u$. The directions that maximize
+this quantity are eigenvectors of the covariance matrix, and their eigenvalues tell us how much
+variance each principal component captures.
+
+```python
+eigvals_pca_demo, eigvecs_pca_demo = np.linalg.eigh(cov_pca_demo)  # Eigen-decompose the symmetric covariance matrix.
+order_pca_demo = np.argsort(eigvals_pca_demo)[::-1]  # Sort component indices from largest variance to smallest.
+eigvals_pca_demo = eigvals_pca_demo[order_pca_demo]  # Reorder eigenvalues by explained variance.
+eigvecs_pca_demo = eigvecs_pca_demo[:, order_pca_demo]  # Reorder eigenvectors to match the eigenvalues.
+ratio_pca_demo = eigvals_pca_demo / eigvals_pca_demo.sum()  # Convert eigenvalues into explained-variance ratios.
+unit_diag_demo = np.array([1.0, 1.0]) / np.sqrt(2.0)  # A hand-picked comparison direction.
+var_diag_demo = unit_diag_demo.T @ cov_pca_demo @ unit_diag_demo  # Projected variance along the comparison direction.
+var_pc1_demo = eigvecs_pca_demo[:, 0].T @ cov_pca_demo @ eigvecs_pca_demo[:, 0]  # Projected variance along PC1.
+var_pc2_demo = eigvecs_pca_demo[:, 1].T @ cov_pca_demo @ eigvecs_pca_demo[:, 1]  # Projected variance along PC2.
+
+log("eigenvalues", np.round(eigvals_pca_demo, 3))  # Print variance captured by each PC.
+log("eigenvectors columns", np.round(eigvecs_pca_demo, 3))  # Print principal axes as columns.
+log("variance along PC1", round(float(var_pc1_demo), 3))  # Show PC1 variance equals the largest eigenvalue.
+log("variance along PC2", round(float(var_pc2_demo), 3))  # Show PC2 variance equals the second eigenvalue.
+log("variance along diagonal", round(float(var_diag_demo), 3))  # Compare with an arbitrary unit direction.
+log("explained variance ratios", np.round(ratio_pca_demo, 3))  # Print variance fractions.
+
+plt.scatter(X_centered_demo[:, 0], X_centered_demo[:, 1], s=90, alpha=0.7, color="slateblue")  # Draw centered points under the arrows.
+for comp_idx_demo in range(2):  # Draw both principal-component directions.
+    arrow_demo = eigvecs_pca_demo[:, comp_idx_demo] * np.sqrt(eigvals_pca_demo[comp_idx_demo])  # Scale unit vector by standard deviation.
+    color_demo = ["crimson", "seagreen"][comp_idx_demo]  # Choose a stable color per component.
+    plt.arrow(0, 0, arrow_demo[0], arrow_demo[1], width=0.035, color=color_demo, length_includes_head=True)  # Draw one PC arrow.
+    plt.text(arrow_demo[0] * 1.12, arrow_demo[1] * 1.12, f"PC{comp_idx_demo + 1}", color=color_demo)  # Label the arrow tip.
+plt.axhline(0, color="gray", linestyle="--")  # Draw the centered horizontal axis.
+plt.axvline(0, color="gray", linestyle="--")  # Draw the centered vertical axis.
+plt.xlabel("centered feature 1")  # Label the centered x-axis.
+plt.ylabel("centered feature 2")  # Label the centered y-axis.
+plt.title("PCA eigenvectors point along maximum variance")  # Title the principal-axis plot.
+plt.axis("equal")  # Preserve geometric angles.
+plt.show()  # Render the PCA direction visualization.
+```
+▶ What you'll see: PC1 points along the longest direction of the cloud, and its eigenvalue/ratio is much larger than PC2's.
+
+### Step 3 — PCA projection and reconstruction: compress, then measure loss
+
+Once the principal directions are known, reducing dimension is a dot product: $Z=\widetilde XU_k$.
+Reconstruction maps back with $\widehat X=ZU_k^T+\mu$, but any discarded perpendicular component
+becomes reconstruction error.
+
+```python
+U1_pca_demo = eigvecs_pca_demo[:, :1]  # Keep only the top principal direction for 1-D compression.
+Z_pca_demo = X_centered_demo @ U1_pca_demo  # Project each centered point into one PCA coordinate.
+X_recon_centered_demo = Z_pca_demo @ U1_pca_demo.T  # Reconstruct centered points from the one kept component.
+X_recon_demo = X_recon_centered_demo + mean_pca_demo  # Add the mean back to return to original feature space.
+recon_error_demo = np.mean(np.sum((X_pca_demo - X_recon_demo) ** 2, axis=1))  # Average squared reconstruction error per point.
+cumulative_ratio_demo = np.cumsum(ratio_pca_demo)  # Compute cumulative explained variance by component count.
+
+log("compressed shape", Z_pca_demo.shape)  # Print that 2-D rows became 1-D coordinates.
+log("first three PCA coordinates", np.round(Z_pca_demo[:3, 0], 3))  # Print example compressed values.
+log("first three reconstructions", np.round(X_recon_demo[:3], 3))  # Print approximate original-space points.
+log("average reconstruction error", round(float(recon_error_demo), 4))  # Print the price of keeping only PC1.
+log("cumulative variance", np.round(cumulative_ratio_demo, 3))  # Print how much variance 1 or 2 PCs keep.
+
+plt.scatter(X_centered_demo[:, 0], X_centered_demo[:, 1], s=90, color="lightgray", edgecolor="black", label="centered data")  # Draw original centered points.
+plt.scatter(X_recon_centered_demo[:, 0], X_recon_centered_demo[:, 1], s=90, color="crimson", label="1-D reconstructions")  # Draw projected/reconstructed points.
+for original_demo, projected_demo in zip(X_centered_demo, X_recon_centered_demo):  # Connect each point to its projection.
+    plt.plot([original_demo[0], projected_demo[0]], [original_demo[1], projected_demo[1]], color="gray", linestyle="--", linewidth=1)  # Show discarded residual.
+line_span_demo = np.array([-3.5, 3.5])[:, None] * eigvecs_pca_demo[:, 0][None, :]  # Build endpoints for the PC1 line.
+plt.plot(line_span_demo[:, 0], line_span_demo[:, 1], color="crimson", linewidth=2, label="PC1 axis")  # Draw the kept one-dimensional subspace.
+plt.xlabel("centered feature 1")  # Label the centered x-axis.
+plt.ylabel("centered feature 2")  # Label the centered y-axis.
+plt.title("Projection drops points onto the PC1 line")  # Title the projection/reconstruction picture.
+plt.legend()  # Identify data, projections, and axis.
+plt.axis("equal")  # Preserve geometric projection angles.
+plt.show()  # Render the PCA compression visualization.
+```
+▶ What you'll see: every point drops onto the red PC1 line; the dashed segments are the information lost by one-dimensional compression.
+
+### Step 4 — ICA source separation: unmix non-Gaussian signals
+
+ICA assumes observations are mixtures $x=As$ of hidden independent sources. PCA can whiten the
+mixtures so they are uncorrelated, but ICA goes further by rotating whitened data toward components
+that look strongly non-Gaussian and therefore more source-like.
+
+```python
+time_ica_demo = np.linspace(0.0, 1.0, 160)  # Short time axis for two hidden signals.
+source1_demo = np.sign(np.sin(2 * np.pi * 3 * time_ica_demo))  # Non-Gaussian square-wave source.
+source2_demo = 2.0 * ((5 * time_ica_demo) % 1.0) - 1.0  # Non-Gaussian sawtooth-like source.
+S_ica_demo = np.column_stack([source1_demo, source2_demo])  # Store hidden sources as columns.
+S_ica_demo = (S_ica_demo - S_ica_demo.mean(axis=0)) / S_ica_demo.std(axis=0)  # Standardize source scales.
+A_ica_demo = np.array([[1.0, 0.7], [0.45, 1.0]])  # Mixing matrix that blends both sources into both sensors.
+X_mix_demo = S_ica_demo @ A_ica_demo.T  # Observed mixtures, row-wise version of x = A s.
+X_mix_centered_demo = X_mix_demo - X_mix_demo.mean(axis=0)  # Center mixtures before whitening.
+cov_mix_demo = (X_mix_centered_demo.T @ X_mix_centered_demo) / (X_mix_centered_demo.shape[0] - 1)  # Mixed-sensor covariance.
+vals_mix_demo, vecs_mix_demo = np.linalg.eigh(cov_mix_demo)  # Eigen-decompose covariance for whitening.
+white_mix_demo = vecs_mix_demo @ np.diag(1.0 / np.sqrt(vals_mix_demo)) @ vecs_mix_demo.T  # Whitening matrix makes covariance near identity.
+X_white_demo = X_mix_centered_demo @ white_mix_demo  # Whitened mixtures are uncorrelated but still rotated.
+angles_ica_demo = np.linspace(0.0, np.pi, 181)  # Try many possible rotations after whitening.
+scores_ica_demo = []  # Store a non-Gaussianity score for each rotation.
+
+for angle_ica_demo in angles_ica_demo:  # Scan rotations because whitening leaves a rotational ambiguity.
+    R_ica_demo = np.array([[np.cos(angle_ica_demo), -np.sin(angle_ica_demo)], [np.sin(angle_ica_demo), np.cos(angle_ica_demo)]])  # 2-D rotation matrix.
+    Y_try_demo = X_white_demo @ R_ica_demo  # Candidate recovered components.
+    kurt_try_demo = np.mean(Y_try_demo**4, axis=0) - 3.0  # Excess-kurtosis-like non-Gaussianity per component.
+    scores_ica_demo.append(np.sum(np.abs(kurt_try_demo)))  # Prefer rotations with strongly non-Gaussian marginals.
+
+best_idx_ica_demo = int(np.argmax(scores_ica_demo))  # Choose the rotation with the largest non-Gaussianity score.
+best_angle_ica_demo = angles_ica_demo[best_idx_ica_demo]  # Store the winning angle.
+R_best_ica_demo = np.array([[np.cos(best_angle_ica_demo), -np.sin(best_angle_ica_demo)], [np.sin(best_angle_ica_demo), np.cos(best_angle_ica_demo)]])  # Rebuild best rotation.
+Y_ica_demo = X_white_demo @ R_best_ica_demo  # ICA-style recovered components.
+corr_ica_demo = np.abs(np.corrcoef(Y_ica_demo.T, S_ica_demo.T)[:2, 2:])  # Compare to true sources for teaching only; sign/order can flip.
+
+log("mixing matrix A", A_ica_demo)  # Print how sensors blend sources.
+log("mixed covariance", np.round(cov_mix_demo, 3))  # Print correlation before whitening.
+log("whitened covariance", np.round(np.cov(X_white_demo, rowvar=False), 3))  # Print near-identity covariance after whitening.
+log("best ICA rotation angle", round(float(best_angle_ica_demo), 3))  # Print the selected source-seeking rotation.
+log("abs corr recovered vs true", np.round(corr_ica_demo, 3))  # Print recovery quality up to sign and order.
+
+fig_ica_demo, axes_ica_demo = plt.subplots(3, 1, figsize=(8, 6), sharex=True)  # Create stacked source/mixture/recovery panels.
+axes_ica_demo[0].plot(time_ica_demo, S_ica_demo[:, 0], label="source 1")  # Draw hidden source 1.
+axes_ica_demo[0].plot(time_ica_demo, S_ica_demo[:, 1], label="source 2", alpha=0.8)  # Draw hidden source 2.
+axes_ica_demo[0].set_title("hidden independent sources")  # Title the source panel.
+axes_ica_demo[0].legend(loc="upper right")  # Label sources.
+axes_ica_demo[1].plot(time_ica_demo, X_mix_demo[:, 0], label="mixed sensor 1")  # Draw observed mixture 1.
+axes_ica_demo[1].plot(time_ica_demo, X_mix_demo[:, 1], label="mixed sensor 2", alpha=0.8)  # Draw observed mixture 2.
+axes_ica_demo[1].set_title("observed mixtures")  # Title the mixture panel.
+axes_ica_demo[1].legend(loc="upper right")  # Label mixtures.
+axes_ica_demo[2].plot(time_ica_demo, Y_ica_demo[:, 0], label="recovered 1")  # Draw recovered component 1.
+axes_ica_demo[2].plot(time_ica_demo, Y_ica_demo[:, 1], label="recovered 2", alpha=0.8)  # Draw recovered component 2.
+axes_ica_demo[2].set_title("ICA-style recovered components")  # Title the recovery panel.
+axes_ica_demo[2].set_xlabel("time")  # Label the shared time axis.
+axes_ica_demo[2].legend(loc="upper right")  # Label recovered components.
+plt.tight_layout()  # Keep stacked panels readable.
+plt.show()  # Render the ICA source-separation visualization.
+```
+▶ What you'll see: the observed sensors are blended, while the recovered components line up strongly with the original sources up to sign and order.
+
+### Recap — what you just ran
+
+- **PCA preprocessing** centered the data, optionally standardized scales, and built a covariance matrix.
+- **PCA eigenvectors** gave orthogonal directions ordered by variance, with eigenvalues as variance captured.
+- **PCA projection** compressed points into PC coordinates and reconstructed them with measurable error.
+- **ICA** whitened mixed signals and then searched for a non-Gaussian rotation that separated independent sources.
+
+Everything below (starting at **§1 Overview**) develops these same ideas with fuller derivations,
+worked examples, and an interactive reconstruction experiment.
+
+---
+
 ## 1. Overview
 
 Dimensionality reduction replaces many original features with a smaller number of learned coordinates. The goal is not merely to delete columns; it is to preserve the structure that matters for visualization, compression, denoising, or downstream modeling.

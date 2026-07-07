@@ -2,6 +2,190 @@
 > **Source:** CS 230 · **Category:** Model · **Type:** 💻 Colab · [↑ Full reference](../../ai-ml-cheatsheets.md)
 > 📓 Runnable notebook section; an `.ipynb` will be generated.
 
+## 0. Step-by-Step Worked Example — Start Here (Beginner Friendly)
+
+> 🧑‍🎓 **New to this topic? Start here.** This is a gentle, fully runnable walkthrough that
+> builds up *every* idea in this lesson one tiny step at a time. Each step **prints** the
+> numbers it computes and **draws a picture** so you can *see* what is happening. Run the
+> cells in order from top to bottom. Nothing here needs the internet or any downloaded data.
+
+**What we will build, step by step:**
+1. **ResNet residual learning with a shortcut** — learn a correction instead of relearning the input.
+2. **Inception parallel branches plus $1\times1$ convolution** — mix channels cheaply and concatenate multi-scale features.
+3. **GAN generator versus discriminator** — move fake samples in the direction that fools a discriminator.
+
+### Step 0 — Set up our tools
+
+We import NumPy (tiny tensors + math) and Matplotlib (pictures). We fix a random **seed** so you
+get the same numbers every run, then define a small `log()` helper so each printed value is labeled.
+
+```python
+import numpy as np                       # NumPy: vectors, tiny image tensors, losses, and parameter counts.
+import matplotlib.pyplot as plt          # Matplotlib: draw residuals, branch maps, and GAN histograms.
+
+np.random.seed(0)                         # Fix the seed so every run prints the SAME numbers.
+plt.rcParams["figure.figsize"] = (7, 4)   # A comfortable default plot size.
+
+def log(label, value):                    # A tiny logger so each printed line explains itself.
+    print(f"[{label}] {value}")           # Format is: [what this is] the value.
+
+log("setup", "tools ready — NumPy + Matplotlib imported, seed fixed to 0")
+```
+▶ What you'll see: one line confirming the tools are ready.
+
+### Step 1 — ResNet: residual learning with a shortcut
+
+A residual block computes $y=g(x+F(x))$. The shortcut carries the input $x$ forward directly, so
+the main path only has to learn a **correction** $F(x)$; if the right mapping is close to identity,
+the block can keep $F(x)$ small.
+
+```python
+x_res_demo = np.array([1.0, -0.6, 0.2, 1.4, -0.1])                         # A tiny activation vector entering a residual block.
+residual_demo = np.array([0.08, 0.30, -0.05, -0.12, 0.18])                  # The main path learns a small correction F(x).
+pre_activation_demo = x_res_demo + residual_demo                            # The shortcut adds x back to the residual correction.
+output_res_demo = np.maximum(pre_activation_demo, 0.0)                      # Apply ReLU g(.) after the residual addition.
+
+log("input x", np.round(x_res_demo, 3))                                     # Print the shortcut signal.
+log("residual F(x)", np.round(residual_demo, 3))                             # Print the learned correction.
+log("x + F(x)", np.round(pre_activation_demo, 3))                            # Print the pre-activation sum.
+log("ReLU(x + F(x))", np.round(output_res_demo, 3))                          # Print the final block output.
+
+layers_demo = np.arange(1, 31)                                              # Compare gradient flow through depths 1..30.
+plain_slope_demo = 0.82                                                     # A plain stack multiplies by a sub-unit derivative each layer.
+residual_slope_demo = 1.0 + 0.02                                            # A shortcut contributes an identity derivative plus a small correction.
+plain_gradient_demo = plain_slope_demo ** layers_demo                       # Plain gradients shrink by repeated multiplication.
+residual_gradient_demo = residual_slope_demo ** layers_demo                 # Residual gradients keep an identity route.
+
+log("plain gradient after 30 layers", round(float(plain_gradient_demo[-1]), 5)) # Print the vanishing-gradient example.
+log("residual gradient after 30 layers", round(float(residual_gradient_demo[-1]), 5)) # Print the shortcut-preserved scale.
+
+fig_demo, axes_demo = plt.subplots(1, 2, figsize=(10, 4))                   # Create panels for activations and gradients.
+axes_demo[0].bar(np.arange(len(x_res_demo)) - 0.18, x_res_demo, width=0.36, label="x") # Draw the input coordinates.
+axes_demo[0].bar(np.arange(len(x_res_demo)) + 0.18, residual_demo, width=0.36, label="F(x)") # Draw residual corrections.
+axes_demo[0].set_title("Residual block learns a correction")                # Title the activation panel.
+axes_demo[0].set_xlabel("coordinate")                                       # Label vector coordinates.
+axes_demo[0].legend()                                                       # Show x versus F(x).
+axes_demo[1].plot(layers_demo, plain_gradient_demo, marker="o", label="plain stack") # Plot shrinking plain gradients.
+axes_demo[1].plot(layers_demo, residual_gradient_demo, marker="s", label="shortcut path") # Plot residual gradient scale.
+axes_demo[1].axhline(1.0, color="black", linestyle="--", label="unit scale") # Mark unchanged gradient size.
+axes_demo[1].set_title("Shortcut keeps gradients flowing")                  # Title the gradient panel.
+axes_demo[1].set_xlabel("number of layers")                                 # Label depth axis.
+axes_demo[1].set_ylabel("relative gradient")                                # Label gradient magnitude.
+axes_demo[1].legend()                                                       # Explain curves.
+plt.tight_layout()                                                          # Prevent panel overlap.
+plt.show()                                                                  # Render the residual visualization.
+```
+▶ What you'll see: the residual output keeps most of the input signal, and the shortcut-gradient curve stays much larger than the plain one.
+
+### Step 2 — Inception: parallel branches plus $1\times1$ convolution
+
+An Inception module sends the same input through several branches, such as $1\times1$, $3\times3$,
+$5\times5$, and pooling, then concatenates their channels. The $1\times1$ convolution is a cheap
+channel mixer and bottleneck that reduces expensive spatial-filter parameters.
+
+```python
+patch_demo = np.random.rand(4, 4, 3)                                        # A tiny 4x4 image-like tensor with 3 channels.
+weights_1x1_demo = np.array([[0.8, -0.2], [0.1, 0.6], [0.4, 0.3]])           # A 1x1 conv mixes 3 input channels into 2 channels.
+bottleneck_demo = patch_demo @ weights_1x1_demo                             # Apply the same channel-mixing weights at every pixel.
+
+branch_1x1_demo = bottleneck_demo[..., :1]                                  # Branch 1 keeps one cheap 1x1 mixed channel.
+branch_3x3_demo = (bottleneck_demo[..., :1] + np.roll(bottleneck_demo[..., :1], 1, axis=0) + np.roll(bottleneck_demo[..., :1], -1, axis=0) + np.roll(bottleneck_demo[..., :1], 1, axis=1) + np.roll(bottleneck_demo[..., :1], -1, axis=1)) / 5.0 # Mimic a local 3x3-style branch.
+branch_pool_demo = np.max(patch_demo, axis=2, keepdims=True)                # Pooling branch keeps the strongest channel at each pixel.
+inception_output_demo = np.concatenate([branch_1x1_demo, branch_3x3_demo, branch_pool_demo], axis=2) # Concatenate branch outputs by channel.
+
+k_demo = 5                                                                  # Use a 5x5 branch to show bottleneck savings.
+c_in_demo = 64                                                              # Number of input channels before a large branch.
+c_b_demo = 16                                                               # Bottleneck channels after the 1x1 reduction.
+c_out_demo = 128                                                            # Number of output channels from the large branch.
+params_direct_demo = k_demo * k_demo * c_in_demo * c_out_demo + c_out_demo  # Direct 5x5 parameter count.
+params_bottleneck_demo = c_in_demo * c_b_demo + c_b_demo + k_demo * k_demo * c_b_demo * c_out_demo + c_out_demo # 1x1 bottleneck plus 5x5 count.
+savings_demo = 100.0 * (1.0 - params_bottleneck_demo / params_direct_demo)  # Convert the savings to a percentage.
+
+log("input patch shape", patch_demo.shape)                                  # Print input tensor shape.
+log("1x1 bottleneck shape", bottleneck_demo.shape)                          # Print reduced channel shape.
+log("branch shapes", [branch_1x1_demo.shape, branch_3x3_demo.shape, branch_pool_demo.shape]) # Print all branch shapes.
+log("concatenated output shape", inception_output_demo.shape)               # Print final Inception-style output shape.
+log("direct 5x5 params", int(params_direct_demo))                           # Print direct large-filter cost.
+log("1x1 bottleneck + 5x5 params", int(params_bottleneck_demo))             # Print bottlenecked cost.
+log("parameter savings %", round(float(savings_demo), 1))                   # Print savings percentage.
+
+fig_demo, axes_demo = plt.subplots(1, 4, figsize=(12, 3))                   # Create branch-map and parameter panels.
+axes_demo[0].imshow(branch_1x1_demo[:, :, 0], cmap="viridis")               # Show the 1x1 branch output map.
+axes_demo[0].set_title("1x1 branch")                                        # Title the first branch.
+axes_demo[1].imshow(branch_3x3_demo[:, :, 0], cmap="viridis")               # Show the local branch output map.
+axes_demo[1].set_title("3x3-like branch")                                   # Title the second branch.
+axes_demo[2].imshow(branch_pool_demo[:, :, 0], cmap="viridis")              # Show the pooling branch output map.
+axes_demo[2].set_title("pool branch")                                       # Title the pooling branch.
+axes_demo[3].bar(["direct", "1x1+5x5"], [params_direct_demo, params_bottleneck_demo], color=["salmon", "seagreen"]) # Compare parameter counts.
+axes_demo[3].set_title("bottleneck saves params")                           # Title the parameter chart.
+for ax_demo in axes_demo[:3]:                                               # Clean up image panels.
+    ax_demo.axis("off")                                                     # Hide pixel ticks.
+plt.tight_layout()                                                          # Keep labels readable.
+plt.show()                                                                  # Render the Inception visualization.
+```
+▶ What you'll see: parallel branch maps keep the same spatial size, concatenation widens the channel axis, and the bottleneck bar is much smaller.
+
+### Step 3 — GAN: generator versus discriminator
+
+A GAN trains two models in a game. The discriminator $D(x)$ learns to score real samples high and
+fake samples low; the generator $G(z)$ changes its fake samples so $D(G(z))$ moves closer to 1.
+
+```python
+def sigmoid_demo(logits_demo):                                              # Define the discriminator's probability squashing function.
+    return 1.0 / (1.0 + np.exp(-np.clip(logits_demo, -40.0, 40.0)))          # Convert logits into probabilities safely.
+
+real_demo = np.random.normal(loc=2.0, scale=0.35, size=120)                 # Synthetic real data clustered near 2.
+noise_demo = np.random.normal(loc=0.0, scale=1.0, size=120)                 # Random generator noise.
+generator_mean_demo = -1.1                                                  # Start the generator far from the real data.
+generator_scale_demo = 0.25                                                 # Keep fake samples narrowly spread at first.
+fake_before_demo = generator_mean_demo + generator_scale_demo * noise_demo  # Generate fake samples from noise.
+
+disc_slope_demo = 1.4                                                       # A simple discriminator that treats larger values as more real.
+disc_bias_demo = -0.8                                                       # Discriminator intercept.
+eps_demo = 1e-8                                                             # Small constant to protect logarithms.
+d_real_demo = sigmoid_demo(disc_slope_demo * real_demo + disc_bias_demo)    # Score real samples.
+d_fake_before_demo = sigmoid_demo(disc_slope_demo * fake_before_demo + disc_bias_demo) # Score fake samples before the generator update.
+loss_d_demo = -np.mean(np.log(d_real_demo + eps_demo) + np.log(1.0 - d_fake_before_demo + eps_demo)) # Discriminator binary-cross-entropy loss.
+loss_g_before_demo = -np.mean(np.log(d_fake_before_demo + eps_demo))        # Generator loss rewards high D(fake).
+
+lr_demo = 0.9                                                               # A visible one-step generator learning rate.
+grad_fake_demo = -disc_slope_demo * (1.0 - d_fake_before_demo)              # Gradient of -log D(fake) with respect to fake sample value.
+fake_after_demo = fake_before_demo - lr_demo * grad_fake_demo               # Move fake samples toward higher discriminator scores.
+d_fake_after_demo = sigmoid_demo(disc_slope_demo * fake_after_demo + disc_bias_demo) # Score fake samples after the generator update.
+loss_g_after_demo = -np.mean(np.log(d_fake_after_demo + eps_demo))          # Recompute generator loss after the update.
+
+log("real mean", round(float(real_demo.mean()), 3))                         # Print real distribution center.
+log("fake mean before", round(float(fake_before_demo.mean()), 3))           # Print starting fake center.
+log("fake mean after one G step", round(float(fake_after_demo.mean()), 3))  # Print moved fake center.
+log("mean D(real)", round(float(d_real_demo.mean()), 3))                    # Print discriminator score on real samples.
+log("mean D(fake) before", round(float(d_fake_before_demo.mean()), 3))      # Print discriminator score on initial fake samples.
+log("mean D(fake) after", round(float(d_fake_after_demo.mean()), 3))        # Print discriminator score after the generator step.
+log("D loss", round(float(loss_d_demo), 3))                                 # Print discriminator objective.
+log("G loss before/after", (round(float(loss_g_before_demo), 3), round(float(loss_g_after_demo), 3))) # Print generator improvement.
+
+bins_demo = np.linspace(-2.0, 3.3, 28)                                      # Shared histogram bins for all distributions.
+plt.hist(real_demo, bins=bins_demo, density=True, alpha=0.55, label="real", color="steelblue") # Draw real data.
+plt.hist(fake_before_demo, bins=bins_demo, density=True, alpha=0.45, label="fake before", color="salmon") # Draw fake samples before.
+plt.hist(fake_after_demo, bins=bins_demo, density=True, alpha=0.45, label="fake after one G step", color="seagreen") # Draw fake samples after.
+plt.xlabel("sample value")                                                  # Label the 1-D data axis.
+plt.ylabel("density")                                                       # Label histogram density.
+plt.title("GAN generator moves fake samples toward real-looking regions")   # Title the adversarial visualization.
+plt.legend()                                                                # Explain histogram colors.
+plt.show()                                                                  # Render the GAN plot.
+```
+▶ What you'll see: the generator step shifts fake samples toward the real distribution, raises $D(\text{fake})$, and lowers generator loss.
+
+### Recap — what you just ran
+
+- **ResNet** added a shortcut so the block learned only a residual correction and preserved gradient flow.
+- **Inception** used parallel branches, a cheap **$1\times1$ bottleneck**, and channel concatenation.
+- **GANs** trained a generator using feedback from a discriminator that scores real vs. fake samples.
+
+Everything below (starting at **§1 Overview**) develops these same ideas with fuller architecture
+examples, toy classifiers, and adversarial-training diagnostics.
+
+---
+
 ## 1. Overview
 
 Advanced CNN architectures reuse the same primitive operations from convolutional networks, but arrange them in smarter computational graphs. GANs learn by adversarial competition, ResNets learn deep transformations with skip connections, and Inception modules learn several receptive-field scales in parallel.

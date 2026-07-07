@@ -2,6 +2,298 @@
 > **Source:** CS 230 · **Category:** Method/Model · **Type:** 💻 Colab · [↑ Full reference](../../ai-ml-cheatsheets.md)
 > 📓 Runnable notebook section; an `.ipynb` will be generated.
 
+## 0. Step-by-Step Worked Example — Start Here (Beginner Friendly)
+
+> 🧑‍🎓 **New to this topic? Start here.** This is a gentle, fully runnable walkthrough that
+> builds up *every* idea in this lesson one tiny step at a time. Each step **prints** the
+> numbers it computes and **draws a picture** so you can *see* what is happening. Run the
+> cells in order from top to bottom. Nothing here needs the internet or any downloaded data.
+
+**What we will build, step by step:**
+1. **Bounding-box representation** — convert between corner boxes and center-size boxes.
+2. **Intersection over Union** — compute overlap quality from intersection and union areas.
+3. **Anchor boxes** — compare preset shapes at one grid cell to a target object.
+4. **Non-max suppression** — keep high-scoring boxes and remove duplicate same-class overlaps.
+5. **YOLO-style detection pipeline** — decode grid/anchor predictions into final detections.
+
+### Step 0 — Set up our tools
+
+We import NumPy for box arithmetic and Matplotlib for rectangle drawings. We fix a random
+**seed** for reproducibility, then define tiny helpers for box area, IoU, and format conversion
+so each later step can print the same geometric quantities it draws.
+
+```python
+import numpy as np                                      # NumPy: box arrays, scores, and class probabilities.
+import matplotlib.pyplot as plt                         # Matplotlib: draw boxes, grids, and overlap regions.
+from matplotlib.patches import Rectangle                # Rectangle patches: visualize bounding boxes directly.
+
+np.random.seed(0)                                        # Fix the seed so every run prints the SAME numbers.
+plt.rcParams["figure.figsize"] = (7, 4)                  # Use a comfortable default plot size.
+
+
+def log(label, value):                                   # A tiny logger so each printed line explains itself.
+    print(f"[{label}] {value}")                          # Format is: [what this is] the value.
+
+
+def center_to_xyxy_demo(box_demo):                       # Convert (cx, cy, w, h) into (x1, y1, x2, y2).
+    cx_demo, cy_demo, w_demo, h_demo = np.asarray(box_demo, dtype=float)  # Unpack center-size values.
+    return np.array([cx_demo - w_demo / 2.0, cy_demo - h_demo / 2.0, cx_demo + w_demo / 2.0, cy_demo + h_demo / 2.0])  # Return corners.
+
+
+def xyxy_to_center_demo(box_demo):                       # Convert (x1, y1, x2, y2) into (cx, cy, w, h).
+    x1_demo, y1_demo, x2_demo, y2_demo = np.asarray(box_demo, dtype=float)  # Unpack corner values.
+    return np.array([(x1_demo + x2_demo) / 2.0, (y1_demo + y2_demo) / 2.0, x2_demo - x1_demo, y2_demo - y1_demo])  # Return center-size.
+
+
+def area_demo(box_demo):                                 # Compute area for a corner-format box.
+    x1_demo, y1_demo, x2_demo, y2_demo = np.asarray(box_demo, dtype=float)  # Unpack corners.
+    width_demo = max(0.0, x2_demo - x1_demo)              # Clip width at zero for non-overlap or invalid boxes.
+    height_demo = max(0.0, y2_demo - y1_demo)             # Clip height at zero for non-overlap or invalid boxes.
+    return width_demo * height_demo                       # Return rectangle area.
+
+
+def iou_demo(box_a_demo, box_b_demo):                     # Compute Intersection over Union for two boxes.
+    left_demo = max(box_a_demo[0], box_b_demo[0])          # Intersection left edge is the larger left coordinate.
+    top_demo = max(box_a_demo[1], box_b_demo[1])           # Intersection top edge is the larger top coordinate.
+    right_demo = min(box_a_demo[2], box_b_demo[2])         # Intersection right edge is the smaller right coordinate.
+    bottom_demo = min(box_a_demo[3], box_b_demo[3])        # Intersection bottom edge is the smaller bottom coordinate.
+    inter_demo = np.array([left_demo, top_demo, right_demo, bottom_demo])  # Store the overlap rectangle.
+    inter_area_demo = area_demo(inter_demo)                # Measure overlap area.
+    union_demo = area_demo(box_a_demo) + area_demo(box_b_demo) - inter_area_demo  # Compute union area.
+    return (0.0 if union_demo == 0.0 else inter_area_demo / union_demo), inter_demo, inter_area_demo, union_demo  # Return all pieces.
+
+log("setup", "box helpers ready — NumPy + Matplotlib imported, seed fixed to 0")  # Confirm setup.
+```
+▶ What you'll see: one line confirming the detection helpers are ready.
+
+### Step 1 — Bounding-box representation: corners and center-size are the same rectangle
+
+A detector can describe one object box by corners $(x_1,y_1,x_2,y_2)$ or by center, width, and
+height $(b_x,b_y,b_w,b_h)$. Corners are handy for drawing and overlap; center-size is handy when
+neural nets predict offsets around grid cells and anchors.
+
+```python
+box_xyxy_demo = np.array([2.0, 1.5, 7.0, 5.5])          # Define one box as left, top, right, bottom.
+box_center_demo = xyxy_to_center_demo(box_xyxy_demo)    # Convert corners to center x, center y, width, height.
+box_back_demo = center_to_xyxy_demo(box_center_demo)    # Convert center-size back to corners.
+log("corner box", box_xyxy_demo.tolist())               # Print drawable corner coordinates.
+log("center-size box", box_center_demo.tolist())        # Print detector-style center-size values.
+log("round trip matches?", bool(np.allclose(box_xyxy_demo, box_back_demo)))  # Verify conversion preserved the box.
+
+fig_box_demo, ax_box_demo = plt.subplots(figsize=(6, 4)) # Create a coordinate-grid figure.
+ax_box_demo.set_xlim(0, 10)                              # Show a ten-unit image width.
+ax_box_demo.set_ylim(0, 7)                               # Show a seven-unit image height.
+ax_box_demo.invert_yaxis()                               # Match image coordinates where y increases downward.
+ax_box_demo.grid(True, alpha=0.3)                        # Draw a light grid for reading coordinates.
+ax_box_demo.add_patch(Rectangle((box_xyxy_demo[0], box_xyxy_demo[1]), box_center_demo[2], box_center_demo[3], fill=False, edgecolor="tab:blue", linewidth=2))  # Draw the box.
+ax_box_demo.scatter([box_center_demo[0]], [box_center_demo[1]], color="tab:red", zorder=3)  # Mark the center point.
+ax_box_demo.text(box_center_demo[0] + 0.15, box_center_demo[1], "center", color="tab:red")  # Label the center.
+ax_box_demo.set_title("Bounding-box corners and center-size form")   # Title the plot.
+ax_box_demo.set_xlabel("x coordinate")                              # Label the horizontal coordinate.
+ax_box_demo.set_ylabel("y coordinate")                              # Label the vertical coordinate.
+plt.show()                                                          # Render the box visualization.
+```
+▶ What you'll see: one rectangle with a red center marker; the printed center-size values reconstruct the same corners.
+
+### Step 2 — Intersection over Union: overlap divided by total covered area
+
+IoU measures localization quality. We first find the overlap rectangle, clip impossible overlap
+widths/heights at zero through `area_demo()`, then divide intersection area by union area so the
+score always lives between 0 and 1.
+
+```python
+box_a_demo = np.array([1.0, 1.0, 6.0, 5.0])             # Define a target-like box.
+box_b_demo = np.array([4.0, 3.0, 9.0, 6.5])             # Define a prediction-like box with partial overlap.
+iou_value_demo, inter_box_demo, inter_area_demo, union_area_demo = iou_demo(box_a_demo, box_b_demo)  # Compute IoU and all pieces.
+log("intersection box", np.round(inter_box_demo, 2).tolist())  # Print overlap corners.
+log("area A", area_demo(box_a_demo))                           # Print first box area.
+log("area B", area_demo(box_b_demo))                           # Print second box area.
+log("intersection area", inter_area_demo)                      # Print overlap numerator.
+log("union area", union_area_demo)                             # Print IoU denominator.
+log("IoU", round(float(iou_value_demo), 3))                    # Print final overlap score.
+
+fig_iou_demo, ax_iou_demo = plt.subplots(figsize=(6.5, 4.5))    # Create an IoU geometry figure.
+ax_iou_demo.set_xlim(0, 10)                                     # Show the toy image width.
+ax_iou_demo.set_ylim(0, 8)                                      # Show the toy image height.
+ax_iou_demo.invert_yaxis()                                      # Match image-style coordinates.
+ax_iou_demo.grid(True, alpha=0.3)                               # Draw a coordinate grid.
+ax_iou_demo.add_patch(Rectangle((box_a_demo[0], box_a_demo[1]), box_a_demo[2] - box_a_demo[0], box_a_demo[3] - box_a_demo[1], fill=False, edgecolor="tab:blue", linewidth=2, label="A"))  # Draw box A.
+ax_iou_demo.add_patch(Rectangle((box_b_demo[0], box_b_demo[1]), box_b_demo[2] - box_b_demo[0], box_b_demo[3] - box_b_demo[1], fill=False, edgecolor="tab:orange", linewidth=2, label="B"))  # Draw box B.
+ax_iou_demo.add_patch(Rectangle((inter_box_demo[0], inter_box_demo[1]), inter_box_demo[2] - inter_box_demo[0], inter_box_demo[3] - inter_box_demo[1], facecolor="limegreen", alpha=0.35, edgecolor="none", label="overlap"))  # Shade intersection.
+ax_iou_demo.set_title(f"Intersection over Union = {iou_value_demo:.3f}")  # Title with IoU score.
+ax_iou_demo.set_xlabel("x coordinate")                              # Label the x-axis.
+ax_iou_demo.set_ylabel("y coordinate")                              # Label the y-axis.
+ax_iou_demo.legend(loc="lower right")                              # Show box labels.
+plt.show()                                                          # Render the IoU plot.
+```
+▶ What you'll see: two boxes with a green overlap region, plus printed numerator and denominator for IoU.
+
+### Step 3 — Anchor boxes: preset shapes at one grid cell
+
+Anchors give each grid cell several default shapes. The model predicts offsets and scale changes
+from these defaults, so a tall object can start from a tall anchor and a wide object can start
+from a wide anchor.
+
+```python
+cell_center_demo = np.array([5.0, 4.0])                              # Choose one grid-cell center.
+anchor_sizes_demo = np.array([[2.0, 2.0], [4.0, 1.6], [1.4, 4.0]])    # Define square, wide, and tall anchors.
+anchor_names_demo = np.array(["square", "wide", "tall"])            # Name each anchor shape.
+anchor_boxes_demo = np.array([center_to_xyxy_demo([cell_center_demo[0], cell_center_demo[1], size_demo[0], size_demo[1]]) for size_demo in anchor_sizes_demo])  # Convert anchors to corners.
+target_anchor_demo = np.array([3.6, 2.1, 6.6, 5.7])                  # Define a nearby target object.
+anchor_ious_demo = np.array([iou_demo(anchor_demo, target_anchor_demo)[0] for anchor_demo in anchor_boxes_demo])  # Compare each anchor to target.
+best_anchor_demo = int(np.argmax(anchor_ious_demo))                  # Select the anchor with highest IoU.
+target_center_demo = xyxy_to_center_demo(target_anchor_demo)         # Convert target to center-size form.
+offset_demo = target_center_demo[:2] - cell_center_demo              # Compute center offset from the grid cell.
+scale_demo = target_center_demo[2:] / anchor_sizes_demo[best_anchor_demo]  # Compute size scale relative to best anchor.
+log("anchor IoUs", dict(zip(anchor_names_demo.tolist(), np.round(anchor_ious_demo, 3).tolist())))  # Print anchor matching scores.
+log("best anchor", str(anchor_names_demo[best_anchor_demo]))         # Print selected anchor shape.
+log("target center offset", np.round(offset_demo, 2).tolist())       # Print residual center prediction.
+log("target size / best anchor size", np.round(scale_demo, 2).tolist())  # Print residual scale prediction.
+
+fig_anchor_demo, ax_anchor_demo = plt.subplots(figsize=(6.5, 5))      # Create an anchor geometry figure.
+ax_anchor_demo.set_xlim(0, 10)                                       # Show image width.
+ax_anchor_demo.set_ylim(0, 8)                                        # Show image height.
+ax_anchor_demo.invert_yaxis()                                        # Match image-coordinate orientation.
+ax_anchor_demo.grid(True, alpha=0.3)                                 # Draw coordinate grid.
+colors_anchor_demo = ["tab:blue", "tab:orange", "tab:green"]        # Choose one color per anchor.
+for idx_anchor_demo, anchor_demo in enumerate(anchor_boxes_demo):     # Draw each preset anchor.
+    ax_anchor_demo.add_patch(Rectangle((anchor_demo[0], anchor_demo[1]), anchor_demo[2] - anchor_demo[0], anchor_demo[3] - anchor_demo[1], fill=False, edgecolor=colors_anchor_demo[idx_anchor_demo], linewidth=2, label=anchor_names_demo[idx_anchor_demo]))  # Draw anchor.
+ax_anchor_demo.add_patch(Rectangle((target_anchor_demo[0], target_anchor_demo[1]), target_anchor_demo[2] - target_anchor_demo[0], target_anchor_demo[3] - target_anchor_demo[1], fill=False, edgecolor="black", linestyle="--", linewidth=2, label="target"))  # Draw target.
+ax_anchor_demo.scatter([cell_center_demo[0]], [cell_center_demo[1]], color="black", zorder=3)  # Mark shared anchor center.
+ax_anchor_demo.set_title("Anchor boxes compare preset shapes")        # Title the anchor plot.
+ax_anchor_demo.set_xlabel("x coordinate")                            # Label the x-axis.
+ax_anchor_demo.set_ylabel("y coordinate")                            # Label the y-axis.
+ax_anchor_demo.legend(loc="lower right")                             # Show anchor names.
+plt.show()                                                            # Render anchor comparison.
+```
+▶ What you'll see: square, wide, and tall anchors share one center; the target matches one preset best and needs only an offset/scale correction.
+
+### Step 4 — Non-max suppression: keep the best box and remove duplicates
+
+Raw detectors often output several boxes around the same object. NMS sorts by score, keeps the
+best remaining box, and suppresses lower-scoring **same-class** boxes whose IoU with it is above
+a threshold.
+
+```python
+boxes_nms_demo = np.array([[1.0, 1.0, 5.0, 4.5], [1.3, 1.2, 5.2, 4.6], [6.4, 1.3, 9.2, 4.2], [1.2, 1.1, 5.1, 4.4]])  # Define duplicate and separate candidates.
+scores_nms_demo = np.array([0.92, 0.84, 0.76, 0.67])                # Assign detector confidence scores.
+labels_nms_demo = np.array(["dog", "dog", "dog", "cat"])          # Make one overlapping box a different class.
+threshold_nms_demo = 0.45                                           # Suppress same-class boxes above this IoU.
+keep_nms_demo = []                                                  # Store kept candidate indices.
+suppressed_nms_demo = []                                            # Store suppressed candidate indices.
+for label_nms_demo in np.unique(labels_nms_demo):                   # Run NMS independently per class.
+    class_idx_demo = np.where(labels_nms_demo == label_nms_demo)[0]  # Select candidates of this class.
+    order_nms_demo = class_idx_demo[np.argsort(scores_nms_demo[class_idx_demo])[::-1]]  # Sort by descending score.
+    while len(order_nms_demo) > 0:                                  # Process until no candidates remain.
+        current_nms_demo = int(order_nms_demo[0])                   # Pick highest-score remaining box.
+        keep_nms_demo.append(current_nms_demo)                      # Keep it as a representative detection.
+        rest_nms_demo = order_nms_demo[1:]                          # Compare only lower-score boxes.
+        survivors_nms_demo = []                                     # Store boxes not suppressed by current.
+        for candidate_nms_demo in rest_nms_demo:                    # Inspect each lower-score same-class candidate.
+            overlap_nms_demo = iou_demo(boxes_nms_demo[current_nms_demo], boxes_nms_demo[candidate_nms_demo])[0]  # Compute IoU.
+            log(f"compare {current_nms_demo} vs {int(candidate_nms_demo)}", round(float(overlap_nms_demo), 3))  # Print NMS decision input.
+            if overlap_nms_demo > threshold_nms_demo:               # Suppress if overlap is too high.
+                suppressed_nms_demo.append(int(candidate_nms_demo)) # Record suppressed duplicate.
+            else:                                                   # Otherwise keep candidate alive.
+                survivors_nms_demo.append(candidate_nms_demo)       # Preserve for a later NMS round.
+        order_nms_demo = np.array(survivors_nms_demo, dtype=int)    # Continue with unsuppressed boxes.
+keep_nms_demo = np.array(keep_nms_demo, dtype=int)                  # Convert kept list to an array.
+log("kept after NMS", keep_nms_demo.tolist())                       # Print final kept indices.
+log("suppressed duplicates", suppressed_nms_demo)                   # Print suppressed indices.
+
+fig_nms_demo, axes_nms_demo = plt.subplots(1, 2, figsize=(10, 4), sharex=True, sharey=True)  # Create before/after panels.
+for ax_nms_demo, title_nms_demo, idxs_nms_demo in zip(axes_nms_demo, ["before NMS", "after NMS"], [np.arange(len(boxes_nms_demo)), keep_nms_demo]):  # Fill panels.
+    ax_nms_demo.set_xlim(0, 10)                                      # Show image width.
+    ax_nms_demo.set_ylim(0, 6)                                       # Show image height.
+    ax_nms_demo.invert_yaxis()                                       # Match image coordinates.
+    ax_nms_demo.grid(True, alpha=0.3)                                # Draw a coordinate grid.
+    ax_nms_demo.set_title(title_nms_demo)                            # Title panel state.
+    for idx_nms_demo in idxs_nms_demo:                               # Draw selected candidate boxes.
+        box_nms_demo = boxes_nms_demo[idx_nms_demo]                  # Select one box.
+        color_nms_demo = "tab:red" if idx_nms_demo in keep_nms_demo else "gray"  # Highlight kept boxes.
+        ax_nms_demo.add_patch(Rectangle((box_nms_demo[0], box_nms_demo[1]), box_nms_demo[2] - box_nms_demo[0], box_nms_demo[3] - box_nms_demo[1], fill=False, edgecolor=color_nms_demo, linewidth=2))  # Draw the box.
+        ax_nms_demo.text(box_nms_demo[0], box_nms_demo[1] - 0.1, f"{idx_nms_demo}: {labels_nms_demo[idx_nms_demo]} {scores_nms_demo[idx_nms_demo]:.2f}", color=color_nms_demo)  # Label box.
+plt.show()                                                           # Render NMS before/after.
+```
+▶ What you'll see: duplicate dog boxes collapse to the highest-scoring dog, while the overlapping cat is kept because NMS is class-aware.
+
+### Step 5 — YOLO-style detection pipeline: decode, score, filter, and suppress
+
+A YOLO-style detector emits a dense tensor shaped like $G 	imes G 	imes k 	imes (5+p)$.
+Each grid-cell/anchor prediction contains objectness, box coordinates, and class probabilities;
+post-processing decodes boxes, multiplies objectness by class probability, thresholds, then runs NMS.
+
+```python
+grid_shape_demo = np.array([2, 2])                                  # Use a tiny 2-by-2 grid.
+anchors_yolo_demo = 2                                                # Use two anchor slots per grid cell.
+classes_yolo_demo = np.array(["cat", "dog"])                       # Define two possible object classes.
+tensor_shape_demo = (grid_shape_demo[0], grid_shape_demo[1], anchors_yolo_demo, 5 + len(classes_yolo_demo))  # Compute YOLO output shape.
+cell_size_demo = np.array([5.0, 4.0])                                # Set each cell width and height.
+cell_row_col_demo = np.array([1, 0])                                 # Choose one responsible cell as row, column.
+cell_origin_demo = np.array([cell_row_col_demo[1] * cell_size_demo[0], cell_row_col_demo[0] * cell_size_demo[1]])  # Convert cell index to image origin.
+local_centers_demo = np.array([[0.52, 0.46], [0.55, 0.50]])          # Predict centers as fractions inside the cell.
+sizes_yolo_demo = np.array([[2.5, 2.0], [2.8, 2.1]])                # Predict width and height per anchor.
+objectness_demo = np.array([0.91, 0.74])                             # Predict objectness per anchor.
+class_probs_demo = np.array([[0.12, 0.88], [0.18, 0.82]])            # Predict class probabilities [cat, dog].
+centers_yolo_demo = cell_origin_demo + local_centers_demo * cell_size_demo  # Decode centers to image coordinates.
+boxes_yolo_demo = np.array([center_to_xyxy_demo([center_demo[0], center_demo[1], size_demo[0], size_demo[1]]) for center_demo, size_demo in zip(centers_yolo_demo, sizes_yolo_demo)])  # Decode corner boxes.
+best_class_demo = np.argmax(class_probs_demo, axis=1)                # Select highest-probability class per anchor.
+confidence_demo = objectness_demo * class_probs_demo[np.arange(len(objectness_demo)), best_class_demo]  # Combine objectness and class probability.
+mask_yolo_demo = confidence_demo >= 0.50                             # Keep predictions above confidence threshold.
+filtered_boxes_demo = boxes_yolo_demo[mask_yolo_demo]                # Keep confident boxes.
+filtered_scores_demo = confidence_demo[mask_yolo_demo]               # Keep confident scores.
+filtered_labels_demo = classes_yolo_demo[best_class_demo[mask_yolo_demo]]  # Keep predicted labels.
+order_yolo_demo = np.argsort(filtered_scores_demo)[::-1]             # Sort survivors by confidence.
+keep_yolo_demo = []                                                  # Store final detection indices after NMS.
+for idx_yolo_demo in order_yolo_demo:                                # Greedily process filtered boxes.
+    duplicate_demo = False                                           # Track whether current box overlaps a kept same-class box.
+    for kept_yolo_demo in keep_yolo_demo:                            # Compare against already-kept boxes.
+        same_class_demo = filtered_labels_demo[idx_yolo_demo] == filtered_labels_demo[kept_yolo_demo]  # Check class match.
+        overlap_yolo_demo = iou_demo(filtered_boxes_demo[idx_yolo_demo], filtered_boxes_demo[kept_yolo_demo])[0]  # Compute IoU.
+        duplicate_demo = duplicate_demo or (same_class_demo and overlap_yolo_demo > 0.45)  # Mark duplicate if same class and high overlap.
+        log(f"YOLO compare {int(idx_yolo_demo)} vs {int(kept_yolo_demo)}", round(float(overlap_yolo_demo), 3))  # Print comparison IoU.
+    if not duplicate_demo:                                           # Keep boxes that are not duplicates.
+        keep_yolo_demo.append(int(idx_yolo_demo))                    # Add the final detection.
+log("YOLO tensor shape", tensor_shape_demo)                         # Print dense output tensor shape.
+log("decoded boxes", np.round(boxes_yolo_demo, 2).tolist())         # Print decoded corner boxes.
+log("confidence scores", np.round(confidence_demo, 3).tolist())     # Print objectness times class probability.
+log("final detections", list(zip(filtered_labels_demo[keep_yolo_demo].tolist(), np.round(filtered_scores_demo[keep_yolo_demo], 3).tolist())))  # Print final label-score pairs.
+
+fig_yolo_demo, ax_yolo_demo = plt.subplots(figsize=(7, 5))           # Create YOLO pipeline figure.
+ax_yolo_demo.set_xlim(0, grid_shape_demo[1] * cell_size_demo[0])     # Set image width from grid.
+ax_yolo_demo.set_ylim(0, grid_shape_demo[0] * cell_size_demo[1])     # Set image height from grid.
+ax_yolo_demo.invert_yaxis()                                          # Match image-coordinate orientation.
+ax_yolo_demo.grid(True, alpha=0.35)                                  # Draw a light coordinate grid.
+for col_yolo_demo in range(grid_shape_demo[1] + 1):                  # Draw vertical grid lines.
+    ax_yolo_demo.axvline(col_yolo_demo * cell_size_demo[0], color="black", linewidth=0.8, alpha=0.4)  # Add one vertical boundary.
+for row_yolo_demo in range(grid_shape_demo[0] + 1):                  # Draw horizontal grid lines.
+    ax_yolo_demo.axhline(row_yolo_demo * cell_size_demo[1], color="black", linewidth=0.8, alpha=0.4)  # Add one horizontal boundary.
+ax_yolo_demo.scatter(centers_yolo_demo[:, 0], centers_yolo_demo[:, 1], color="tab:orange", zorder=3, label="raw centers")  # Show raw centers.
+for final_pos_demo in keep_yolo_demo:                                # Draw each final detection.
+    box_final_demo = filtered_boxes_demo[final_pos_demo]             # Select final box coordinates.
+    ax_yolo_demo.add_patch(Rectangle((box_final_demo[0], box_final_demo[1]), box_final_demo[2] - box_final_demo[0], box_final_demo[3] - box_final_demo[1], fill=False, edgecolor="tab:purple", linewidth=2))  # Draw final box.
+    ax_yolo_demo.text(box_final_demo[0], box_final_demo[1] - 0.15, f"{filtered_labels_demo[final_pos_demo]} {filtered_scores_demo[final_pos_demo]:.2f}", color="tab:purple")  # Label final detection.
+ax_yolo_demo.set_title("YOLO-style decode → score → filter → NMS")  # Title the pipeline plot.
+ax_yolo_demo.set_xlabel("x coordinate")                              # Label x-axis.
+ax_yolo_demo.set_ylabel("y coordinate")                              # Label y-axis.
+ax_yolo_demo.legend(loc="lower right")                              # Explain center markers.
+plt.show()                                                           # Render the YOLO-style output.
+```
+▶ What you'll see: two raw anchor centers in one grid cell, confidence scores, and one final duplicate-suppressed dog detection.
+
+### Recap — what you just ran
+
+- **Bounding-box representations** converted cleanly between corners and center-size values.
+- **IoU** measured localization quality as intersection area divided by union area.
+- **Anchor boxes** gave one cell multiple shape priors and selected the best prior by IoU.
+- **Non-max suppression** removed high-overlap same-class duplicates while keeping different classes separate.
+- A **YOLO-style pipeline** decoded a grid/anchor tensor into final scored boxes with thresholding and NMS.
+
+Everything below (starting at **§1 Overview**) develops these same ideas with full derivations,
+more examples, and detector-style mini-pipelines.
+
+---
+
 ## 1. Overview
 
 Object detection extends image classification from one whole-image label to a structured prediction: a variable-size set of objects, each with a class label, confidence score, and bounding box. This lesson builds every core post-processing idea with NumPy only: box coordinates, Intersection over Union (IoU), anchor boxes, confidence filtering, YOLO-style grid targets, and non-max suppression (NMS).

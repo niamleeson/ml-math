@@ -2,6 +2,247 @@
 > **Source:** CS 221 · **Category:** Model/Concept · **Type:** ⚖️ Both · [↑ Full reference](../../ai-ml-cheatsheets.md)
 > 📓 The coded examples form a runnable notebook section; an .ipynb will be generated.
 
+## 0. Step-by-Step Worked Example — Start Here (Beginner Friendly)
+
+> 🧑‍🎓 **New to this topic? Start here.** This is a gentle, fully runnable walkthrough that
+> builds up *every* idea in this lesson one tiny step at a time. Each step **prints** the
+> numbers it computes and **draws a picture** so you can *see* what is happening. Run the
+> cells in order from top to bottom. Nothing here needs the internet or any downloaded data.
+
+**What we will build, step by step:**
+1. **Features and scores** — turn raw inputs into numbers, weight them, and add contributions.
+2. **Linear classification** — use the score sign, boundary, and margin for two classes.
+3. **Classification losses** — compare zero-one, hinge, and logistic penalties by margin.
+4. **Linear regression** — use the same score as a real-valued prediction and inspect residuals.
+5. **Training loss** — average per-example losses to choose better weights.
+6. **Linear versus non-linear predictors** — see how non-linear features, kNN, and neural units add flexibility.
+
+### Step 0 — Set up our tools
+
+We import NumPy (arrays + math) and Matplotlib (pictures). We fix a random **seed** so every
+run gives the same printed numbers, then define a tiny `log()` helper for clearly labeled output.
+
+```python
+import numpy as np                       # NumPy: arrays, dot products, and tiny synthetic datasets.
+import matplotlib.pyplot as plt          # Matplotlib: visual checks for scores, boundaries, and losses.
+
+np.random.seed(0)                         # Fix the seed so every run prints the same numbers.
+plt.rcParams["figure.figsize"] = (7, 4)   # Use a comfortable default plot size.
+
+
+def log(label, value):                    # Define one small logger used in every worked-example cell.
+    print(f"[{label}] {value}")           # Print each value with a readable label.
+
+log("setup", "tools ready — NumPy + Matplotlib imported, seed fixed to 0")  # Confirm setup finished.
+```
+▶ What you'll see: one line confirming the tools are ready.
+
+### Step 1 — Features and scores: weighted evidence
+
+A reflex model first turns an input into a feature vector $\phi(x)$, then multiplies each feature by a weight.
+The score $s=w\cdot\phi(x)$ is just the sum of those feature contributions, so we print every piece before adding.
+
+```python
+feature_names_demo = np.array(["bias", "likes", "recent", "has_question"])  # Name each feature in phi(x).
+features_demo = np.array([1.0, 0.8, 0.4, 1.0])                                # Store one synthetic input as features.
+weights_demo = np.array([-0.2, 1.1, 0.6, -0.5])                                # Store learned weights for those features.
+contributions_demo = weights_demo * features_demo                              # Multiply feature by weight term-by-term.
+score_demo = contributions_demo.sum()                                          # Add contributions to get s(x,w).
+colors_demo = np.where(contributions_demo >= 0, "seagreen", "salmon")         # Color positive pushes green and negative pushes red.
+
+log("feature vector phi(x)", np.round(features_demo, 2))                       # Print the numeric feature vector.
+log("weights w", np.round(weights_demo, 2))                                    # Print the matching weight vector.
+log("feature contributions w_j phi_j", np.round(contributions_demo, 3))        # Print each term in the dot product.
+log("score s = w dot phi", round(score_demo, 3))                               # Print the final score.
+
+plt.bar(feature_names_demo, contributions_demo, color=colors_demo, edgecolor="black")  # Draw each contribution as a bar.
+plt.axhline(0.0, color="black", linewidth=1)                                  # Mark zero so upward and downward pushes are visible.
+plt.ylabel("contribution to score")                                            # Label the vertical axis.
+plt.title("Features and scores: add the weighted evidence")                    # Title the plot with the concept.
+plt.show()                                                                      # Render the contribution chart.
+```
+▶ What you'll see: green bars push the score up, red bars push it down, and the printed sum is the final score.
+
+### Step 2 — Linear classification: sign, boundary, and margin
+
+For binary labels $y\in\{-1,+1\}$, the sign of the score is the prediction. The boundary is where the
+score equals zero, and the margin $m=y\,s$ says whether the labeled point is correct and how confidently.
+
+```python
+points_demo = np.array([[-2.0, -1.2], [-1.4, 0.2], [-0.3, -1.0], [0.4, 0.8], [1.2, 0.4], [1.8, 1.5]])  # Create tiny 2D inputs.
+labels_demo = np.array([-1, -1, -1, 1, 1, 1])                                                           # Store true class labels.
+weights_class_demo = np.array([-0.1, 1.0, 0.7])                                                          # Store [bias, x1 weight, x2 weight].
+features_class_demo = np.column_stack([np.ones(len(points_demo)), points_demo])                          # Add a bias column to the points.
+scores_class_demo = features_class_demo @ weights_class_demo                                             # Compute one linear score per point.
+predictions_demo = np.where(scores_class_demo >= 0.0, 1, -1)                                             # Predict class by the sign of the score.
+margins_demo = labels_demo * scores_class_demo                                                           # Compute margin y*s for each labeled point.
+line_x_demo = np.linspace(-2.5, 2.5, 100)                                                                # Build x-values for the decision boundary.
+line_y_demo = -(weights_class_demo[0] + weights_class_demo[1] * line_x_demo) / weights_class_demo[2]      # Solve w0+w1*x1+w2*x2=0 for x2.
+
+log("scores", np.round(scores_class_demo, 3))                                                           # Print raw scores before taking signs.
+log("predictions", predictions_demo)                                                                     # Print predicted classes.
+log("margins y*s", np.round(margins_demo, 3))                                                            # Print margins for correctness/confidence.
+log("all margins positive?", bool(np.all(margins_demo > 0)))                                             # Check whether every example is correctly classified.
+
+plt.scatter(points_demo[:, 0], points_demo[:, 1], c=labels_demo, cmap="bwr", s=90, edgecolor="black")    # Plot the labeled points.
+plt.plot(line_x_demo, line_y_demo, color="black", linestyle="--", label="score = 0 boundary")           # Draw the separating line.
+plt.xlabel("feature x1")                                                                                 # Label the horizontal feature.
+plt.ylabel("feature x2")                                                                                 # Label the vertical feature.
+plt.title("Linear classification uses the sign of the score")                                            # Title the classification plot.
+plt.legend()                                                                                              # Show the boundary label.
+plt.show()                                                                                                # Render the boundary plot.
+```
+▶ What you'll see: the dashed line is the zero-score boundary, and positive printed margins mean correct predictions.
+
+### Step 3 — Classification losses: three ways to punish margins
+
+Loss functions translate a margin into a penalty. Zero-one loss only asks if the sign is wrong, hinge loss
+also wants a margin of at least $1$, and logistic loss is smooth so optimization can follow a gradient.
+
+```python
+margin_grid_demo = np.linspace(-3.0, 3.0, 300)                                # Create margins from very wrong to very correct.
+zero_one_demo = (margin_grid_demo <= 0.0).astype(float)                        # Zero-one loss is 1 for non-positive margin.
+hinge_demo = np.maximum(1.0 - margin_grid_demo, 0.0)                           # Hinge loss is positive until margin reaches 1.
+logistic_demo = np.log1p(np.exp(-margin_grid_demo))                            # Logistic loss smoothly shrinks as margin grows.
+example_margins_demo = np.array([-1.0, 0.0, 0.5, 2.0])                         # Pick a few margins to inspect numerically.
+example_losses_demo = np.column_stack([(example_margins_demo <= 0.0).astype(float), np.maximum(1.0 - example_margins_demo, 0.0), np.log1p(np.exp(-example_margins_demo))])  # Compute all three losses.
+
+for margin_demo, losses_demo in zip(example_margins_demo, example_losses_demo):  # Loop through the example margins.
+    log(f"m={margin_demo}: 0/1, hinge, logistic", np.round(losses_demo, 3))       # Print the three penalties side by side.
+
+plt.plot(margin_grid_demo, zero_one_demo, label="zero-one")                    # Plot the discontinuous zero-one loss.
+plt.plot(margin_grid_demo, hinge_demo, label="hinge")                          # Plot the piecewise-linear hinge loss.
+plt.plot(margin_grid_demo, logistic_demo, label="logistic")                    # Plot the smooth logistic loss.
+plt.axvline(0.0, color="black", linewidth=1, linestyle="--")                  # Mark the correctness threshold.
+plt.axvline(1.0, color="gray", linewidth=1, linestyle=":")                   # Mark the hinge comfort margin.
+plt.xlabel("margin m = y s")                                                   # Label the margin axis.
+plt.ylabel("loss")                                                             # Label the loss axis.
+plt.title("Classification losses reward larger positive margins")             # Title the loss comparison.
+plt.legend()                                                                    # Show the loss names.
+plt.show()                                                                      # Render the loss curves.
+```
+▶ What you'll see: all losses are high for negative margins, but hinge and logistic still care about small positive margins.
+
+### Step 4 — Linear regression: scores become real-valued predictions
+
+For regression, the same linear score is the prediction $\hat y$. The residual $\hat y-y$ measures the
+vertical miss, and squared loss punishes large misses more strongly than absolute loss.
+
+```python
+x_reg_demo = np.linspace(0.0, 5.0, 8)                                           # Create one tiny one-dimensional dataset.
+y_reg_demo = 1.0 + 0.7 * x_reg_demo + np.array([0.2, -0.3, 0.1, 0.4, -0.4, 0.0, 0.3, -0.2])  # Add small fixed noise to targets.
+weights_reg_demo = np.array([0.8, 0.8])                                         # Store [bias, slope] for a candidate regressor.
+features_reg_demo = np.column_stack([np.ones(len(x_reg_demo)), x_reg_demo])      # Build [1, x] features for every point.
+preds_reg_demo = features_reg_demo @ weights_reg_demo                           # Compute predicted y-values from the score.
+residuals_demo = preds_reg_demo - y_reg_demo                                    # Compute prediction minus target.
+squared_losses_demo = residuals_demo ** 2                                       # Square residuals for squared loss.
+absolute_losses_demo = np.abs(residuals_demo)                                   # Take absolute residuals for absolute loss.
+
+log("predictions", np.round(preds_reg_demo, 2))                                 # Print predicted values.
+log("residuals pred - y", np.round(residuals_demo, 2))                          # Print misses around the line.
+log("mean squared loss", round(squared_losses_demo.mean(), 3))                  # Print average squared loss.
+log("mean absolute loss", round(absolute_losses_demo.mean(), 3))                # Print average absolute loss.
+
+plt.scatter(x_reg_demo, y_reg_demo, color="steelblue", label="targets")        # Plot the observed targets.
+plt.plot(x_reg_demo, preds_reg_demo, color="black", label="linear prediction") # Plot the candidate line.
+for x_value_demo, y_value_demo, pred_demo in zip(x_reg_demo, y_reg_demo, preds_reg_demo):  # Loop over points to draw residuals.
+    plt.plot([x_value_demo, x_value_demo], [y_value_demo, pred_demo], color="salmon", alpha=0.8)  # Draw one vertical residual.
+plt.xlabel("input x")                                                           # Label the input axis.
+plt.ylabel("target or prediction")                                              # Label the output axis.
+plt.title("Linear regression: residuals are vertical misses")                   # Title the regression plot.
+plt.legend()                                                                     # Show target and line labels.
+plt.show()                                                                       # Render the residual plot.
+```
+▶ What you'll see: red vertical segments are residuals, and the logs show squared vs. absolute penalties.
+
+### Step 5 — Training loss: average many example losses
+
+Training loss is the average loss over the dataset, not just one example. We compare three candidate
+weight vectors by computing their average hinge loss, then pick the one with the smallest average.
+
+```python
+points_train_demo = np.array([[-1.5, -0.7], [-0.8, -0.6], [-0.4, 0.2], [0.4, 0.4], [0.9, 0.8], [1.5, 0.7]])  # Create a small training set.
+labels_train_demo = np.array([-1, -1, -1, 1, 1, 1])                                                            # Store labels for the training set.
+features_train_demo = np.column_stack([np.ones(len(points_train_demo)), points_train_demo])                    # Add a bias feature for each example.
+candidate_names_demo = np.array(["bad", "okay", "good"])                                                     # Name three candidate models.
+candidate_weights_demo = np.array([[0.0, -0.8, 0.2], [-0.1, 0.5, 0.4], [-0.1, 1.0, 0.7]])                      # Store three weight vectors.
+scores_train_demo = features_train_demo @ candidate_weights_demo.T                                             # Compute scores for every example/model pair.
+margins_train_demo = labels_train_demo[:, None] * scores_train_demo                                            # Convert scores to margins using labels.
+hinge_train_demo = np.maximum(1.0 - margins_train_demo, 0.0)                                                   # Compute hinge loss per example/model.
+train_losses_demo = hinge_train_demo.mean(axis=0)                                                              # Average losses over the dataset.
+best_index_demo = int(np.argmin(train_losses_demo))                                                            # Find the lowest-loss candidate.
+
+for name_demo, loss_demo in zip(candidate_names_demo, train_losses_demo):                                       # Loop over candidate names and losses.
+    log(f"average hinge loss for {name_demo}", round(loss_demo, 3))                                           # Print each training loss.
+log("chosen weights", candidate_names_demo[best_index_demo])                                                   # Print the candidate selected by training loss.
+
+plt.bar(candidate_names_demo, train_losses_demo, color=["salmon", "gold", "seagreen"], edgecolor="black")    # Plot average training losses.
+plt.ylabel("average hinge loss")                                                                              # Label the loss axis.
+plt.title("Training chooses weights with smaller average loss")                                                # Title the training-loss plot.
+plt.show()                                                                                                     # Render the bar chart.
+```
+▶ What you'll see: the best candidate has the smallest average hinge loss across all training examples.
+
+### Step 6 — Linear versus non-linear predictors: feature choices change the shape
+
+A predictor is linear in the features it receives, but those features can be non-linear functions of the raw input.
+Adding $x_1^2+x_2^2$ lets a linear score draw a circle, while kNN and neural units are other non-linear alternatives.
+
+```python
+angles_demo = np.linspace(0.0, 2.0 * np.pi, 40, endpoint=False)                  # Create angles for a small circular dataset.
+inner_demo = 0.45 * np.column_stack([np.cos(angles_demo[:20]), np.sin(angles_demo[:20])])  # Create inner-ring points.
+outer_demo = 1.05 * np.column_stack([np.cos(angles_demo[20:]), np.sin(angles_demo[20:])])  # Create outer-ring points.
+points_ring_demo = np.vstack([inner_demo, outer_demo])                           # Combine inner and outer points.
+labels_ring_demo = np.r_[-np.ones(len(inner_demo)), np.ones(len(outer_demo))]     # Label inner as -1 and outer as +1.
+linear_scores_demo = points_ring_demo @ np.array([1.0, 0.0])                     # Use a plain linear score based only on x1.
+linear_preds_demo = np.where(linear_scores_demo >= 0.0, 1, -1)                   # Predict with the linear score sign.
+radius_feature_demo = np.sum(points_ring_demo ** 2, axis=1)                      # Build the non-linear feature x1^2 + x2^2.
+circle_scores_demo = -0.55 + radius_feature_demo                                 # Use a linear score in [1, radius^2] feature space.
+circle_preds_demo = np.where(circle_scores_demo >= 0.0, 1, -1)                   # Predict from the circular score.
+query_demo = np.array([0.75, 0.15])                                               # Pick one query point for a tiny kNN vote.
+distances_demo = np.sqrt(np.sum((points_ring_demo - query_demo) ** 2, axis=1))    # Measure distances from the query to training points.
+nearest_demo = np.argsort(distances_demo)[:3]                                     # Find the three closest neighbors.
+knn_vote_demo = np.sign(labels_ring_demo[nearest_demo].sum())                     # Vote by summing the nearest labels.
+neural_activation_demo = np.tanh(4.0 * (np.sum(query_demo ** 2) - 0.55))          # Compute one non-linear neural-style hidden activation.
+
+log("linear accuracy", round(np.mean(linear_preds_demo == labels_ring_demo), 3))  # Print accuracy without the radial feature.
+log("circular-feature accuracy", round(np.mean(circle_preds_demo == labels_ring_demo), 3))  # Print accuracy with x1^2+x2^2.
+log("3-NN neighbor labels", labels_ring_demo[nearest_demo].astype(int))           # Print nearby labels used by kNN.
+log("3-NN vote for query", int(knn_vote_demo))                                    # Print the kNN prediction.
+log("one neural-style tanh activation", round(float(neural_activation_demo), 3))  # Print a smooth non-linear unit value.
+
+fig_demo, axes_demo = plt.subplots(1, 2, figsize=(9, 4))                          # Create side-by-side plots.
+axes_demo[0].scatter(points_ring_demo[:, 0], points_ring_demo[:, 1], c=linear_preds_demo, cmap="bwr", s=70, edgecolor="black")  # Plot plain-linear predictions.
+axes_demo[0].axvline(0.0, color="black", linestyle="--")                        # Draw the vertical linear boundary.
+axes_demo[0].set_title("plain linear features")                                  # Title the first panel.
+axes_demo[1].scatter(points_ring_demo[:, 0], points_ring_demo[:, 1], c=circle_preds_demo, cmap="bwr", s=70, edgecolor="black")  # Plot circular-feature predictions.
+axes_demo[1].add_patch(plt.Circle((0.0, 0.0), np.sqrt(0.55), fill=False, color="black", linestyle="--"))  # Draw the circular boundary.
+axes_demo[1].scatter(query_demo[0], query_demo[1], marker="*", s=180, color="gold", edgecolor="black")  # Mark the kNN query point.
+axes_demo[1].set_title("linear in non-linear features")                          # Title the second panel.
+for ax_demo in axes_demo:                                                         # Loop over both panels.
+    ax_demo.set_aspect("equal")                                                  # Use equal scaling so circles look round.
+    ax_demo.set_xlabel("x1")                                                     # Label x1 on each panel.
+    ax_demo.set_ylabel("x2")                                                     # Label x2 on each panel.
+fig_demo.suptitle("Non-linear features can make non-linear boundaries")          # Add an overall title.
+plt.tight_layout()                                                                # Keep subplot labels from overlapping.
+plt.show()                                                                        # Render the comparison.
+```
+▶ What you'll see: a straight-line feature split fails on rings, while the radial feature draws the right circular boundary.
+
+### Recap — what you just ran
+
+- **Features and scores** broke one dot product into visible weighted contributions.
+- **Linear classification** used score signs, a zero-score boundary, and margins.
+- **Classification losses** showed how zero-one, hinge, and logistic losses penalize margins differently.
+- **Linear regression** reused the same score as a numeric prediction and measured residual losses.
+- **Training loss** averaged example losses to compare candidate weights.
+- **Linear versus non-linear predictors** showed that non-linear features, kNN votes, and neural activations add flexible boundaries.
+
+Everything below (starting at **§1 Overview**) develops these same ideas with full derivations,
+more examples, and an interactive experiment.
+
+---
+
 ## 1. Overview
 
 A **reflex-based model** predicts directly from the current input features, without explicitly planning over future states. In supervised learning language, it turns an input $x$ into a feature vector $\phi(x)$, scores that vector with weights $w$, and chooses or improves the weights by minimizing a loss.

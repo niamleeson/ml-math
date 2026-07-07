@@ -2,6 +2,222 @@
 > **Source:** CS 230 · **Category:** Method/Model · **Type:** 💻 Colab · [↑ Full reference](../../ai-ml-cheatsheets.md)
 > 📓 Runnable notebook section; an `.ipynb` will be generated.
 
+## 0. Step-by-Step Worked Example — Start Here (Beginner Friendly)
+
+> 🧑‍🎓 **New to this topic? Start here.** This is a gentle, fully runnable walkthrough that
+> builds up *every* idea in this lesson one tiny step at a time. Each step **prints** the
+> numbers it computes and **draws a picture** so you can *see* what is happening. Run the
+> cells in order from top to bottom. Nothing here needs the internet or any downloaded data.
+
+**What we will build, step by step:**
+1. **Face verification versus face recognition** — one claimed identity vs. a whole gallery.
+2. **Siamese embeddings and one-shot learning** — add a new person with one example.
+3. **Triplet loss** — pull positives close and push negatives past a margin.
+4. **Neural style transfer** — content loss, Gram-matrix style loss, and the weighted objective.
+
+### Step 0 — Set up our tools
+
+We import NumPy (vectors + tiny synthetic arrays) and Matplotlib (pictures). We fix a random
+**seed** so every run gives the same printed numbers, then define a tiny `log()` helper so each
+line of output has a clear label.
+
+```python
+import numpy as np                       # NumPy: tiny embeddings, distances, feature maps, and matrix math.
+import matplotlib.pyplot as plt          # Matplotlib: draw distance bars, embedding maps, and Gram heatmaps.
+
+np.random.seed(0)                         # Fix the seed so every run prints the SAME numbers.
+plt.rcParams["figure.figsize"] = (7, 4)   # A comfortable default plot size.
+
+def log(label, value):                    # A tiny logger so each printed line explains itself.
+    print(f"[{label}] {value}")           # Format is: [what this is] the value.
+
+log("setup", "tools ready — NumPy + Matplotlib imported, seed fixed to 0")
+```
+▶ What you'll see: one line confirming the tools are ready.
+
+### Step 1 — Face verification versus face recognition
+
+Verification asks a **1-to-1** question: "Is this query really the claimed person?" Recognition
+asks a **1-to-many** question: "Which enrolled person is closest?" Both use embedding distances,
+but the decision rule is different.
+
+```python
+gallery_names_demo = np.array(["Ava", "Ben", "Cy"])                         # Three enrolled identities in the gallery.
+gallery_embeddings_demo = np.array([[0.10, 0.20], [0.82, 0.18], [0.22, 0.82]]) # One 2-D face embedding per identity.
+query_embedding_demo = np.array([0.16, 0.24])                                # A query face embedding that should look like Ava.
+claimed_name_demo = "Ava"                                                    # The identity being claimed in verification.
+threshold_demo = 0.12                                                        # Accept the claim only below this distance.
+
+claimed_index_demo = int(np.where(gallery_names_demo == claimed_name_demo)[0][0]) # Find Ava's row in the gallery.
+verification_distance_demo = np.linalg.norm(query_embedding_demo - gallery_embeddings_demo[claimed_index_demo]) # One 1-to-1 distance.
+verification_accept_demo = verification_distance_demo <= threshold_demo       # Turn that one distance into accept/reject.
+
+recognition_distances_demo = np.linalg.norm(gallery_embeddings_demo - query_embedding_demo, axis=1) # One distance to every gallery entry.
+best_index_demo = int(np.argmin(recognition_distances_demo))                 # Recognition chooses the nearest gallery row.
+best_name_demo = gallery_names_demo[best_index_demo]                         # Convert the nearest row into an identity name.
+
+for name_demo, distance_demo in zip(gallery_names_demo, recognition_distances_demo): # Print every gallery comparison.
+    log(f"distance to {name_demo}", round(float(distance_demo), 3))           # Show one recognition distance.
+log("verification claim", f"{claimed_name_demo} -> {'ACCEPT' if verification_accept_demo else 'REJECT'}") # Show the 1-to-1 decision.
+log("recognition winner", best_name_demo)                                    # Show the 1-to-many nearest identity.
+
+plt.bar(gallery_names_demo, recognition_distances_demo, color=["seagreen", "steelblue", "orange"]) # Draw all query-to-gallery distances.
+plt.axhline(threshold_demo, color="red", linestyle="--", label="verification threshold") # Draw the accept/reject cutoff.
+plt.scatter([best_name_demo], [recognition_distances_demo[best_index_demo]], color="black", zorder=3, label="nearest") # Mark the winner.
+plt.ylabel("Euclidean embedding distance")                                  # Label the distance scale.
+plt.title("Verification uses one threshold; recognition searches the gallery") # Title the comparison.
+plt.legend()                                                                # Explain the threshold and nearest marker.
+plt.show()                                                                  # Render the plot.
+```
+▶ What you'll see: Ava is accepted in verification and also wins the recognition search because her distance bar is shortest.
+
+### Step 2 — Siamese embeddings and one-shot learning
+
+A Siamese model uses the **same encoder** for both images, so all outputs live in one shared
+embedding space. That makes one-shot learning possible: to enroll a new person, store one
+reference embedding and compare future queries to it.
+
+```python
+one_shot_names_demo = np.array(["Ava", "Ben", "Dora (new)"])                 # Dora is a newly enrolled identity.
+one_shot_gallery_demo = np.array([[0.10, 0.20], [0.82, 0.18], [0.48, 0.76]])  # Store just one reference embedding per person.
+one_shot_query_demo = np.array([0.52, 0.72])                                 # A query embedding from Dora.
+one_shot_distances_demo = np.linalg.norm(one_shot_gallery_demo - one_shot_query_demo, axis=1) # Compare the query to all references.
+one_shot_index_demo = int(np.argmin(one_shot_distances_demo))                # Pick the nearest reference.
+one_shot_prediction_demo = one_shot_names_demo[one_shot_index_demo]          # Translate nearest row into a predicted name.
+
+for name_demo, distance_demo in zip(one_shot_names_demo, one_shot_distances_demo): # Print each one-shot comparison.
+    log(f"one-shot distance to {name_demo}", round(float(distance_demo), 3))  # Show one distance.
+log("one-shot prediction", one_shot_prediction_demo)                         # Show the nearest-neighbor prediction.
+
+plt.scatter(one_shot_gallery_demo[:, 0], one_shot_gallery_demo[:, 1], s=90, label="gallery references") # Draw enrolled embeddings.
+plt.scatter(one_shot_query_demo[0], one_shot_query_demo[1], s=160, marker="*", color="black", label="query") # Draw the query as a star.
+for index_demo, name_demo in enumerate(one_shot_names_demo):                 # Label each reference point.
+    plt.text(one_shot_gallery_demo[index_demo, 0] + 0.01, one_shot_gallery_demo[index_demo, 1] + 0.01, name_demo, fontsize=9) # Add a name label.
+plt.plot([one_shot_query_demo[0], one_shot_gallery_demo[one_shot_index_demo, 0]], [one_shot_query_demo[1], one_shot_gallery_demo[one_shot_index_demo, 1]], "k--") # Connect query to nearest reference.
+plt.xlabel("embedding coordinate 1")                                        # Label the horizontal coordinate.
+plt.ylabel("embedding coordinate 2")                                        # Label the vertical coordinate.
+plt.title("One stored embedding is enough for one-shot lookup")             # Title the geometry plot.
+plt.legend()                                                                # Explain point markers.
+plt.show()                                                                  # Render the plot.
+```
+▶ What you'll see: the query star lands closest to Dora's single stored example, so the new identity is recognized without retraining.
+
+### Step 3 — Triplet loss
+
+Triplet loss looks at an **anchor** image, a same-person **positive**, and a different-person
+**negative**. The loss is positive when the negative is not at least margin $\alpha$ farther
+than the positive, so training pulls positives inward and pushes negatives outward.
+
+```python
+anchor_demo = np.array([0.15, 0.20])                                        # Anchor embedding for one identity.
+positive_demo = np.array([0.52, 0.35])                                      # Positive embedding from the same identity.
+negative_demo = np.array([0.62, 0.26])                                      # Negative embedding from a different identity.
+margin_demo = 0.30                                                          # Required extra separation for the negative.
+
+d_ap_before_demo = np.linalg.norm(anchor_demo - positive_demo)              # Distance from anchor to positive before training.
+d_an_before_demo = np.linalg.norm(anchor_demo - negative_demo)              # Distance from anchor to negative before training.
+loss_before_demo = max(d_ap_before_demo - d_an_before_demo + margin_demo, 0.0) # Hinge triplet loss before training.
+
+learning_rate_demo = 0.35                                                   # A visible toy update size.
+positive_after_demo = positive_demo - learning_rate_demo * (positive_demo - anchor_demo) # Pull positive toward the anchor.
+negative_after_demo = negative_demo + learning_rate_demo * (negative_demo - anchor_demo) # Push negative away from the anchor.
+d_ap_after_demo = np.linalg.norm(anchor_demo - positive_after_demo)         # Distance from anchor to positive after the update.
+d_an_after_demo = np.linalg.norm(anchor_demo - negative_after_demo)         # Distance from anchor to negative after the update.
+loss_after_demo = max(d_ap_after_demo - d_an_after_demo + margin_demo, 0.0) # Hinge triplet loss after the update.
+
+log("before d(anchor, positive)", round(float(d_ap_before_demo), 3))         # Print same-identity distance before.
+log("before d(anchor, negative)", round(float(d_an_before_demo), 3))         # Print different-identity distance before.
+log("before triplet loss", round(float(loss_before_demo), 3))               # Print margin violation before.
+log("after d(anchor, positive)", round(float(d_ap_after_demo), 3))           # Print same-identity distance after.
+log("after d(anchor, negative)", round(float(d_an_after_demo), 3))           # Print different-identity distance after.
+log("after triplet loss", round(float(loss_after_demo), 3))                 # Print margin violation after.
+
+fig_demo, axes_demo = plt.subplots(1, 2, figsize=(10, 4))                   # Create distance and geometry panels.
+axes_demo[0].bar(["d(A,P)", "d(A,N)"], [d_ap_before_demo, d_an_before_demo], alpha=0.45, label="before") # Draw before distances.
+axes_demo[0].bar(["d(A,P)", "d(A,N)"], [d_ap_after_demo, d_an_after_demo], alpha=0.75, label="after") # Draw after distances.
+axes_demo[0].axhline(d_ap_after_demo + margin_demo, color="red", linestyle="--", label="after positive + margin") # Show target separation.
+axes_demo[0].set_ylabel("embedding distance")                              # Label the distance axis.
+axes_demo[0].set_title("Triplet margin before and after")                  # Title the bar panel.
+axes_demo[0].legend()                                                       # Explain before/after bars.
+axes_demo[1].scatter(anchor_demo[0], anchor_demo[1], s=140, color="black", label="anchor") # Draw the anchor.
+axes_demo[1].scatter(positive_demo[0], positive_demo[1], s=90, color="green", alpha=0.4, label="positive before") # Draw original positive.
+axes_demo[1].scatter(negative_demo[0], negative_demo[1], s=90, color="red", alpha=0.4, label="negative before") # Draw original negative.
+axes_demo[1].scatter(positive_after_demo[0], positive_after_demo[1], s=140, marker="*", color="green", label="positive after") # Draw moved positive.
+axes_demo[1].scatter(negative_after_demo[0], negative_after_demo[1], s=140, marker="*", color="red", label="negative after") # Draw moved negative.
+axes_demo[1].plot([positive_demo[0], positive_after_demo[0]], [positive_demo[1], positive_after_demo[1]], "g--") # Show positive movement.
+axes_demo[1].plot([negative_demo[0], negative_after_demo[0]], [negative_demo[1], negative_after_demo[1]], "r--") # Show negative movement.
+axes_demo[1].set_title("Positive moves in; negative moves out")             # Title the embedding panel.
+axes_demo[1].legend(fontsize=8)                                             # Explain point markers.
+plt.tight_layout()                                                          # Prevent panel labels from overlapping.
+plt.show()                                                                  # Render both panels.
+```
+▶ What you'll see: after the toy update, the positive is closer, the negative is farther, and the triplet loss drops to zero.
+
+### Step 4 — Neural style transfer: content loss, style loss, and Gram matrix
+
+Neural style transfer optimizes a generated image $G$ by balancing two wishes: keep feature
+maps close to the content image $C$, but match the style image $S$ through a **Gram matrix** of
+channel co-activations. The weights $\alpha$ and $\beta$ decide the content/style tradeoff.
+
+```python
+grid_y_demo, grid_x_demo = np.mgrid[0:4, 0:4]                               # Build a tiny 4-by-4 coordinate grid.
+content_base_demo = ((grid_x_demo == 1) | (grid_y_demo == 2)).astype(float)  # Make a simple cross-like content shape.
+style_base_demo = ((grid_x_demo + grid_y_demo) % 2).astype(float)            # Make a checkerboard style texture.
+content_demo = np.stack([content_base_demo, np.roll(content_base_demo, 1, axis=0), np.roll(content_base_demo, 1, axis=1)], axis=2) # Create 3 content channels.
+style_demo = np.stack([style_base_demo, 1.0 - style_base_demo, np.roll(style_base_demo, 1, axis=0)], axis=2) # Create 3 style channels.
+generated_demo = np.clip(0.65 * content_demo + 0.35 * style_demo, 0.0, 1.0)  # Start generated features between content and style.
+
+def gram_matrix_demo(activation_demo):                                      # Define the Gram helper for H-by-W-by-C activations.
+    h_demo, w_demo, c_demo = activation_demo.shape                          # Read height, width, and channels.
+    features_demo = activation_demo.reshape(h_demo * w_demo, c_demo)        # Flatten spatial positions into rows.
+    return features_demo.T @ features_demo                                  # Compute channel-by-channel co-activation totals.
+
+content_loss_demo = 0.5 * np.sum((generated_demo - content_demo) ** 2)      # Content loss compares activations at the same positions.
+gram_style_demo = gram_matrix_demo(style_demo)                              # Target style correlations.
+gram_generated_demo = gram_matrix_demo(generated_demo)                      # Generated style correlations.
+n_h_demo, n_w_demo, n_c_demo = generated_demo.shape                         # Read dimensions for the style-loss normalization.
+style_loss_demo = np.sum((gram_style_demo - gram_generated_demo) ** 2) / float((2 * n_h_demo * n_w_demo * n_c_demo) ** 2) # Normalized Gram loss.
+alpha_demo = 1.0                                                            # Content weight.
+beta_demo = 30.0                                                            # Style weight.
+total_loss_demo = alpha_demo * content_loss_demo + beta_demo * style_loss_demo # Weighted neural-style-transfer objective.
+
+log("content loss", round(float(content_loss_demo), 4))                     # Print the content penalty.
+log("style loss", round(float(style_loss_demo), 6))                         # Print the Gram-matrix style penalty.
+log("weighted total loss", round(float(total_loss_demo), 4))                # Print the combined objective.
+log("style Gram matrix", np.round(gram_style_demo, 2))                      # Print the style channel correlations.
+log("generated Gram matrix", np.round(gram_generated_demo, 2))              # Print the generated channel correlations.
+
+fig_demo, axes_demo = plt.subplots(2, 3, figsize=(10, 6))                   # Create image and matrix panels.
+for ax_demo, tensor_demo, title_demo in zip(axes_demo[0], [content_demo, style_demo, generated_demo], ["content C", "style S", "generated G"]): # Loop over toy images.
+    ax_demo.imshow(tensor_demo)                                             # Show each 3-channel tensor as an image.
+    ax_demo.set_title(title_demo)                                           # Label the panel.
+    ax_demo.axis("off")                                                     # Hide image axes.
+for ax_demo, matrix_demo, title_demo in zip(axes_demo[1, :2], [gram_style_demo, gram_generated_demo], ["style Gram", "generated Gram"]): # Loop over Gram matrices.
+    image_demo = ax_demo.imshow(matrix_demo, cmap="magma")                  # Draw one Gram heatmap.
+    ax_demo.set_title(title_demo)                                           # Label the heatmap.
+    ax_demo.set_xlabel("channel")                                           # Label Gram columns.
+    ax_demo.set_ylabel("channel")                                           # Label Gram rows.
+    plt.colorbar(image_demo, ax=ax_demo, fraction=0.046)                    # Add a small color scale.
+axes_demo[1, 2].bar(["content", "style×β"], [alpha_demo * content_loss_demo, beta_demo * style_loss_demo], color=["steelblue", "salmon"]) # Compare weighted terms.
+axes_demo[1, 2].set_title("weighted objective pieces")                      # Title the loss bar chart.
+axes_demo[1, 2].set_ylabel("loss contribution")                             # Label contribution size.
+plt.tight_layout()                                                          # Keep the panels readable.
+plt.show()                                                                  # Render the style-transfer visualization.
+```
+▶ What you'll see: content is measured by spatial differences, style by Gram heatmaps, and the weighted bars show how $\alpha$ and $\beta$ form the final objective.
+
+### Recap — what you just ran
+
+- **Verification** made one thresholded 1-to-1 decision, while **recognition** searched a whole gallery.
+- **Siamese embeddings** made **one-shot** enrollment possible by comparing a query to one stored vector.
+- **Triplet loss** reduced the anchor-positive distance and increased the anchor-negative distance past a margin.
+- **Neural style transfer** combined content loss with Gram-matrix style loss in one weighted objective.
+
+Everything below (starting at **§1 Overview**) develops these same ideas with fuller examples,
+threshold sweeps, triplet mining, and toy style-transfer optimization.
+
+---
+
 ## 1. Overview
 
 Face-recognition systems and neural style-transfer systems both reuse learned visual representations instead of treating raw pixels as the final object of interest. Face systems map images into embedding vectors and compare distances; style-transfer systems optimize a generated image so its internal activations preserve content while its channel correlations match style.

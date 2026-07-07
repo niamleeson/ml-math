@@ -2,6 +2,294 @@
 > **Source:** CS 221 · **Category:** Method/Algorithm · **Type:** ⚖️ Both · [↑ Full reference](../../ai-ml-cheatsheets.md)
 > 📓 The coded examples form a runnable notebook section; an .ipynb will be generated.
 
+## 0. Step-by-Step Worked Example — Start Here (Beginner Friendly)
+
+> 🧑‍🎓 **New to this topic? Start here.** This is a gentle, fully runnable walkthrough that
+> builds up *every* idea in this lesson one tiny step at a time. Each step **prints** the
+> numbers it computes and **draws a picture** so you can *see* what is happening. Run the
+> cells in order from top to bottom. Nothing here needs the internet or any downloaded data.
+
+**What we will build, step by step:**
+1. **Game ingredients and zero-sum payoffs** — states, actions, successors, turns, terminals, and utilities.
+2. **Minimax value recursion** — max moves for us, min moves for the opponent.
+3. **Alpha-beta pruning** — the same minimax answer with skipped branches.
+4. **Expectimax** — chance or fixed-policy opponents use expectations instead of minima.
+5. **Evaluation functions and depth limits** — stop early and estimate nonterminal positions.
+6. **Simultaneous games and Nash equilibrium** — best responses, mixed payoffs, and stable strategies.
+
+### Step 0 — Set up our tools
+
+We import NumPy (small arrays and payoff tables) and Matplotlib (pictures). We fix a random
+**seed** so the printed traces stay reproducible, and define a tiny `log()` helper for labeled
+output.
+
+```python
+import numpy as np                       # NumPy stores tiny game trees, payoffs, and mixed-strategy grids.
+import matplotlib.pyplot as plt          # Matplotlib draws trees, pruning counts, heuristic bars, and payoff pictures.
+
+np.random.seed(0)                         # Fix the seed so every run produces the same trace.
+plt.rcParams["figure.figsize"] = (7, 4)   # Use readable default figures for the walkthrough.
+
+
+def log(label, value):                    # Define a tiny logger for clear beginner-friendly output.
+    print(f"[{label}] {value}")           # Print each line as [label] value.
+
+log("setup", "tools ready — NumPy + Matplotlib imported, seed fixed to 0")  # Confirm setup succeeded.
+```
+▶ What you'll see: one line confirming the tools are ready.
+
+### Step 1 — Game ingredients and zero-sum payoffs
+
+A turn-taking zero-sum game needs a start state, legal actions, successor states, terminal utilities,
+and a player-to-move label. Zero-sum means the opponent's payoff is the negative of the agent's payoff.
+
+```python
+game_tree_demo = {  # Store a complete tiny game tree as nested dictionaries.
+    "player": "agent",  # The root is our agent's turn, so it will use a max backup later.
+    "actions": {  # Legal root actions point to successor states.
+        "Left": {"player": "opp", "actions": {"L-low": 3, "L-high": 5}},  # Opponent will choose between utilities 3 and 5.
+        "Right": {"player": "opp", "actions": {"R-low": 2, "R-high": 9}},  # Opponent will choose between utilities 2 and 9.
+    },  # Finish the root action dictionary.
+}  # Finish the tiny game tree.
+start_state_demo = "root"  # Name the start state for printing.
+terminal_utility_demo = 3  # Choose one terminal utility from the agent's perspective.
+opponent_utility_demo = -terminal_utility_demo  # Use zero-sum symmetry for the opponent's payoff.
+log("start state", start_state_demo)  # Print the start label.
+log("root player", game_tree_demo["player"])  # Print whose turn it is.
+log("root actions", list(game_tree_demo["actions"].keys()))  # Print legal actions.
+log("agent utility at one leaf", terminal_utility_demo)  # Print the agent payoff.
+log("opponent utility at same leaf", opponent_utility_demo)  # Print the opponent payoff.
+pos_demo = {"root": (0, 2), "Left": (-1, 1), "Right": (1, 1), "L-low": (-1.4, 0), "L-high": (-0.6, 0), "R-low": (0.6, 0), "R-high": (1.4, 0)}  # Place tree nodes by hand.
+edges_demo = [("root", "Left"), ("root", "Right"), ("Left", "L-low"), ("Left", "L-high"), ("Right", "R-low"), ("Right", "R-high")]  # List parent-child edges.
+labels_demo = {"root": "agent turn", "Left": "opp turn", "Right": "opp turn", "L-low": "+3", "L-high": "+5", "R-low": "+2", "R-high": "+9"}  # Label nodes with turn or utility.
+for parent_demo, child_demo in edges_demo:  # Draw every tree edge.
+    plt.plot([pos_demo[parent_demo][0], pos_demo[child_demo][0]], [pos_demo[parent_demo][1], pos_demo[child_demo][1]], color="gray")  # Connect parent to child.
+for node_demo, (x_demo, y_demo) in pos_demo.items():  # Draw every tree node.
+    color_demo = "lightblue" if node_demo == "root" else ("mistyrose" if "-" not in node_demo else "white")  # Color decision nodes differently.
+    plt.scatter(x_demo, y_demo, s=900, color=color_demo, edgecolor="black", zorder=3)  # Draw the node marker.
+    plt.text(x_demo, y_demo, labels_demo[node_demo], ha="center", va="center", fontsize=9)  # Add the node text.
+plt.axis("off")  # Hide coordinate axes because this is a tree diagram.
+plt.title("Step 1: ingredients of a tiny zero-sum game")  # Title the picture.
+plt.show()  # Display the tree.
+```
+▶ What you'll see: a root state, legal moves, opponent states, terminal utilities, and zero-sum payoff signs.
+
+### Step 2 — Minimax value recursion
+
+Minimax backs up terminal utilities through the game tree. The agent takes a maximum, while the
+opponent takes a minimum because it is trying to make our utility as small as possible.
+
+```python
+def minimax_demo(node_demo, name_demo="root", depth_demo=0):  # Define recursive minimax for dictionaries and numeric leaves.
+    indent_demo = "  " * depth_demo  # Indent logs so the tree shape is visible.
+    if isinstance(node_demo, (int, float)):  # Stop when a terminal utility is reached.
+        log(f"{indent_demo}{name_demo} leaf", node_demo)  # Print the terminal utility.
+        return float(node_demo)  # Return the utility directly.
+    child_values_demo = []  # Store backed-up values from every successor.
+    for action_demo, child_demo in node_demo["actions"].items():  # Recurse over legal actions.
+        child_values_demo.append(minimax_demo(child_demo, action_demo, depth_demo + 1))  # Save each child value.
+    if node_demo["player"] == "agent":  # Agent nodes use max.
+        value_demo = max(child_values_demo)  # Choose the best child for us.
+    else:  # Opponent nodes use min.
+        value_demo = min(child_values_demo)  # Choose the worst child for us.
+    log(f"{indent_demo}{name_demo} {node_demo['player']} backup", f"{np.round(child_values_demo, 2)} -> {value_demo}")  # Print the local backup.
+    return value_demo  # Return the backed-up value.
+
+root_value_demo = minimax_demo(game_tree_demo)  # Evaluate the full tree.
+root_child_names_demo = list(game_tree_demo["actions"].keys())  # Store root action names.
+root_child_values_demo = [minimax_demo(game_tree_demo["actions"][name_demo], name_demo) for name_demo in root_child_names_demo]  # Compute each root child value.
+best_root_action_demo = root_child_names_demo[int(np.argmax(root_child_values_demo))]  # Extract the agent's optimal action.
+log("root minimax value", root_value_demo)  # Print the final value.
+log("best root action", best_root_action_demo)  # Print the argmax action.
+plt.bar(root_child_names_demo, root_child_values_demo, color=["seagreen" if name_demo == best_root_action_demo else "lightgray" for name_demo in root_child_names_demo], edgecolor="black")  # Plot root action values.
+plt.axhline(root_value_demo, color="red", linestyle="--", label="root value")  # Mark the selected root value.
+plt.ylabel("minimax child value")  # Label the y-axis.
+plt.title("Step 2: minimax chooses the best guaranteed branch")  # Title the plot.
+plt.legend()  # Show the root-value line label.
+plt.show()  # Display the minimax chart.
+```
+▶ What you'll see: opponent nodes back up 3 and 2, so the agent chooses `Left` for value 3.
+
+### Step 3 — Alpha-beta pruning
+
+Alpha-beta keeps the same minimax value but tracks two bounds: $\alpha$ for max's best guarantee
+and $\beta$ for min's best guarantee. When $\alpha \ge \beta$, remaining siblings cannot affect the final choice.
+
+```python
+prune_tree_demo = {"player": "agent", "actions": {"A": {"player": "opp", "actions": {"A1": 3, "A2": 5}}, "B": {"player": "opp", "actions": {"B1": 2, "B2": 100}}}}  # Build a tree with one easy cutoff.
+plain_count_demo = {"nodes": 0}  # Count nodes visited by full minimax.
+prune_count_demo = {"nodes": 0}  # Count nodes visited by alpha-beta.
+pruned_demo = []  # Store labels of branches skipped by alpha-beta.
+
+def counted_minimax_demo(node_demo):  # Define minimax with a visit counter.
+    plain_count_demo["nodes"] += 1  # Count this node.
+    if isinstance(node_demo, (int, float)):  # Terminal case.
+        return float(node_demo)  # Return leaf utility.
+    values_demo = [counted_minimax_demo(child_demo) for child_demo in node_demo["actions"].values()]  # Search all children.
+    return max(values_demo) if node_demo["player"] == "agent" else min(values_demo)  # Back up by player type.
+
+def alphabeta_demo(node_demo, alpha_demo=-np.inf, beta_demo=np.inf, name_demo="root", depth_demo=0):  # Define alpha-beta recursion.
+    prune_count_demo["nodes"] += 1  # Count this visited node.
+    if isinstance(node_demo, (int, float)):  # Terminal case.
+        log(f"leaf {name_demo}", f"value={node_demo}, alpha={alpha_demo:g}, beta={beta_demo:g}")  # Print leaf and bounds.
+        return float(node_demo)  # Return leaf utility.
+    action_items_demo = list(node_demo["actions"].items())  # Freeze child order for logging and pruning.
+    if node_demo["player"] == "agent":  # Max node case.
+        value_demo = -np.inf  # Start below all values.
+        for index_demo, (action_demo, child_demo) in enumerate(action_items_demo):  # Visit children left to right.
+            value_demo = max(value_demo, alphabeta_demo(child_demo, alpha_demo, beta_demo, action_demo, depth_demo + 1))  # Update max value.
+            alpha_demo = max(alpha_demo, value_demo)  # Tighten alpha.
+            log(f"max after {action_demo}", f"value={value_demo:g}, alpha={alpha_demo:g}, beta={beta_demo:g}")  # Print bounds.
+            if alpha_demo >= beta_demo:  # Check for beta cutoff.
+                pruned_demo.extend(action_name_demo for action_name_demo, child_name_demo in action_items_demo[index_demo + 1:])  # Record skipped siblings.
+                break  # Stop searching this node.
+        return value_demo  # Return max value.
+    value_demo = np.inf  # Start above all values at min nodes.
+    for index_demo, (action_demo, child_demo) in enumerate(action_items_demo):  # Visit opponent choices.
+        value_demo = min(value_demo, alphabeta_demo(child_demo, alpha_demo, beta_demo, action_demo, depth_demo + 1))  # Update min value.
+        beta_demo = min(beta_demo, value_demo)  # Tighten beta.
+        log(f"min after {action_demo}", f"value={value_demo:g}, alpha={alpha_demo:g}, beta={beta_demo:g}")  # Print bounds.
+        if alpha_demo >= beta_demo:  # Check for alpha cutoff.
+            pruned_demo.extend(action_name_demo for action_name_demo, child_name_demo in action_items_demo[index_demo + 1:])  # Record skipped siblings.
+            break  # Stop because remaining siblings cannot matter.
+    return value_demo  # Return min value.
+
+plain_value_demo = counted_minimax_demo(prune_tree_demo)  # Run full minimax.
+prune_value_demo = alphabeta_demo(prune_tree_demo)  # Run alpha-beta.
+log("plain minimax value", plain_value_demo)  # Print full-search value.
+log("alpha-beta value", prune_value_demo)  # Print pruned-search value.
+log("pruned branches", pruned_demo)  # Print skipped branches.
+plt.bar(["plain", "alpha-beta"], [plain_count_demo["nodes"], prune_count_demo["nodes"]], color=["gray", "seagreen"], edgecolor="black")  # Compare node counts.
+plt.ylabel("nodes visited")  # Label the y-axis.
+plt.title("Step 3: alpha-beta returns the same value with fewer visits")  # Title the plot.
+plt.show()  # Display the node-count comparison.
+```
+▶ What you'll see: both algorithms return the same value, but alpha-beta skips branch `B2`.
+
+### Step 4 — Expectimax: chance nodes average instead of minimize
+
+Minimax is correct for a hostile opponent. If the next actor follows known probabilities, use an
+expectation backup instead of a minimum backup.
+
+```python
+expect_tree_demo = {"player": "agent", "actions": {"Safe": 4.0, "Risky": {"player": "chance", "outcomes": [(0.25, "low", -8.0), (0.75, "high", 8.0)]}}}  # Build a max root with one chance branch.
+
+def expectimax_demo(node_demo, name_demo="root", depth_demo=0):  # Define expectimax on numeric leaves, max nodes, and chance nodes.
+    if isinstance(node_demo, (int, float)):  # Terminal deterministic value.
+        log(f"{name_demo} leaf", node_demo)  # Print the leaf.
+        return float(node_demo)  # Return the leaf value.
+    if node_demo["player"] == "chance":  # Chance node case.
+        total_demo = 0.0  # Initialize expected value.
+        for prob_demo, outcome_demo, value_demo in node_demo["outcomes"]:  # Loop through stochastic outcomes.
+            contribution_demo = prob_demo * value_demo  # Compute probability times utility.
+            total_demo += contribution_demo  # Add the weighted contribution.
+            log(f"chance {outcome_demo}", f"p={prob_demo}, value={value_demo}, contribution={contribution_demo}")  # Print the expectation term.
+        return total_demo  # Return the expected value.
+    values_demo = {action_demo: expectimax_demo(child_demo, action_demo, depth_demo + 1) for action_demo, child_demo in node_demo["actions"].items()}  # Evaluate root actions.
+    log("expectimax action values", values_demo)  # Print action expected values.
+    return max(values_demo.values())  # Max chooses the best expected value.
+
+expect_value_demo = expectimax_demo(expect_tree_demo)  # Run expectimax.
+risky_expected_demo = sum(prob_demo * value_demo for prob_demo, outcome_demo, value_demo in expect_tree_demo["actions"]["Risky"]["outcomes"])  # Compute the risky expectation directly.
+log("root expectimax value", expect_value_demo)  # Print the final expected value.
+plt.bar(["Safe", "Risky expected"], [4.0, risky_expected_demo], color=["steelblue", "mediumpurple"], edgecolor="black")  # Compare deterministic and expected values.
+plt.scatter([1, 1], [-8, 8], color=["red", "green"], s=90, zorder=3, label="risky outcomes")  # Show raw risky outcomes.
+plt.ylabel("value")  # Label the value axis.
+plt.title("Step 4: expectimax averages chance outcomes")  # Title the plot.
+plt.legend()  # Explain the outcome dots.
+plt.show()  # Display the expectimax visualization.
+```
+▶ What you'll see: the risky branch uses a weighted average, not the worst outcome.
+
+### Step 5 — Evaluation functions and depth limits
+
+Real games are too deep to search fully, so agents stop at a cutoff depth and estimate the state
+with an evaluation function. A good heuristic can help; a biased one can mis-rank moves.
+
+```python
+feature_names_demo = ["attack", "safety"]  # Name the two toy board features.
+weights_demo = np.array([1.5, 1.0])  # Weight attack and safety in the heuristic evaluation.
+cutoff_features_demo = {"Attack": np.array([2.0, -1.0]), "Defend": np.array([0.5, 1.5])}  # Store cutoff-state features.
+deep_leaf_values_demo = {"Attack": [1.0, 6.0], "Defend": [2.0, 3.0]}  # Store deeper terminal utilities under opponent min nodes.
+heuristic_values_demo = {}  # Store Eval(s) values.
+exact_deeper_values_demo = {}  # Store one-deeper minimax values.
+for action_demo in cutoff_features_demo:  # Score each root action.
+    heuristic_values_demo[action_demo] = float(cutoff_features_demo[action_demo] @ weights_demo)  # Compute weighted feature score.
+    exact_deeper_values_demo[action_demo] = min(deep_leaf_values_demo[action_demo])  # Opponent would choose the smaller deeper value.
+    log(f"Eval({action_demo})", round(heuristic_values_demo[action_demo], 3))  # Print heuristic value.
+    log(f"deeper minimax({action_demo})", exact_deeper_values_demo[action_demo])  # Print deeper value.
+actions_eval_demo = list(cutoff_features_demo.keys())  # Store action labels for plotting.
+x_eval_demo = np.arange(len(actions_eval_demo))  # Create x positions for grouped bars.
+width_eval_demo = 0.36  # Set bar width for grouped display.
+plt.bar(x_eval_demo - width_eval_demo / 2, [heuristic_values_demo[action_demo] for action_demo in actions_eval_demo], width_eval_demo, label="cutoff Eval(s)", color="skyblue")  # Plot heuristic estimates.
+plt.bar(x_eval_demo + width_eval_demo / 2, [exact_deeper_values_demo[action_demo] for action_demo in actions_eval_demo], width_eval_demo, label="deeper minimax", color="orange")  # Plot deeper values.
+plt.xticks(x_eval_demo, actions_eval_demo)  # Label root actions.
+plt.ylabel("value")  # Label the value axis.
+plt.title("Step 5: depth-limited search depends on Eval(s)")  # Title the plot.
+plt.legend()  # Show both value sources.
+plt.show()  # Display the comparison.
+```
+▶ What you'll see: heuristic cutoff values can differ from values found by deeper search.
+
+### Step 6 — Simultaneous games and Nash equilibrium
+
+In simultaneous games, players choose at the same time, so we check best responses instead of
+walking down a game tree. Mixed strategies assign probabilities to actions and evaluate expected payoffs.
+
+```python
+row_payoff_demo = np.array([[2.0, 0.0], [1.0, 1.0]])  # Store row player's payoffs in a tiny non-zero-sum game.
+col_payoff_demo = np.array([[2.0, 3.0], [0.0, 1.0]])  # Store column player's payoffs in the same cells.
+row_actions_demo = ["Up", "Down"]  # Name row strategies.
+col_actions_demo = ["Left", "Right"]  # Name column strategies.
+row_best_demo = row_payoff_demo == row_payoff_demo.max(axis=0, keepdims=True)  # Mark row best responses to each column.
+col_best_demo = col_payoff_demo == col_payoff_demo.max(axis=1, keepdims=True)  # Mark column best responses to each row.
+nash_cells_demo = row_best_demo & col_best_demo  # A pure Nash cell is both players' best response.
+log("row best responses", row_best_demo.astype(int))  # Print row best-response markers.
+log("column best responses", col_best_demo.astype(int))  # Print column best-response markers.
+log("pure Nash cells", nash_cells_demo.astype(int))  # Print pure equilibrium markers.
+matching_demo = np.array([[1.0, -1.0], [-1.0, 1.0]])  # Store row payoffs for matching pennies.
+grid_demo = np.linspace(0.0, 1.0, 101)  # Create possible row probabilities p(Heads).
+worst_case_demo = np.minimum(2.0 * grid_demo - 1.0, 1.0 - 2.0 * grid_demo)  # Compute min over column pure responses.
+best_mix_index_demo = int(np.argmax(worst_case_demo))  # Find the maximin row probability.
+best_p_demo = grid_demo[best_mix_index_demo]  # Read the best row mixing probability.
+best_value_demo = worst_case_demo[best_mix_index_demo]  # Read the guaranteed payoff.
+log("matching-pennies p*", round(best_p_demo, 2))  # Print the mixed equilibrium row probability.
+log("matching-pennies value", round(best_value_demo, 2))  # Print the zero-sum game value.
+fig_demo, axes_demo = plt.subplots(1, 2, figsize=(10, 4))  # Create side-by-side game visuals.
+axes_demo[0].imshow(nash_cells_demo.astype(float), cmap="Greens", vmin=0, vmax=1)  # Shade pure Nash cells.
+for i_demo in range(row_payoff_demo.shape[0]):  # Loop over row actions for annotations.
+    for j_demo in range(row_payoff_demo.shape[1]):  # Loop over column actions for annotations.
+        star_demo = "★" if nash_cells_demo[i_demo, j_demo] else ""  # Mark equilibrium cells.
+        axes_demo[0].text(j_demo, i_demo, f"({row_payoff_demo[i_demo, j_demo]:.0f},{col_payoff_demo[i_demo, j_demo]:.0f}){star_demo}", ha="center", va="center")  # Write payoff pairs.
+axes_demo[0].set_xticks(np.arange(len(col_actions_demo)), col_actions_demo)  # Label column actions.
+axes_demo[0].set_yticks(np.arange(len(row_actions_demo)), row_actions_demo)  # Label row actions.
+axes_demo[0].set_title("pure Nash by best responses")  # Title the Nash panel.
+axes_demo[1].plot(grid_demo, worst_case_demo, color="black", label="min_q V(p,q)")  # Plot the row player's guaranteed payoff.
+axes_demo[1].axvline(best_p_demo, color="red", linestyle="--", label="p*=0.5")  # Mark the equilibrium mix.
+axes_demo[1].axhline(0.0, color="gray", linestyle=":", label="value 0")  # Mark the game value.
+axes_demo[1].set_xlabel("row probability of Heads")  # Label the mixed-strategy axis.
+axes_demo[1].set_ylabel("guaranteed payoff")  # Label the payoff axis.
+axes_demo[1].set_title("zero-sum mixed strategy")  # Title the mixed panel.
+axes_demo[1].legend()  # Show curve labels.
+plt.tight_layout()  # Prevent subplot labels from overlapping.
+plt.show()  # Display both simultaneous-game visuals.
+```
+▶ What you'll see: a starred pure Nash cell on the left and the matching-pennies mixed equilibrium at $p=0.5$ on the right.
+
+### Recap — what you just ran
+
+- You built a tiny **zero-sum game tree** with turns, actions, successors, terminal utilities, and opposite payoffs.
+- You used **minimax** to back up values through max and min turns.
+- You used **alpha-beta pruning** to keep the same answer while visiting fewer branches.
+- You used **expectimax** when the next actor follows probabilities instead of adversarial choices.
+- You compared **depth-limited evaluation** with deeper search.
+- You checked **Nash equilibrium** in simultaneous games and saw a simple mixed zero-sum strategy.
+
+Everything below (starting at **§1 Overview**) develops these same ideas with full derivations,
+more examples, and larger game-playing experiments.
+
+---
+
 ## 1. Overview
 
 Game playing studies decisions made in the presence of other agents. A game state is not valuable only because of what **we** can do next; it is valuable because of what our opponent, chance, or another strategic player can do after that.

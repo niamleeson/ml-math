@@ -2,6 +2,192 @@
 > **Source:** CS 230 · **Category:** Tips/Method · **Type:** 💻 Colab · [↑ Full reference](../../ai-ml-cheatsheets.md)
 > 📓 Runnable notebook section; an .ipynb will be generated.
 
+## 0. Step-by-Step Worked Example — Start Here (Beginner Friendly)
+
+> 🧑‍🎓 **New to this topic? Start here.** This is a gentle, fully runnable walkthrough that
+> builds up *every* idea in this lesson one tiny step at a time. Each step **prints** the
+> numbers it computes and **draws a picture** so you can *see* what is happening. Run the
+> cells in order from top to bottom. Nothing here needs the internet or any downloaded data.
+
+**What we will build, step by step:**
+1. **Normalize inputs before asking gradients to behave** — standardize features and inspect batch norm.
+2. **Augment data without changing labels** — create safe transformed views of one tiny image.
+3. **Mini-batch gradient descent** — run forward propagation, binary cross-entropy, backpropagation, and updates.
+
+### Step 0 — Set up our tools
+
+We import NumPy (arrays + gradients) and Matplotlib (pictures). We fix a random **seed** so the
+same mini-batches and augmentations appear every run. We also define a tiny `log()` helper so
+every step prints clearly labeled numbers.
+
+```python
+import numpy as np                       # NumPy: arrays, synthetic data, probabilities, and gradients.
+import matplotlib.pyplot as plt          # Matplotlib: draw preprocessing, augmentation, and training diagnostics.
+
+np.random.seed(0)                         # Fix the seed so every run prints the SAME numbers.
+plt.rcParams["figure.figsize"] = (7, 4)   # A comfortable default plot size.
+
+def log(label, value):                    # A tiny logger so each printed line explains itself.
+    print(f"[{label}] {value}")           # Format is: [what this is] the value.
+
+log("setup", "tools ready — NumPy + Matplotlib imported, seed fixed to 0")  # Confirm setup ran.
+```
+▶ What you'll see: one line confirming the tools are ready.
+
+### Step 1 — Normalize inputs before asking gradients to behave
+
+When one feature is measured in huge units, dot products and gradients can be dominated by that
+feature. Standardization puts columns on comparable scales; batch normalization applies the same
+centering-and-scaling idea inside a network, then learns a scale and shift.
+
+```python
+X_raw_demo = np.array([[-2.0, -100.0], [-1.0, -100.0], [1.0, -100.0], [2.0, -100.0], [-2.0, 100.0], [-1.0, 100.0], [1.0, 100.0], [2.0, 100.0]])  # Two features with very different units.
+y_raw_demo = np.array([-0.5, 0.0, 1.0, 1.5, -1.5, -1.0, 0.0, 0.5])  # Tiny regression targets for a gradient check.
+mean_demo = X_raw_demo.mean(axis=0, keepdims=True)  # Compute one training-set mean per feature.
+std_demo = X_raw_demo.std(axis=0, keepdims=True)  # Compute one training-set standard deviation per feature.
+X_norm_demo = (X_raw_demo - mean_demo) / std_demo  # Standardize features with (x - mean) / std.
+w_start_demo = np.zeros(2)  # Start a linear model at zero weights.
+error_raw_demo = X_raw_demo @ w_start_demo - y_raw_demo  # Residuals before any update on raw inputs.
+grad_raw_demo = 2.0 * X_raw_demo.T @ error_raw_demo / len(y_raw_demo)  # Raw-feature MSE gradient.
+error_norm_demo = X_norm_demo @ w_start_demo - y_raw_demo  # Residuals before any update on normalized inputs.
+grad_norm_demo = 2.0 * X_norm_demo.T @ error_norm_demo / len(y_raw_demo)  # Normalized-feature MSE gradient.
+z_batch_demo = np.array([8.0, 10.0, 9.0, 12.0, 11.0, 7.0])  # One mini-batch of hidden pre-activations.
+mu_batch_demo = z_batch_demo.mean()  # Batch-norm mean for this mini-batch.
+var_batch_demo = z_batch_demo.var()  # Batch-norm variance for this mini-batch.
+z_hat_demo = (z_batch_demo - mu_batch_demo) / np.sqrt(var_batch_demo + 1e-5)  # Normalize activations to near mean 0 and std 1.
+gamma_demo = 1.3  # Learned batch-norm scale parameter for the demo.
+beta_demo = -0.4  # Learned batch-norm shift parameter for the demo.
+z_bn_demo = gamma_demo * z_hat_demo + beta_demo  # Apply learned scale and shift after normalization.
+log("raw feature means", np.round(mean_demo.ravel(), 3))  # Print raw means.
+log("raw feature stds", np.round(std_demo.ravel(), 3))  # Print raw spreads.
+log("normalized means", np.round(X_norm_demo.mean(axis=0), 3))  # Verify centering.
+log("normalized stds", np.round(X_norm_demo.std(axis=0), 3))  # Verify scaling.
+log("raw gradient", np.round(grad_raw_demo, 3))  # Show the scale-dominated gradient.
+log("normalized gradient", np.round(grad_norm_demo, 3))  # Show the balanced gradient.
+log("batch norm mean/var", (round(float(mu_batch_demo), 3), round(float(var_batch_demo), 3)))  # Print batch statistics.
+log("batch norm output mean/std", (round(float(z_bn_demo.mean()), 3), round(float(z_bn_demo.std()), 3)))  # Print transformed activation scale.
+
+fig_demo, axes_demo = plt.subplots(1, 3, figsize=(12, 3.6))  # Create three beginner-friendly visuals.
+axes_demo[0].scatter(X_raw_demo[:, 0], X_raw_demo[:, 1], c=y_raw_demo, cmap="viridis", s=80, edgecolor="black")  # Plot stretched raw feature geometry.
+axes_demo[0].set_title("raw feature scale")  # Title the raw scatter.
+axes_demo[0].set_xlabel("feature 1")  # Label the small-unit feature.
+axes_demo[0].set_ylabel("feature 2")  # Label the large-unit feature.
+axes_demo[1].scatter(X_norm_demo[:, 0], X_norm_demo[:, 1], c=y_raw_demo, cmap="viridis", s=80, edgecolor="black")  # Plot balanced normalized geometry.
+axes_demo[1].set_title("standardized scale")  # Title the normalized scatter.
+axes_demo[1].set_xlabel("normalized feature 1")  # Label normalized feature 1.
+axes_demo[1].set_ylabel("normalized feature 2")  # Label normalized feature 2.
+axes_demo[2].bar(np.arange(len(z_batch_demo)) - 0.2, z_batch_demo, width=0.2, label="raw z")  # Plot raw activations.
+axes_demo[2].bar(np.arange(len(z_hat_demo)), z_hat_demo, width=0.2, label="z hat")  # Plot normalized activations.
+axes_demo[2].bar(np.arange(len(z_bn_demo)) + 0.2, z_bn_demo, width=0.2, label="gamma zhat + beta")  # Plot scaled-shifted activations.
+axes_demo[2].set_title("batch norm on one mini-batch")  # Title the batch-norm bars.
+axes_demo[2].legend(fontsize=8)  # Identify the three activation versions.
+plt.tight_layout()  # Keep subplot labels readable.
+plt.show()  # Render all normalization visuals.
+```
+▶ What you'll see: raw features are stretched and give an unbalanced gradient, while normalized features and batch-normalized activations sit on controlled scales.
+
+### Step 2 — Augment data without changing labels
+
+Data augmentation makes extra training views from one example while preserving the correct label.
+The important rule is semantic safety: a small shift, mirror, or mild noise helps only when the
+label truly should stay the same.
+
+```python
+image_demo = np.zeros((7, 7), dtype=float)  # Start one tiny grayscale image with a dark background.
+image_demo[1:6, 3] = 1.0  # Draw a bright vertical stroke.
+image_demo[2, 2:5] = 0.8  # Add a short crossbar so transformations are visible.
+label_demo = "vertical mark"  # Use a label that survives small shifts and horizontal flips.
+flip_demo = image_demo[:, ::-1]  # Mirror the image left-to-right.
+shift_demo = np.roll(image_demo, shift=1, axis=1)  # Shift the object one pixel to the right.
+noise_demo = np.clip(image_demo + np.random.normal(0.0, 0.08, image_demo.shape), 0.0, 1.0)  # Add mild sensor-like noise.
+variants_demo = [image_demo, flip_demo, shift_demo, noise_demo]  # Collect original and augmented views.
+titles_demo = ["original", "horizontal flip", "shift right", "mild noise"]  # Name each view.
+log("label reused for every view", label_demo)  # Print the unchanged label.
+log("pixel sums", np.round([variant_demo.sum() for variant_demo in variants_demo], 3))  # Print a simple brightness diagnostic.
+log("number of training views", len(variants_demo))  # Show the effective dataset expansion.
+
+fig_demo, axes_demo = plt.subplots(1, len(variants_demo), figsize=(10, 2.8))  # Create one panel per image view.
+for ax_demo, variant_demo, title_demo in zip(axes_demo, variants_demo, titles_demo):  # Draw every augmented view.
+    ax_demo.imshow(variant_demo, cmap="gray", vmin=0.0, vmax=1.0)  # Show pixel intensities on a fixed scale.
+    ax_demo.set_title(title_demo)  # Label the transformation.
+    ax_demo.axis("off")  # Hide pixel ticks so the pattern is the focus.
+fig_demo.suptitle("Label-preserving augmentation: same target, different view", y=1.05)  # Title the montage.
+plt.tight_layout()  # Prevent titles from overlapping.
+plt.show()  # Render the augmentation grid.
+```
+▶ What you'll see: the same tiny image appears in several safe variations, and every variation keeps the label `vertical mark`.
+
+### Step 3 — Mini-batch gradient descent: forward, loss, backward, update
+
+A training loop repeatedly shuffles data, takes a mini-batch, computes predictions, evaluates a
+loss, backpropagates gradients, and updates parameters. We use logistic regression so every step
+of binary cross-entropy and gradient descent is visible in a few lines.
+
+```python
+X_train_demo = np.array([[-2.0, -1.0], [-1.5, -0.5], [-1.0, -1.3], [-0.4, -0.8], [0.4, 0.8], [1.0, 1.2], [1.5, 0.6], [2.0, 1.0]])  # Tiny two-class feature matrix.
+y_train_demo = np.array([0, 0, 0, 0, 1, 1, 1, 1], dtype=float)  # Binary labels for the points.
+w_demo = np.zeros(2)  # Initialize two logistic-regression weights.
+b_demo = 0.0  # Initialize the bias.
+lr_demo = 0.45  # Choose a learning rate for visible progress.
+batch_size_demo = 4  # Use four examples per mini-batch.
+loss_history_demo = []  # Store full-data loss after each epoch.
+for epoch_demo in range(24):  # Run a short CPU-friendly training loop.
+    order_demo = np.random.permutation(len(y_train_demo))  # Shuffle examples at the start of each epoch.
+    for start_demo in range(0, len(y_train_demo), batch_size_demo):  # Step through mini-batches.
+        batch_indices_demo = order_demo[start_demo:start_demo + batch_size_demo]  # Select one mini-batch.
+        xb_demo = X_train_demo[batch_indices_demo]  # Gather mini-batch features.
+        yb_demo = y_train_demo[batch_indices_demo]  # Gather mini-batch labels.
+        logits_demo = xb_demo @ w_demo + b_demo  # Forward pass: linear scores.
+        probs_demo = 1.0 / (1.0 + np.exp(-np.clip(logits_demo, -30.0, 30.0)))  # Forward pass: sigmoid probabilities.
+        loss_demo = -np.mean(yb_demo * np.log(probs_demo + 1e-8) + (1.0 - yb_demo) * np.log(1.0 - probs_demo + 1e-8))  # Binary cross-entropy.
+        error_demo = probs_demo - yb_demo  # Backprop shortcut: dL/dlogit for sigmoid plus BCE.
+        grad_w_demo = xb_demo.T @ error_demo / len(xb_demo)  # Average mini-batch weight gradient.
+        grad_b_demo = float(error_demo.mean())  # Average mini-batch bias gradient.
+        if epoch_demo == 0 and start_demo == 0:  # Print the first update in detail.
+            log("first batch indices", batch_indices_demo)  # Show which examples formed the first mini-batch.
+            log("first batch probabilities", np.round(probs_demo, 3))  # Show initial predictions.
+            log("first batch BCE loss", round(float(loss_demo), 3))  # Show initial mini-batch loss.
+            log("first batch grad_w", np.round(grad_w_demo, 3))  # Show the weight gradient.
+            log("first batch grad_b", round(grad_b_demo, 3))  # Show the bias gradient.
+        w_demo = w_demo - lr_demo * grad_w_demo  # Gradient descent weight update.
+        b_demo = b_demo - lr_demo * grad_b_demo  # Gradient descent bias update.
+    full_logits_demo = X_train_demo @ w_demo + b_demo  # Score all examples after the epoch.
+    full_probs_demo = 1.0 / (1.0 + np.exp(-np.clip(full_logits_demo, -30.0, 30.0)))  # Convert scores to probabilities.
+    full_loss_demo = -np.mean(y_train_demo * np.log(full_probs_demo + 1e-8) + (1.0 - y_train_demo) * np.log(1.0 - full_probs_demo + 1e-8))  # Full-data BCE.
+    loss_history_demo.append(float(full_loss_demo))  # Save the epoch loss.
+log("final weights", np.round(w_demo, 3))  # Print learned weights.
+log("final bias", round(float(b_demo), 3))  # Print learned bias.
+log("first/last full loss", (round(loss_history_demo[0], 3), round(loss_history_demo[-1], 3)))  # Show loss decreased.
+
+fig_demo, axes_demo = plt.subplots(1, 2, figsize=(11, 4))  # Create loss and decision-boundary panels.
+axes_demo[0].plot(loss_history_demo, marker="o", color="seagreen")  # Plot loss after each epoch.
+axes_demo[0].set_xlabel("epoch")  # Label training epochs.
+axes_demo[0].set_ylabel("binary cross-entropy")  # Label the optimized loss.
+axes_demo[0].set_title("Mini-batch training lowers BCE")  # Title the loss curve.
+x_grid_demo = np.linspace(-2.5, 2.5, 100)  # Create x-values for the learned boundary.
+y_boundary_demo = -(w_demo[0] * x_grid_demo + b_demo) / (w_demo[1] + 1e-8)  # Solve w1*x + w2*y + b = 0.
+axes_demo[1].scatter(X_train_demo[:, 0], X_train_demo[:, 1], c=y_train_demo, cmap="coolwarm", s=80, edgecolor="black")  # Plot labeled points.
+axes_demo[1].plot(x_grid_demo, y_boundary_demo, color="black", label="p=0.5 boundary")  # Draw the learned decision line.
+axes_demo[1].set_xlabel("feature 1")  # Label feature axis 1.
+axes_demo[1].set_ylabel("feature 2")  # Label feature axis 2.
+axes_demo[1].set_title("Learned classifier after mini-batches")  # Title the model view.
+axes_demo[1].legend()  # Show the boundary label.
+plt.tight_layout()  # Keep panels readable.
+plt.show()  # Render training diagnostics.
+```
+▶ What you'll see: the first mini-batch prints probabilities, loss, and gradients; then the loss curve falls and the learned boundary separates the toy classes.
+
+### Recap — what you just ran
+
+- **Normalization** made feature scales and gradients more balanced, and **batch norm** stabilized one mini-batch of activations.
+- **Augmentation** created extra safe views of one example while keeping its label unchanged.
+- **Mini-batch gradient descent** connected forward propagation, binary cross-entropy, backpropagated gradients, and parameter updates.
+
+Everything below (starting at **§1 Overview**) develops these same ideas with full derivations,
+more examples, and a larger hands-on notebook section.
+
+---
+
 ## 1. Overview
 
 Deep-learning performance is often decided before the model architecture becomes interesting: raw inputs must be normalized, examples must be batched, labels must match the loss, and the training loop must update weights with stable gradients. The same one-layer network can learn quickly or fail badly depending on preprocessing, augmentation, batch size, and learning rate.

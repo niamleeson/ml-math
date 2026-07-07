@@ -2,6 +2,295 @@
 > **Source:** CS 230 · **Category:** Model/Concept · **Type:** ⚖️ Both · [↑ Full reference](../../ai-ml-cheatsheets.md)
 > 📓 The coded examples form a runnable notebook section; an .ipynb will be generated.
 
+## 0. Step-by-Step Worked Example — Start Here (Beginner Friendly)
+
+> 🧑‍🎓 **New to this topic? Start here.** This is a gentle, fully runnable walkthrough that
+> builds up *every* idea in this lesson one tiny step at a time. Each step **prints** the
+> numbers it computes and **draws a picture** so you can *see* what is happening. Run the
+> cells in order from top to bottom. Nothing here needs the internet or any downloaded data.
+
+**What we will build, step by step:**
+1. **The convolution operation** — slide a tiny filter over an image and make a feature map.
+2. **Filters, stride, and padding** — see what the detector looks for and how it moves.
+3. **Output-size formula** — predict spatial sizes before running a layer.
+4. **Pooling** — shrink feature maps with max and average summaries.
+5. **Fully connected layer after flattening** — turn feature maps into class scores.
+6. **Parameter counting** — count CONV, POOL, and FC parameters.
+7. **Receptive field** — trace how stacked layers see larger input regions.
+
+### Step 0 — Set up our tools
+
+We import NumPy (tiny images, filters, and dot products) and Matplotlib (image displays).
+We fix a random **seed** so every synthetic image and printed value is reproducible. The
+small `log()` helper keeps the numeric trace readable.
+
+```python
+import numpy as np                       # NumPy: tiny images, filters, dot products, and shape math.
+import matplotlib.pyplot as plt          # Matplotlib: draw images, feature maps, and parameter charts.
+
+np.random.seed(0)                         # Fix the seed so every run prints the SAME numbers.
+plt.rcParams["figure.figsize"] = (7, 4)   # Use a comfortable default plot size.
+plt.rcParams["image.cmap"] = "gray"       # Show image-like arrays in grayscale by default.
+
+
+def log(label, value):                    # A tiny logger so each printed line explains itself.
+    print(f"[{label}] {value}")           # Format is: [what this is] the value.
+
+log("setup", "tools ready — NumPy + Matplotlib imported, seed fixed to 0")  # Confirm setup.
+```
+▶ What you'll see: one line confirming the tools are ready.
+
+### Step 1 — The convolution operation: slide, multiply, and sum
+
+A convolution filter is a small pattern detector. At each output location, it looks at one
+local image patch, multiplies patch pixels by filter weights, sums the products, and stores
+that number in a **feature map**.
+
+```python
+image_conv_demo = np.array([[0., 0., 0., 1., 1., 1.], [0., 0., 0., 1., 1., 1.], [0., 0., 0., 1., 1., 1.], [0., 0., 0., 1., 1., 1.], [0., 0., 0., 1., 1., 1.], [0., 0., 0., 1., 1., 1.]])  # Make a 6-by-6 image with a vertical edge.
+kernel_conv_demo = np.array([[-1., 0., 1.], [-1., 0., 1.], [-1., 0., 1.]])  # Make a 3-by-3 vertical-edge filter.
+patch_conv_demo = image_conv_demo[1:4, 2:5]                      # Select one patch that straddles the edge.
+products_conv_demo = patch_conv_demo * kernel_conv_demo          # Multiply patch and filter element by element.
+score_conv_demo = float(np.sum(products_conv_demo))              # Sum products to get one convolution output cell.
+out_h_conv_demo = image_conv_demo.shape[0] - kernel_conv_demo.shape[0] + 1  # Count valid vertical filter positions.
+out_w_conv_demo = image_conv_demo.shape[1] - kernel_conv_demo.shape[1] + 1  # Count valid horizontal filter positions.
+feature_conv_demo = np.zeros((out_h_conv_demo, out_w_conv_demo)) # Allocate the full feature map.
+for row_conv_demo in range(out_h_conv_demo):                     # Slide the filter down the image.
+    for col_conv_demo in range(out_w_conv_demo):                 # Slide the filter across the image.
+        local_conv_demo = image_conv_demo[row_conv_demo:row_conv_demo + 3, col_conv_demo:col_conv_demo + 3]  # Extract one 3-by-3 patch.
+        feature_conv_demo[row_conv_demo, col_conv_demo] = np.sum(local_conv_demo * kernel_conv_demo)  # Store the patch-filter dot product.
+log("one edge patch", patch_conv_demo.tolist())                  # Print the local pixels used in one dot product.
+log("elementwise products", products_conv_demo.tolist())         # Print each signed contribution.
+log("one convolution score", score_conv_demo)                    # Print the scalar output for that patch.
+log("feature map shape", feature_conv_demo.shape)                # Print the full valid-convolution shape.
+
+fig_conv_demo, axes_conv_demo = plt.subplots(1, 3, figsize=(9, 3))  # Create panels for input, filter, and feature map.
+axes_conv_demo[0].imshow(image_conv_demo, vmin=0, vmax=1)         # Draw the input image.
+axes_conv_demo[0].set_title("input image")                       # Title the input panel.
+axes_conv_demo[1].imshow(kernel_conv_demo, cmap="coolwarm")      # Draw signed filter weights.
+axes_conv_demo[1].set_title("vertical-edge filter")              # Title the filter panel.
+axes_conv_demo[2].imshow(feature_conv_demo, cmap="magma")        # Draw the convolution responses.
+axes_conv_demo[2].set_title("feature map")                       # Title the output panel.
+plt.tight_layout()                                                # Prevent panel labels from overlapping.
+plt.show()                                                        # Render the convolution picture.
+```
+▶ What you'll see: the feature map glows where the 3×3 filter crosses the vertical edge.
+
+### Step 2 — Filters, stride, and padding: what moves and what changes
+
+The **filter** says what local pattern to detect, **stride** says how far the filter jumps, and
+**padding** adds zeros around the image so boundary pixels can participate. Changing stride or
+padding changes the map size and how much boundary information is used.
+
+```python
+image_sp_demo = image_conv_demo.copy()                             # Reuse the edge image from the previous step.
+kernel_sp_demo = kernel_conv_demo.copy()                           # Reuse the same local edge detector.
+cases_sp_demo = [("S=1, P=0", 1, 0), ("S=2, P=0", 2, 0), ("S=1, P=1", 1, 1)]  # Compare movement and boundary settings.
+maps_sp_demo = []                                                  # Store feature maps for each setting.
+padded_sp_demo = []                                                # Store padded inputs for visual inspection.
+for name_sp_demo, stride_sp_demo, pad_sp_demo in cases_sp_demo:    # Run each stride-padding case.
+    padded_one_demo = np.pad(image_sp_demo, pad_sp_demo, mode="constant", constant_values=0.0)  # Add zeros around the image.
+    out_h_sp_demo = (padded_one_demo.shape[0] - kernel_sp_demo.shape[0]) // stride_sp_demo + 1  # Compute output height.
+    out_w_sp_demo = (padded_one_demo.shape[1] - kernel_sp_demo.shape[1]) // stride_sp_demo + 1  # Compute output width.
+    fmap_sp_demo = np.zeros((out_h_sp_demo, out_w_sp_demo))        # Allocate this case's feature map.
+    for row_sp_demo in range(out_h_sp_demo):                       # Loop over output rows.
+        for col_sp_demo in range(out_w_sp_demo):                   # Loop over output columns.
+            start_r_sp_demo = row_sp_demo * stride_sp_demo         # Convert output row to input start row.
+            start_c_sp_demo = col_sp_demo * stride_sp_demo         # Convert output column to input start column.
+            patch_sp_demo = padded_one_demo[start_r_sp_demo:start_r_sp_demo + 3, start_c_sp_demo:start_c_sp_demo + 3]  # Extract the current patch.
+            fmap_sp_demo[row_sp_demo, col_sp_demo] = np.sum(patch_sp_demo * kernel_sp_demo)  # Store the filter response.
+    maps_sp_demo.append(fmap_sp_demo)                              # Save this feature map for plotting.
+    padded_sp_demo.append(padded_one_demo)                         # Save the padded input for plotting.
+    log(f"{name_sp_demo} output shape", fmap_sp_demo.shape)        # Print each output shape.
+
+fig_sp_demo, axes_sp_demo = plt.subplots(1, 4, figsize=(11, 3))    # Create a comparison row.
+axes_sp_demo[0].imshow(padded_sp_demo[2], vmin=0, vmax=1)          # Show the padded input for the P=1 case.
+axes_sp_demo[0].set_title("padded input")                         # Title the padded-input panel.
+for axis_sp_demo, case_sp_demo, fmap_sp_demo in zip(axes_sp_demo[1:], cases_sp_demo, maps_sp_demo):  # Fill feature-map panels.
+    axis_sp_demo.imshow(fmap_sp_demo, cmap="magma")                # Draw one stride-padding feature map.
+    axis_sp_demo.set_title(case_sp_demo[0])                        # Title the panel with S and P.
+plt.tight_layout()                                                 # Keep panel titles readable.
+plt.show()                                                         # Render the stride-padding comparison.
+```
+▶ What you'll see: stride 2 makes a smaller map, while padding adds boundary positions and keeps more spatial cells.
+
+### Step 3 — Output-size formula: predict the feature-map shape
+
+The output-size formula counts legal starting positions for the sliding window. For symmetric
+padding it is $O=(I-F+2P)/S+1$; if the result is not an integer, the layer setting is
+incompatible because the windows do not land exactly.
+
+```python
+cases_size_demo = [("valid", 6, 3, 0, 0, 1), ("stride 2", 7, 3, 0, 0, 2), ("same", 6, 3, 1, 1, 1), ("bad", 6, 3, 0, 0, 2)]  # Store named formula cases.
+outputs_size_demo = []                                             # Store raw output-size values.
+compatible_size_demo = []                                          # Store whether each case lands on an integer.
+for name_size_demo, input_size_demo, filter_size_demo, pad_start_demo, pad_end_demo, stride_size_demo in cases_size_demo:  # Evaluate each case.
+    output_size_demo = (input_size_demo - filter_size_demo + pad_start_demo + pad_end_demo) / stride_size_demo + 1  # Apply the formula.
+    is_integer_demo = float(output_size_demo).is_integer()          # Check compatibility.
+    outputs_size_demo.append(output_size_demo)                      # Save the raw formula value.
+    compatible_size_demo.append(is_integer_demo)                    # Save the compatibility flag.
+    log(f"{name_size_demo} O", output_size_demo)                   # Print the computed output length.
+    log(f"{name_size_demo} compatible?", bool(is_integer_demo))    # Print whether the result is legal.
+colors_size_demo = ["seagreen" if flag_size_demo else "salmon" for flag_size_demo in compatible_size_demo]  # Color legal and illegal cases.
+
+plt.bar([case_size_demo[0] for case_size_demo in cases_size_demo], outputs_size_demo, color=colors_size_demo)  # Plot formula outputs.
+plt.axhline(0, color="black", linewidth=0.8)                       # Add a baseline for readability.
+plt.title("Output-size formula predicts shape and compatibility")   # Title the formula plot.
+plt.xlabel("case")                                                  # Label each setting.
+plt.ylabel("computed O")                                            # Label the output length.
+plt.show()                                                          # Render the output-size chart.
+```
+▶ What you'll see: legal cases are green integer sizes, while the incompatible case prints a non-integer output.
+
+### Step 4 — Pooling: summarize nearby activations
+
+Pooling has no learned weights. Max pooling keeps the strongest activation in each local
+window, while average pooling keeps the local mean; both shrink the spatial grid and can make
+small shifts less dramatic.
+
+```python
+feature_pool_demo = np.array([[0., 1., 2., 1.], [1., 6., 5., 2.], [0., 4., 7., 3.], [1., 2., 2., 0.]])  # Make a 4-by-4 activation map.
+max_pool_demo = np.zeros((2, 2))                                      # Allocate a 2-by-2 max-pooled map.
+avg_pool_demo = np.zeros((2, 2))                                      # Allocate a 2-by-2 average-pooled map.
+for row_pool_demo in range(2):                                        # Loop over pooled output rows.
+    for col_pool_demo in range(2):                                    # Loop over pooled output columns.
+        window_pool_demo = feature_pool_demo[2 * row_pool_demo:2 * row_pool_demo + 2, 2 * col_pool_demo:2 * col_pool_demo + 2]  # Extract one 2-by-2 window.
+        max_pool_demo[row_pool_demo, col_pool_demo] = np.max(window_pool_demo)  # Keep the strongest value.
+        avg_pool_demo[row_pool_demo, col_pool_demo] = np.mean(window_pool_demo)  # Keep the average value.
+shifted_pool_demo = np.roll(feature_pool_demo, shift=1, axis=1)       # Shift activations one pixel right.
+shifted_max_demo = np.zeros((2, 2))                                   # Allocate pooled shifted activations.
+for row_pool_demo in range(2):                                        # Loop over shifted pooled rows.
+    for col_pool_demo in range(2):                                    # Loop over shifted pooled columns.
+        window_shift_demo = shifted_pool_demo[2 * row_pool_demo:2 * row_pool_demo + 2, 2 * col_pool_demo:2 * col_pool_demo + 2]  # Extract shifted window.
+        shifted_max_demo[row_pool_demo, col_pool_demo] = np.max(window_shift_demo)  # Max-pool the shifted window.
+log("top-left max", float(max_pool_demo[0, 0]))                      # Print one max-pooling result.
+log("top-left average", float(avg_pool_demo[0, 0]))                  # Print one average-pooling result.
+log("mean |pooled shift difference|", round(float(np.mean(np.abs(max_pool_demo - shifted_max_demo))), 3))  # Print shift sensitivity.
+
+fig_pool_demo, axes_pool_demo = plt.subplots(1, 3, figsize=(9, 3))    # Create panels for pooling comparison.
+axes_pool_demo[0].imshow(feature_pool_demo, cmap="magma")            # Show the original feature map.
+axes_pool_demo[0].set_title("feature map")                           # Title the original map.
+axes_pool_demo[1].imshow(max_pool_demo, cmap="magma")                # Show max-pooled output.
+axes_pool_demo[1].set_title("max pool")                              # Title the max-pooled map.
+axes_pool_demo[2].imshow(avg_pool_demo, cmap="magma")                # Show average-pooled output.
+axes_pool_demo[2].set_title("average pool")                          # Title the average-pooled map.
+plt.tight_layout()                                                    # Keep panels readable.
+plt.show()                                                            # Render the pooling comparison.
+```
+▶ What you'll see: both pooled maps are 2×2, but max pooling keeps peaks while average pooling smooths them.
+
+### Step 5 — Fully connected layer after flattening: turn maps into scores
+
+After convolution and pooling, a CNN often flattens the feature tensor into one vector. A fully
+connected layer then computes class-like scores with a matrix multiply plus a bias.
+
+```python
+feature_fc_demo = np.array([[[1.0, 0.0], [2.0, 1.0]], [[0.0, 3.0], [1.0, 2.0]]])  # Create a 2-by-2-by-2 feature tensor.
+flat_fc_demo = feature_fc_demo.reshape(-1)                         # Flatten height, width, and channels into one vector.
+weights_fc_demo = np.array([[0.2, -0.1, 0.3], [0.0, 0.4, -0.2], [0.1, 0.2, 0.1], [-0.3, 0.1, 0.5], [0.2, 0.0, -0.4], [0.1, -0.2, 0.2], [0.3, 0.3, 0.0], [-0.1, 0.2, 0.4]])  # Make dense weights from 8 inputs to 3 outputs.
+bias_fc_demo = np.array([0.1, -0.2, 0.05])                          # Make one bias per output score.
+logits_fc_demo = flat_fc_demo @ weights_fc_demo + bias_fc_demo      # Compute z = xW + b.
+log("feature tensor shape", feature_fc_demo.shape)                  # Print the grid-shaped feature tensor.
+log("flattened shape", flat_fc_demo.shape)                          # Print the vector shape after flattening.
+log("dense logits", np.round(logits_fc_demo, 3).tolist())           # Print the three output scores.
+
+fig_fc_demo, axes_fc_demo = plt.subplots(1, 3, figsize=(9, 3))       # Create channel and score panels.
+axes_fc_demo[0].imshow(feature_fc_demo[:, :, 0], vmin=0, vmax=3)     # Show channel 0 of the feature tensor.
+axes_fc_demo[0].set_title("feature channel 0")                      # Title the first channel.
+axes_fc_demo[1].imshow(feature_fc_demo[:, :, 1], vmin=0, vmax=3)     # Show channel 1 of the feature tensor.
+axes_fc_demo[1].set_title("feature channel 1")                      # Title the second channel.
+axes_fc_demo[2].bar(["class 0", "class 1", "class 2"], logits_fc_demo, color="slateblue")  # Plot dense scores.
+axes_fc_demo[2].set_title("FC scores")                              # Title the score panel.
+plt.tight_layout()                                                   # Prevent overlap.
+plt.show()                                                           # Render the flatten-to-FC visualization.
+```
+▶ What you'll see: the 2×2×2 tensor becomes eight inputs, and the FC layer turns them into three scores.
+
+### Step 6 — Parameter counting: CONV shares, POOL learns nothing, FC can grow fast
+
+CNN parameter formulas explain why weight sharing matters. A convolutional filter reuses the
+same small weight set at every spatial location, pooling has zero trainable weights, and a fully
+connected layer has one weight for every input-output pair.
+
+```python
+input_h_param_demo = 32                                             # Set image height.
+input_w_param_demo = 32                                             # Set image width.
+input_c_param_demo = 3                                              # Set RGB input channels.
+filter_param_demo = 3                                               # Use 3-by-3 convolution filters.
+filters_param_demo = 8                                              # Use eight output filters.
+classes_param_demo = 10                                             # Use ten final class scores.
+conv_params_demo = (filter_param_demo * filter_param_demo * input_c_param_demo + 1) * filters_param_demo  # Count conv weights plus biases.
+pool_params_demo = 0                                                # Pooling has no learned parameters.
+pooled_h_demo = input_h_param_demo // 2                              # Assume 2-by-2 stride-2 pooling halves height.
+pooled_w_demo = input_w_param_demo // 2                              # Assume 2-by-2 stride-2 pooling halves width.
+flat_params_demo = pooled_h_demo * pooled_w_demo * filters_param_demo  # Count flattened pooled activations.
+fc_params_demo = (flat_params_demo + 1) * classes_param_demo         # Count FC weights plus biases.
+dense_pixel_params_demo = (input_h_param_demo * input_w_param_demo * input_c_param_demo + 1) * classes_param_demo  # Count direct pixel-to-class FC.
+total_cnn_params_demo = conv_params_demo + pool_params_demo + fc_params_demo  # Add CNN-style learned parameters.
+log("conv params", conv_params_demo)                                # Print the convolution parameter count.
+log("pool params", pool_params_demo)                                # Print that pooling learns nothing.
+log("FC after pooling params", fc_params_demo)                      # Print the final dense-layer count.
+log("direct pixel FC params", dense_pixel_params_demo)              # Print a dense baseline for comparison.
+
+names_param_demo = ["CONV", "POOL", "FC after pool", "direct pixel FC"]  # Name the bars.
+counts_param_demo = [conv_params_demo, pool_params_demo, fc_params_demo, dense_pixel_params_demo]  # Store counts.
+plt.bar(names_param_demo, counts_param_demo, color=["seagreen", "lightgray", "slateblue", "tomato"])  # Draw the count comparison.
+plt.ylabel("learned parameters")                                    # Label the count axis.
+plt.title("Parameter counting: shared filters vs dense weights")    # Title the parameter chart.
+plt.xticks(rotation=15)                                             # Rotate labels for readability.
+plt.show()                                                          # Render the parameter-count plot.
+```
+▶ What you'll see: CONV has few parameters, POOL has zero, and dense layers grow with the flattened input length.
+
+### Step 7 — Receptive field: deeper cells see larger input regions
+
+The receptive field is the patch of the original image that can influence one deeper activation.
+Stacking small filters grows that patch gradually; strides magnify later growth because deeper
+cells skip farther across the original input.
+
+```python
+filter_sizes_rf_demo = np.array([3, 3, 2])                           # Use CONV 3, CONV 3, then POOL 2.
+strides_rf_demo = np.array([1, 1, 2])                                # Use stride 1, stride 1, then stride 2.
+names_rf_demo = ["conv1", "conv2", "pool"]                         # Name the three stages.
+rf_values_demo = []                                                  # Store receptive field after each stage.
+receptive_demo = 1                                                   # Start from one input pixel before any layer.
+jump_demo = 1                                                        # Track spacing between neighboring deep cells in input pixels.
+for name_rf_demo, filter_rf_demo, stride_rf_demo in zip(names_rf_demo, filter_sizes_rf_demo, strides_rf_demo):  # Walk through layers.
+    receptive_demo = receptive_demo + (filter_rf_demo - 1) * jump_demo  # Add this layer's extra coverage.
+    rf_values_demo.append(receptive_demo)                             # Save the current receptive field size.
+    log(f"{name_rf_demo} receptive field", int(receptive_demo))       # Print the size after this layer.
+    jump_demo = jump_demo * stride_rf_demo                            # Update input spacing for the next layer.
+mask_rf_demo = np.zeros((9, 9))                                       # Create a toy original-image mask.
+mask_rf_demo[1:1 + rf_values_demo[-1], 1:1 + rf_values_demo[-1]] = 1.0  # Mark the final receptive field area.
+
+plt.subplot(1, 2, 1)                                                  # Start the formula-progression panel.
+plt.plot(np.arange(1, len(rf_values_demo) + 1), rf_values_demo, marker="o")  # Plot receptive field growth.
+plt.xticks(np.arange(1, len(rf_values_demo) + 1), names_rf_demo)      # Label each layer.
+plt.ylabel("receptive-field width")                                  # Label the size axis.
+plt.title("receptive field grows by layer")                          # Title the progression plot.
+plt.subplot(1, 2, 2)                                                  # Start the input-mask panel.
+plt.imshow(mask_rf_demo, vmin=0, vmax=1)                              # Show which input pixels can affect the final activation.
+plt.title(f"final {rf_values_demo[-1]}×{rf_values_demo[-1]} input region")  # Title the mask.
+plt.tight_layout()                                                    # Keep panels readable.
+plt.show()                                                            # Render the receptive-field visualization.
+```
+▶ What you'll see: the receptive field grows from 3 to 5 to 6 pixels wide, then the mask shows the final input region.
+
+### Recap — what you just ran
+
+- **Convolution** made a feature map by sliding one local detector across an image.
+- **Filters, stride, and padding** controlled what pattern was detected and which window starts were legal.
+- The **output-size formula** predicted feature-map sizes and flagged incompatible settings.
+- **Pooling** downsampled activations with max or average summaries.
+- **Flattening + FC** converted feature tensors into dense output scores.
+- **Parameter counting** showed why shared convolution filters are efficient and why FC layers can dominate.
+- **Receptive fields** grew as stacked layers combined wider input evidence.
+
+Everything below (starting at **§1 Overview**) develops these same ideas with full derivations,
+more examples, and CNN-style experiments.
+
+---
+
 ## 1. Overview
 
 Convolutional neural networks (CNNs) are neural networks designed for grid-structured data such as images. Instead of connecting every input pixel to every hidden unit immediately, a CNN scans small learned filters across the input, preserves spatial layout in feature maps, downsamples with pooling, and finally uses fully connected layers to turn extracted evidence into predictions.

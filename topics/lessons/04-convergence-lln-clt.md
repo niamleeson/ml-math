@@ -2,6 +2,212 @@
 > **Source:** Probability (MIT) · **Category:** Formula/Theorem · **Type:** ⚖️ Both · [↑ Full reference](../../ai-ml-cheatsheets.md)
 > 📓 The coded examples form a runnable notebook section; an .ipynb will be generated.
 
+## 0. Step-by-Step Worked Example — Start Here (Beginner Friendly)
+
+> 🧑‍🎓 **New to this topic? Start here.** This is a gentle, fully runnable walkthrough that
+> builds up *every* idea in this lesson one tiny step at a time. Each step **prints** the
+> numbers it computes and **draws a picture** so you can *see* what is happening. Run the
+> cells in order from top to bottom. Nothing here needs the internet or any downloaded data.
+
+**What we will build, step by step:**
+1. **Markov's inequality** — a guaranteed (but loose) tail bound using only the mean.
+2. **Chebyshev's inequality** — a tail bound that also uses the variance.
+3. **The sample mean & the Weak Law of Large Numbers (WLLN)** — averages settle down.
+4. **Convergence in probability** — what "settles down" means precisely.
+5. **The Central Limit Theorem (CLT)** — why averages look bell-shaped.
+6. **Normal approximation to the binomial (De Moivre–Laplace)**.
+
+### Step 0 — Set up our tools
+
+We import NumPy (random numbers + math) and Matplotlib (pictures). We fix a random **seed**
+so you get the *same* numbers every run — that makes the printed logs reproducible. We also
+define a tiny `log()` helper so every step prints a clearly labeled line.
+
+```python
+import numpy as np                       # NumPy: fast arrays, random sampling, and vector math.
+import matplotlib.pyplot as plt          # Matplotlib: draw the plots that make each idea visible.
+
+np.random.seed(0)                         # Fix the seed so every run prints the SAME numbers.
+plt.rcParams["figure.figsize"] = (7, 4)   # A comfortable default plot size.
+
+def log(label, value):                    # A tiny logger so each printed line explains itself.
+    print(f"[{label}] {value}")           # Format is: [what this is] the value.
+
+log("setup", "tools ready — NumPy + Matplotlib imported, seed fixed to 0")
+```
+▶ What you'll see: one line confirming the tools are ready.
+
+### Step 1 — Markov's inequality: a bound from the mean alone
+
+Markov says: for a variable that is never negative, the chance of being *huge* is limited by
+its average. Formally $\mathbb{P}(X\ge a)\le \mathbb{E}[X]/a$. We test it on an Exponential
+variable (always $\ge 0$) where we know the true tail exactly, and compare **true vs.
+simulated vs. the bound**.
+
+```python
+mean_demo = 2.0                                # X ~ Exponential with mean 2 (all values are >= 0).
+a_demo = 6.0                                   # Look at the tail event "X is at least 6".
+true_tail_demo = np.exp(-a_demo / mean_demo)   # Exact exponential tail: P(X >= a) = exp(-a/mean).
+markov_bound_demo = mean_demo / a_demo         # Markov's guarantee: P(X >= a) <= E[X]/a.
+
+samples_demo = np.random.exponential(mean_demo, size=100_000)  # Simulate 100k draws to estimate the tail.
+sim_tail_demo = np.mean(samples_demo >= a_demo)                # Fraction in the tail = estimated probability.
+
+log("true P(X>=6)", round(true_tail_demo, 4))
+log("simulated P(X>=6)", round(sim_tail_demo, 4))
+log("Markov bound E[X]/a", round(markov_bound_demo, 4))
+log("bound holds?", bool(sim_tail_demo <= markov_bound_demo))
+
+plt.bar(["true", "simulated", "Markov bound"],
+        [true_tail_demo, sim_tail_demo, markov_bound_demo],
+        color=["steelblue", "seagreen", "salmon"])
+plt.title("Markov: the bound sits ABOVE the real tail probability")
+plt.ylabel("probability of X >= 6")
+plt.show()
+```
+▶ What you'll see: the orange "Markov bound" bar is taller than the true/simulated tails — the bound is **valid but loose**.
+
+### Step 2 — Chebyshev's inequality: use the variance too
+
+Chebyshev bounds how often a variable strays far from its mean:
+$\mathbb{P}(|X-\mu|\ge c)\le \sigma^2/c^2$. It works for *any* distribution. We use
+Uniform(0,1) (mean $0.5$, variance $1/12$) and check the bound against a simulation.
+
+```python
+samples_cheb_demo = np.random.uniform(0.0, 1.0, size=100_000)  # X ~ Uniform(0,1): mean 0.5, variance 1/12.
+mu_demo = 0.5                                                   # Known mean.
+var_demo = 1.0 / 12.0                                           # Known variance.
+c_demo = 0.4                                                    # How far from the mean counts as "far".
+
+cheb_bound_demo = var_demo / c_demo**2                          # Chebyshev: P(|X-mu|>=c) <= var/c^2.
+sim_far_demo = np.mean(np.abs(samples_cheb_demo - mu_demo) >= c_demo)  # Estimated P(|X-mu| >= c).
+
+log("simulated P(|X-0.5|>=0.4)", round(sim_far_demo, 4))
+log("Chebyshev bound var/c^2", round(cheb_bound_demo, 4))
+log("bound holds?", bool(sim_far_demo <= cheb_bound_demo))
+
+plt.hist(samples_cheb_demo, bins=40, color="lightgray", edgecolor="white")
+plt.axvline(mu_demo - c_demo, color="red", linestyle="--", label="mean ± c")
+plt.axvline(mu_demo + c_demo, color="red", linestyle="--")
+plt.title("Chebyshev: how much mass falls OUTSIDE the red band?")
+plt.xlabel("value of X"); plt.ylabel("count"); plt.legend()
+plt.show()
+```
+▶ What you'll see: only a little mass sits outside the red band — far less than the bound allows.
+
+### Step 3 — The sample mean and the Weak Law of Large Numbers
+
+Flip a biased coin many times and watch the **running average**. WLLN promises it will home in
+on the true probability $p$ as the number of flips grows.
+
+```python
+p_demo = 0.3                                            # A biased coin: P(heads) = 0.3 is the true mean.
+n_flips_demo = 5_000                                    # Flip it 5,000 times and watch the average.
+flips_demo = np.random.binomial(1, p_demo, size=n_flips_demo)          # 1 = heads, 0 = tails.
+running_mean_demo = np.cumsum(flips_demo) / np.arange(1, n_flips_demo + 1)  # Average of the first n flips.
+
+for checkpoint_demo in [10, 100, 1000, 5000]:           # Log the running average at a few checkpoints.
+    log(f"sample mean after {checkpoint_demo} flips", round(running_mean_demo[checkpoint_demo - 1], 4))
+
+plt.plot(running_mean_demo, label="running sample mean")
+plt.axhline(p_demo, color="red", linestyle="--", label=f"true mean p={p_demo}")
+plt.xlabel("number of flips n"); plt.ylabel("average so far")
+plt.title("WLLN: the sample mean settles onto the true mean")
+plt.legend(); plt.show()
+```
+▶ What you'll see: a wiggly line that homes in on the red dashed line as `n` grows.
+
+### Step 4 — Convergence in probability
+
+"Settles down" has a precise meaning: for any tolerance $\epsilon$, the probability that the
+sample mean is *farther* than $\epsilon$ from the truth shrinks to $0$ as $n$ grows. We measure
+that probability directly by repeating the experiment many times.
+
+```python
+eps_demo = 0.05                                         # "Close" means within 0.05 of the true mean.
+ns_demo = [10, 50, 100, 500, 1000, 5000]               # Sample sizes to test.
+reps_demo = 2_000                                       # For each n, repeat the experiment 2,000 times.
+probs_demo = []                                         # Store P(|M_n - p| >= eps) for each n.
+
+for n_demo in ns_demo:
+    means_demo = np.random.binomial(1, p_demo, size=(reps_demo, n_demo)).mean(axis=1)  # 2000 means of size n.
+    prob_far_demo = np.mean(np.abs(means_demo - p_demo) >= eps_demo)                    # How often "far".
+    probs_demo.append(prob_far_demo)
+    log(f"P(|M_n - p| >= {eps_demo}) at n={n_demo}", round(prob_far_demo, 4))
+
+plt.plot(ns_demo, probs_demo, marker="o")
+plt.xlabel("sample size n"); plt.ylabel(f"P(|M_n - p| >= {eps_demo})")
+plt.title("Convergence in probability: this probability heads to 0")
+plt.show()
+```
+▶ What you'll see: the plotted probability falls toward 0 as the sample size increases.
+
+### Step 5 — The Central Limit Theorem
+
+Take averages of very **skewed** data (exponential), standardize them, and histogram the
+result. The CLT says the histogram will look like the standard bell curve $N(0,1)$.
+
+```python
+from math import sqrt
+pop_mean_demo, pop_std_demo = 1.0, 1.0                  # Exponential(mean 1) also has std 1 (very skewed!).
+group_size_demo = 30                                    # Average 30 draws at a time.
+num_means_demo = 20_000                                 # Build 20,000 such averages.
+
+raw_demo = np.random.exponential(pop_mean_demo, size=(num_means_demo, group_size_demo))  # Skewed raw data.
+means_demo = raw_demo.mean(axis=1)                      # Each row -> one sample mean.
+standardized_demo = (means_demo - pop_mean_demo) / (pop_std_demo / sqrt(group_size_demo))  # CLT z-score.
+
+log("mean of standardized averages (~0)", round(standardized_demo.mean(), 3))
+log("std of standardized averages (~1)", round(standardized_demo.std(), 3))
+
+xs_demo = np.linspace(-4, 4, 200)                       # Grid for the reference bell curve.
+normal_pdf_demo = np.exp(-xs_demo**2 / 2) / np.sqrt(2 * np.pi)  # Standard normal density N(0,1).
+plt.hist(standardized_demo, bins=50, density=True, alpha=0.6, label="standardized sample means")
+plt.plot(xs_demo, normal_pdf_demo, "r-", lw=2, label="N(0,1) bell curve")
+plt.title("CLT: averages of skewed data become bell-shaped")
+plt.legend(); plt.show()
+```
+▶ What you'll see: the histogram hugs the red normal curve even though the raw data was skewed.
+
+### Step 6 — Normal approximation to the binomial (De Moivre–Laplace)
+
+A binomial count is a sum of coin flips, so the CLT applies: for large $n$, the binomial bars
+are traced by a normal curve with the same mean $np$ and standard deviation $\sqrt{np(1-p)}$.
+
+```python
+from scipy.stats import binom, norm                     # Exact binomial pmf + normal density to compare.
+n_trials_demo, p_bin_demo = 40, 0.5                      # Binomial with 40 trials, success prob 0.5.
+ks_demo = np.arange(0, n_trials_demo + 1)                # All possible counts 0..40.
+binom_pmf_demo = binom.pmf(ks_demo, n_trials_demo, p_bin_demo)  # Exact probability of each count.
+
+mu_b_demo = n_trials_demo * p_bin_demo                   # Binomial mean n*p.
+sigma_b_demo = np.sqrt(n_trials_demo * p_bin_demo * (1 - p_bin_demo))  # Binomial std sqrt(n p (1-p)).
+normal_approx_demo = norm.pdf(ks_demo, mu_b_demo, sigma_b_demo)        # Normal curve with matching mean/std.
+
+log("binomial mean n*p", mu_b_demo)
+log("binomial std sqrt(n p (1-p))", round(sigma_b_demo, 3))
+
+plt.bar(ks_demo, binom_pmf_demo, alpha=0.6, label="exact Binomial(40, 0.5)")
+plt.plot(ks_demo, normal_approx_demo, "r-o", ms=3, label="normal approximation")
+plt.xlabel("number of successes k"); plt.ylabel("probability")
+plt.title("De Moivre–Laplace: the normal curve traces the binomial bars")
+plt.legend(); plt.show()
+```
+▶ What you'll see: the red normal curve lands right on top of the binomial bars.
+
+### Recap — what you just ran
+
+- **Markov & Chebyshev** gave *guaranteed* tail bounds (loose, then tighter using the variance).
+- The **running sample mean** settled onto the true mean (**WLLN**), and the "far from the mean"
+  probability shrank toward 0 (**convergence in probability**).
+- Averages of skewed data turned **bell-shaped** (**CLT**), and a normal curve traced the
+  **binomial** (**De Moivre–Laplace**).
+
+Everything below (starting at **§1 Overview**) develops these same ideas with full derivations,
+more examples, and an interactive experiment.
+
+---
+
 ## 1. Overview
 
 Convergence theorems explain why repeated randomness becomes predictable. The **Weak Law of Large Numbers (WLLN)** says that sample averages stabilize near the population mean, while the **Central Limit Theorem (CLT)** says that properly standardized sums often look normal even when the original observations are not normal.

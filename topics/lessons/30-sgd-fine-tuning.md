@@ -2,6 +2,240 @@
 > **Source:** CS 221 · **Category:** Method · **Type:** ⚖️ Both · [↑ Full reference](../../ai-ml-cheatsheets.md)
 > 📓 The coded examples form a runnable notebook section; an `.ipynb` will be generated.
 
+## 0. Step-by-Step Worked Example — Start Here (Beginner Friendly)
+
+> 🧑‍🎓 **New to this topic? Start here.** This is a gentle, fully runnable walkthrough that
+> builds up *every* idea in this lesson one tiny step at a time. Each step **prints** the
+> numbers it computes and **draws a picture** so you can *see* what is happening. Run the
+> cells in order from top to bottom. Nothing here needs the internet or any downloaded data.
+
+**What we will build, step by step:**
+1. **Batch vs. stochastic updates** — compare one-example, mini-batch, and full-batch gradients.
+2. **Learning-rate behavior** — watch small, useful, and too-large step sizes move on a loss curve.
+3. **Logistic prediction and gradients** — compute sigmoid probabilities and the gradient they create.
+4. **Hypothesis class and fine-tuning** — freeze or update parts of a tiny base+head model.
+5. **Pseudocode** — run the whole mini-batch SGD loop from shuffle to update.
+
+### Step 0 — Set up our tools
+
+We import NumPy (arrays + gradients) and Matplotlib (pictures). We fix a random **seed** so every
+run gives the same printed numbers, then define a tiny `log()` helper for clearly labeled output.
+
+```python
+import numpy as np                       # NumPy: vectors, matrix products, and tiny optimization loops.
+import matplotlib.pyplot as plt          # Matplotlib: plots for gradients, learning rates, and losses.
+
+np.random.seed(0)                         # Fix the seed so every run prints the same numbers.
+plt.rcParams["figure.figsize"] = (7, 4)   # Use a comfortable default plot size.
+
+
+def log(label, value):                    # Define one small logger used in every worked-example cell.
+    print(f"[{label}] {value}")           # Print each value with a readable label.
+
+log("setup", "tools ready — NumPy + Matplotlib imported, seed fixed to 0")  # Confirm setup finished.
+```
+▶ What you'll see: one line confirming the tools are ready.
+
+### Step 1 — Batch vs. stochastic updates: noisy but cheap, stable but expensive
+
+SGD estimates the gradient from one example, mini-batch gradient descent averages a few examples, and
+full-batch gradient descent averages the whole dataset. We compute all three for the same squared-loss model.
+
+```python
+features_demo = np.array([[1.0, -2.0], [1.0, -1.0], [1.0, 1.0], [1.0, 2.0]])  # Build [bias, x] features for four examples.
+targets_demo = np.array([-2.5, -0.5, 1.0, 3.0])                                # Store tiny regression targets.
+weights_demo = np.array([0.2, 0.4])                                             # Start from one candidate weight vector.
+eta_demo = 0.3                                                                  # Choose a learning rate for all updates.
+preds_demo = features_demo @ weights_demo                                       # Compute predictions for every example.
+residuals_demo = preds_demo - targets_demo                                      # Compute residuals pred - y.
+per_example_grads_demo = residuals_demo[:, None] * features_demo                # Gradient of 0.5 residual^2 is residual * features.
+sgd_grad_demo = per_example_grads_demo[0]                                       # Use one example for a stochastic update.
+mini_grad_demo = per_example_grads_demo[:2].mean(axis=0)                        # Average two examples for a mini-batch update.
+full_grad_demo = per_example_grads_demo.mean(axis=0)                            # Average all examples for a full-batch update.
+update_names_demo = np.array(["SGD", "mini-batch", "full-batch"])             # Name the three gradient estimates.
+update_grads_demo = np.vstack([sgd_grad_demo, mini_grad_demo, full_grad_demo])   # Stack gradients for printing and plotting.
+updated_weights_demo = weights_demo - eta_demo * update_grads_demo              # Apply w <- w - eta * gradient for each case.
+
+for name_demo, grad_demo, new_w_demo in zip(update_names_demo, update_grads_demo, updated_weights_demo):  # Loop over update types.
+    log(f"{name_demo} gradient", np.round(grad_demo, 3))                         # Print the gradient estimate.
+    log(f"{name_demo} updated weights", np.round(new_w_demo, 3))                 # Print the resulting weights.
+
+x_axis_demo = np.arange(len(update_names_demo))                                  # Create bar positions for update types.
+plt.bar(x_axis_demo - 0.18, update_grads_demo[:, 0], width=0.36, label="bias grad")  # Plot bias-gradient estimates.
+plt.bar(x_axis_demo + 0.18, update_grads_demo[:, 1], width=0.36, label="slope grad") # Plot slope-gradient estimates.
+plt.axhline(0.0, color="black", linewidth=1)                                    # Mark zero gradient.
+plt.xticks(x_axis_demo, update_names_demo)                                       # Label each update type.
+plt.ylabel("gradient component")                                                # Label the vertical axis.
+plt.title("Batch size changes the gradient estimate")                           # Title the gradient comparison.
+plt.legend()                                                                     # Show which bars are bias vs slope.
+plt.show()                                                                       # Render the bar chart.
+```
+▶ What you'll see: the one-example gradient is noisier, while the full-batch gradient is an average of all examples.
+
+### Step 2 — Learning-rate behavior: step size controls training motion
+
+The update length is $\eta\|
+abla L\|$. A tiny learning rate crawls, a useful one moves steadily, and a too-large
+one can jump across the minimum and make the loss unstable.
+
+```python
+etas_demo = np.array([0.05, 0.35, 1.05])                                         # Compare small, useful, and too-large learning rates.
+eta_names_demo = np.array(["too small", "useful", "too large"])                 # Name the learning-rate behaviors.
+colors_demo = np.array(["gray", "seagreen", "salmon"])                          # Pick plot colors for the three paths.
+steps_demo = 9                                                                    # Run a few gradient steps for each learning rate.
+start_w_demo = -3.0                                                               # Start far from the minimum w=2.
+grid_demo = np.linspace(-4.0, 5.0, 300)                                           # Create x-values for the loss curve.
+loss_grid_demo = (grid_demo - 2.0) ** 2                                           # Use L(w)=(w-2)^2 as a simple loss surface.
+
+plt.plot(grid_demo, loss_grid_demo, color="black", label="loss L(w)=(w-2)^2")    # Draw the one-dimensional loss curve.
+for eta_value_demo, eta_name_demo, color_demo in zip(etas_demo, eta_names_demo, colors_demo):  # Loop over learning rates.
+    path_demo = [start_w_demo]                                                    # Store the weight path for this eta.
+    for step_demo in range(steps_demo):                                           # Take repeated gradient steps.
+        grad_demo = 2.0 * (path_demo[-1] - 2.0)                                   # Compute d/dw (w-2)^2.
+        path_demo.append(path_demo[-1] - eta_value_demo * grad_demo)              # Apply w <- w - eta * grad.
+    path_demo = np.array(path_demo)                                                # Convert the path to an array for plotting.
+    loss_path_demo = (path_demo - 2.0) ** 2                                       # Compute the loss along the path.
+    log(f"{eta_name_demo} final w", round(path_demo[-1], 3))                      # Print the final weight.
+    log(f"{eta_name_demo} final loss", round(loss_path_demo[-1], 3))              # Print the final loss.
+    plt.plot(path_demo, loss_path_demo, marker="o", color=color_demo, label=f"eta={eta_value_demo}")  # Plot the optimization path.
+plt.xlabel("weight w")                                                            # Label the horizontal axis.
+plt.ylabel("loss")                                                                # Label the vertical axis.
+plt.title("Learning rate decides whether updates crawl, converge, or bounce")     # Title the plot.
+plt.legend()                                                                       # Show learning-rate labels.
+plt.show()                                                                         # Render the learning-rate paths.
+```
+▶ What you'll see: the useful step size reaches the minimum quickly, while the tiny one crawls and the huge one bounces.
+
+### Step 3 — Logistic prediction and gradients: sigmoid turns scores into probabilities
+
+A logistic model computes $z=w^	op\phi(x)$, then predicts $\sigma(z)=1/(1+e^{-z})$. For cross-entropy loss,
+the gradient is $(\sigma(z)-y)\phi(x)$, so the probability error directly scales the feature vector.
+
+```python
+z_grid_demo = np.linspace(-6.0, 6.0, 300)                                        # Create score values for plotting sigmoid behavior.
+sigmoid_demo = 1.0 / (1.0 + np.exp(-z_grid_demo))                                # Compute sigma(z).
+sigmoid_deriv_demo = sigmoid_demo * (1.0 - sigmoid_demo)                         # Compute sigma'(z)=sigma(z)(1-sigma(z)).
+phi_demo = np.array([1.0, 0.6, -0.4])                                             # Store one feature vector with a bias term.
+weights_log_demo = np.array([-0.2, 1.0, -0.5])                                    # Store logistic model weights.
+y_log_demo = 1.0                                                                  # Store the binary target for this example.
+z_demo = float(weights_log_demo @ phi_demo)                                       # Compute the raw linear score.
+p_demo = 1.0 / (1.0 + np.exp(-z_demo))                                            # Convert the score to P(y=1|x;w).
+grad_log_demo = (p_demo - y_log_demo) * phi_demo                                  # Compute the cross-entropy gradient.
+
+log("score z", round(z_demo, 3))                                                  # Print the raw score.
+log("sigmoid probability", round(p_demo, 3))                                      # Print the model probability.
+log("sigmoid derivative at z", round(p_demo * (1.0 - p_demo), 3))                # Print the local sigmoid slope.
+log("logistic gradient", np.round(grad_log_demo, 3))                              # Print the gradient vector.
+
+plt.plot(z_grid_demo, sigmoid_demo, label="sigmoid sigma(z)")                    # Plot the probability curve.
+plt.plot(z_grid_demo, sigmoid_deriv_demo, label="derivative sigma(z)(1-sigma(z))") # Plot the derivative curve.
+plt.axvline(z_demo, color="black", linestyle="--", label="example z")          # Mark this example's score.
+plt.xlabel("score z")                                                            # Label the score axis.
+plt.ylabel("value")                                                              # Label probability/derivative values.
+plt.title("Logistic prediction and gradient ingredients")                       # Title the logistic plot.
+plt.legend()                                                                      # Show the curve names.
+plt.show()                                                                        # Render the sigmoid figure.
+```
+▶ What you'll see: the sigmoid maps scores to probabilities, and its derivative is largest near score zero.
+
+### Step 4 — Hypothesis class and fine-tuning: choose which parameters can move
+
+With fixed features, the hypothesis class varies only the head weights. Fine-tuning changes the allowed parameter
+subspace: frozen feature extractor updates only the head, while full fine-tuning updates both base and head.
+
+```python
+x_base_demo = np.array([-1.0, 0.0, 1.0, 2.0])                                     # Create raw scalar inputs.
+y_base_demo = np.array([-1.0, 0.2, 1.6, 2.8])                                     # Create targets for the new task.
+raw_features_demo = np.column_stack([x_base_demo, x_base_demo ** 2])              # Let the base produce raw [x, x^2] features.
+base_scale_demo = np.array([1.0, 1.0])                                            # Store trainable base scales theta_base.
+head_weights_demo = np.array([0.6, 0.1])                                          # Store trainable head weights theta_head.
+eta_ft_demo = 0.4                                                                 # Choose a small fine-tuning step size.
+representation_demo = raw_features_demo * base_scale_demo                         # Compute r_theta_base(x).
+preds_initial_demo = representation_demo @ head_weights_demo                      # Compute h_theta_head(r_theta_base(x)).
+residual_ft_demo = preds_initial_demo - y_base_demo                               # Compute residuals for squared loss.
+grad_head_demo = representation_demo.T @ residual_ft_demo / len(y_base_demo)      # Differentiate loss with respect to head weights.
+grad_base_demo = (raw_features_demo * head_weights_demo).T @ residual_ft_demo / len(y_base_demo)  # Differentiate loss with respect to base scales.
+frozen_base_demo = base_scale_demo.copy()                                         # Keep the base unchanged for frozen-feature fine-tuning.
+frozen_head_demo = head_weights_demo - eta_ft_demo * grad_head_demo               # Update only the head.
+full_base_demo = base_scale_demo - eta_ft_demo * grad_base_demo                   # Update the base for full fine-tuning.
+full_head_demo = head_weights_demo - eta_ft_demo * grad_head_demo                 # Update the head for full fine-tuning.
+preds_frozen_demo = (raw_features_demo * frozen_base_demo) @ frozen_head_demo     # Predict after frozen-extractor update.
+preds_full_demo = (raw_features_demo * full_base_demo) @ full_head_demo           # Predict after full fine-tuning update.
+
+log("initial loss", round(float(np.mean(0.5 * residual_ft_demo ** 2)), 3))        # Print the starting mean loss.
+log("head gradient", np.round(grad_head_demo, 3))                                 # Print the head gradient.
+log("base gradient", np.round(grad_base_demo, 3))                                 # Print the base gradient.
+log("frozen base after update", np.round(frozen_base_demo, 3))                    # Show frozen parameters did not move.
+log("full-tune base after update", np.round(full_base_demo, 3))                   # Show full fine-tuning moved base parameters.
+
+plt.scatter(x_base_demo, y_base_demo, color="black", label="targets")            # Plot the new-task targets.
+plt.plot(x_base_demo, preds_initial_demo, marker="o", label="initial")           # Plot predictions before fine-tuning.
+plt.plot(x_base_demo, preds_frozen_demo, marker="s", label="frozen base")        # Plot head-only fine-tuned predictions.
+plt.plot(x_base_demo, preds_full_demo, marker="^", label="full fine-tune")       # Plot full fine-tuned predictions.
+plt.xlabel("input x")                                                            # Label the input axis.
+plt.ylabel("prediction")                                                         # Label target/prediction values.
+plt.title("Fine-tuning decides which parameter subspace can change")             # Title the fine-tuning plot.
+plt.legend()                                                                      # Show each prediction curve.
+plt.show()                                                                        # Render the comparison.
+```
+▶ What you'll see: frozen fine-tuning leaves the base scales unchanged, while full fine-tuning moves them too.
+
+### Step 5 — Pseudocode: the full mini-batch SGD loop
+
+The pseudocode becomes a small loop: shuffle, slice a mini-batch, predict, compute average loss, compute an average
+gradient, update trainable weights, and repeat. We use synthetic logistic data so the whole run is fast and inspectable.
+
+```python
+rng_demo = np.random.default_rng(0)                                               # Create a reproducible generator for this mini training run.
+x0_demo = rng_demo.normal(loc=-1.0, scale=0.45, size=(12, 2))                     # Draw class-0 synthetic points.
+x1_demo = rng_demo.normal(loc=1.0, scale=0.45, size=(12, 2))                      # Draw class-1 synthetic points.
+X_loop_demo = np.vstack([x0_demo, x1_demo])                                       # Combine the two classes into one feature matrix.
+y_loop_demo = np.r_[np.zeros(len(x0_demo)), np.ones(len(x1_demo))]                # Create binary labels 0 and 1.
+features_loop_demo = np.column_stack([np.ones(len(X_loop_demo)), X_loop_demo])    # Add a bias column for logistic regression.
+weights_loop_demo = np.zeros(features_loop_demo.shape[1])                         # Initialize trainable weights at zero.
+eta_loop_demo = 0.6                                                               # Choose a stable learning rate for the tiny dataset.
+batch_size_demo = 6                                                               # Use mini-batches of six examples.
+epochs_demo = 8                                                                   # Run just a few epochs to keep it fast.
+losses_loop_demo = []                                                             # Store one full-dataset loss per epoch.
+
+for epoch_demo in range(epochs_demo):                                             # Repeat the training loop for several epochs.
+    order_demo = rng_demo.permutation(len(y_loop_demo))                           # Shuffle the training example order.
+    for start_demo in range(0, len(y_loop_demo), batch_size_demo):                # Walk through shuffled mini-batches.
+        batch_ids_demo = order_demo[start_demo:start_demo + batch_size_demo]      # Select the current mini-batch indices.
+        xb_demo = features_loop_demo[batch_ids_demo]                              # Gather mini-batch features.
+        yb_demo = y_loop_demo[batch_ids_demo]                                     # Gather mini-batch labels.
+        logits_demo = xb_demo @ weights_loop_demo                                 # Compute linear scores on the mini-batch.
+        probs_demo = 1.0 / (1.0 + np.exp(-logits_demo))                           # Convert scores to probabilities.
+        grad_demo = xb_demo.T @ (probs_demo - yb_demo) / len(yb_demo)             # Average logistic gradient over the mini-batch.
+        weights_loop_demo = weights_loop_demo - eta_loop_demo * grad_demo         # Update trainable weights.
+    full_logits_demo = features_loop_demo @ weights_loop_demo                     # Compute full-dataset scores after the epoch.
+    full_probs_demo = 1.0 / (1.0 + np.exp(-full_logits_demo))                     # Convert full-dataset scores to probabilities.
+    loss_demo = -np.mean(y_loop_demo * np.log(full_probs_demo + 1e-9) + (1.0 - y_loop_demo) * np.log(1.0 - full_probs_demo + 1e-9))  # Compute cross-entropy loss.
+    losses_loop_demo.append(loss_demo)                                            # Store the epoch loss.
+    log(f"epoch {epoch_demo + 1} loss", round(float(loss_demo), 3))              # Print a granular loss trace.
+
+log("final weights", np.round(weights_loop_demo, 3))                              # Print the learned weights.
+plt.plot(np.arange(1, epochs_demo + 1), losses_loop_demo, marker="o")            # Plot loss versus epoch.
+plt.xlabel("epoch")                                                              # Label the epoch axis.
+plt.ylabel("cross-entropy loss")                                                 # Label the loss axis.
+plt.title("Mini-batch SGD loop: shuffle, average gradient, update")              # Title the training-loop plot.
+plt.show()                                                                        # Render the loss curve.
+```
+▶ What you'll see: the printed loss decreases over epochs as the mini-batch SGD pseudocode updates the weights.
+
+### Recap — what you just ran
+
+- **Batch vs. stochastic updates** compared one-example, mini-batch, and full-batch gradient estimates.
+- **Learning-rate behavior** showed why step size can make training crawl, converge, or bounce.
+- **Logistic prediction and gradients** connected sigmoid probabilities to the cross-entropy gradient.
+- **Hypothesis class and fine-tuning** demonstrated frozen-base versus full-parameter updates.
+- **Pseudocode** became a complete mini-batch training loop with shuffled batches and logged losses.
+
+Everything below (starting at **§1 Overview**) develops these same ideas with full derivations,
+more examples, and an interactive experiment.
+
+---
+
 ## 1. Overview
 
 Stochastic gradient descent (SGD) is the workhorse algorithm that turns local loss gradients into learned model parameters. Instead of solving for the best weights in one closed-form jump, SGD repeatedly asks: “for this example, which direction makes the loss smaller?”
