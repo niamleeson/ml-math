@@ -18,6 +18,8 @@ Two sub-lessons:
 - **M10.1 Implicit feedback & principled negatives** — PU framing, samplers, logQ, and recall@k caveats.
 - **M10.2 Debiasing** — exposure, position, delay, IPS, and sparse-label augmentation.
 
+<p class="cur-colab"><a class="cur-colab-btn" href="https://colab.research.google.com/github/niamleeson/ml-math/blob/main/afp/notebooks/M10-sparse-implicit-labels.ipynb" target="_blank" rel="noopener">▶ Open the runnable implicit-feedback, negative-sampling &amp; debiasing notebook in Google Colab</a></p>
+
 ---
 
 ## M10.1 · Implicit feedback & principled negatives (PU, negative sampling, logQ correction)
