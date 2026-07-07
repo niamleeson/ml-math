@@ -274,6 +274,263 @@ print("Description:", selected_data["note"])  # print why this source is useful.
 print("Payload:", selected_data)  # print the actual tiny data so nothing is hidden.
 ```
 
+
+### 📖 Concept walkthrough — build each idea from scratch
+
+Before the warm-up examples, we build each language-modeling and translation idea from scratch, one small step at a time. Each concept explains *what* we compute, *why* the idea matters, and *why* the code uses this tiny construction. Everything here uses only NumPy + Matplotlib and tiny inline data, so every probability, search score, attention weight, and BLEU component is inspectable. Variables carry a `_w` suffix so they never collide with the examples below.
+
+```python
+import numpy as np  # use NumPy for probability tables, vector math, stable softmax, and reproducible arrays.
+import matplotlib.pyplot as plt  # use Matplotlib so every concept has a direct visual check.
+np.random.seed(230)  # seed randomness so any later randomized variation stays reproducible.
+```
+
+#### 1. Language models and perplexity: multiply local predictions, then normalize surprise
+
+A language model assigns a sequence probability by multiplying next-token conditionals. For a bigram model, the history is just the previous token:
+
+$$
+P(y)=\prod_{t=1}^{T}P(y^{<t>}\mid y^{<t-1>}).
+$$
+
+Perplexity rewrites the average negative log-likelihood on an exponential scale:
+
+$$
+\operatorname{PP}=\exp\left(-\frac{1}{T}\sum_{t=1}^{T}\log p_t\right).
+$$
+
+We build a tiny probability table because it makes the product, logs, and final comparison visible. The exponential turns average log surprise back into a per-word branching factor: a perplexity of 2 means the model is about as uncertain as choosing among two equally plausible next words at each step.
+
+```python
+contexts_w = np.array(["<s>", "i", "like", "cats"])  # list the previous-token contexts needed for one sentence.
+choices_w = np.array(["i", "like", "cats", "dogs", "<eos>"])  # list a tiny next-token vocabulary.
+good_bigram_w = np.array([[0.72, 0.10, 0.06, 0.04, 0.08], [0.06, 0.70, 0.08, 0.06, 0.10], [0.05, 0.08, 0.68, 0.14, 0.05], [0.04, 0.04, 0.06, 0.06, 0.80]])  # store a model that likes "i like cats".
+weak_bigram_w = np.array([[0.30, 0.22, 0.16, 0.14, 0.18], [0.18, 0.28, 0.20, 0.16, 0.18], [0.14, 0.18, 0.30, 0.24, 0.14], [0.16, 0.15, 0.18, 0.15, 0.36]])  # store a less confident model for the same path.
+target_next_w = np.array(["i", "like", "cats", "<eos>"])  # define the actual next token at each step.
+target_cols_w = np.array([np.where(choices_w == token_w)[0][0] for token_w in target_next_w])  # convert target tokens to column indices.
+print("contexts:", contexts_w)  # inspect the conditional rows used to score the sentence.
+print("target next tokens:", target_next_w)  # inspect the correct next token for each row.
+print("good model table rows sum to:", np.round(good_bigram_w.sum(axis=1), 3))  # verify each row is a probability distribution.
+```
+
+```python
+good_path_probs_w = good_bigram_w[np.arange(len(contexts_w)), target_cols_w]  # select P(correct next token | previous token) from the good table.
+weak_path_probs_w = weak_bigram_w[np.arange(len(contexts_w)), target_cols_w]  # select the same conditionals from the weaker table.
+good_sentence_prob_w = np.prod(good_path_probs_w)  # multiply conditionals to get the sentence probability under the good model.
+weak_sentence_prob_w = np.prod(weak_path_probs_w)  # multiply conditionals to get the sentence probability under the weak model.
+good_ppl_w = np.exp(-np.mean(np.log(np.clip(good_path_probs_w, 1e-12, 1.0))))  # compute perplexity with a log-zero guard.
+weak_ppl_w = np.exp(-np.mean(np.log(np.clip(weak_path_probs_w, 1e-12, 1.0))))  # compute the weak model perplexity with the same formula.
+print("good conditionals:", np.round(good_path_probs_w, 3))  # show each local probability in the product.
+print("weak conditionals:", np.round(weak_path_probs_w, 3))  # show each local probability in the weaker product.
+print("sentence probabilities:", np.round([good_sentence_prob_w, weak_sentence_prob_w], 5))  # compare full sequence probabilities.
+print("perplexities:", np.round([good_ppl_w, weak_ppl_w], 3))  # confirm lower perplexity belongs to the better model.
+```
+
+```python
+plt.figure(figsize=(6.8, 4.0))  # create one compact comparison figure.
+plt.bar(["good model", "weak model"], [good_ppl_w, weak_ppl_w], color=["seagreen", "tomato"], alpha=0.85)  # plot perplexity so lower is visibly better.
+plt.title("1: Language model perplexity comparison")  # title the figure with the subsection number.
+plt.ylabel("perplexity = exp(mean negative log p)")  # label the vertical axis with the exact quantity.
+plt.ylim(0.0, max(good_ppl_w, weak_ppl_w) * 1.25)  # leave visual headroom above the taller bar.
+plt.show()  # render the perplexity plot.
+```
+
+▶ What you'll see: the model with larger correct-token probabilities gives a much larger sentence probability and a lower perplexity bar.
+
+*Why it's done this way: multiplying conditionals shows how local next-word predictions define a full sentence probability, while averaging logs before exponentiating makes sequences of different lengths comparable.*
+
+#### 2. Machine translation and search: greedy choices versus beam joint scoring
+
+A translation decoder must search over output sequences, not just choose one token. Greedy decoding takes the local argmax at every step, while beam search keeps the top-$k$ partial sequences by summed log probability:
+
+$$
+\operatorname{score}(y\mid x)=\sum_t \log P(y^{<t>}\mid x,y^{<1:t-1>}).
+$$
+
+We use a hand-built decoder table where the first locally best token leads to a mediocre ending, while the second-best start leads to a stronger whole sentence. This shows why beam search trades extra compute for a better joint score.
+
+```python
+def step_probs_w(prefix_w):  # define a tiny prefix-conditioned translation model.
+    table_w = {(): (["le", "la"], [0.60, 0.40]), ("le",): (["chat", "chien"], [0.45, 0.55]), ("la",): (["chatte", "maison"], [0.90, 0.10]), ("le", "chien"): (["<eos>"], [0.50]), ("le", "chat"): (["<eos>"], [0.45]), ("la", "chatte"): (["<eos>"], [0.95]), ("la", "maison"): (["<eos>"], [0.30])}  # store tiny token probabilities by prefix.
+    tokens_w, probs_w = table_w.get(tuple(prefix_w), (["<eos>"], [1.0]))  # return EOS for unknown prefixes.
+    return np.array(tokens_w), np.array(probs_w, dtype=float)  # return arrays for vectorized scoring.
+prefix_w = []  # start decoding with an empty target prefix.
+greedy_tokens_w = []  # keep the greedy output tokens.
+greedy_logprob_w = 0.0  # accumulate the greedy log score.
+for step_w in range(3):  # decode at most three steps in this tiny example.
+    tokens_w, probs_w = step_probs_w(prefix_w)  # get next-token probabilities for the current prefix.
+    best_index_w = int(np.argmax(probs_w))  # choose the locally highest-probability token.
+    chosen_w = tokens_w[best_index_w]  # map the best index back to a token.
+    greedy_logprob_w += float(np.log(np.clip(probs_w[best_index_w], 1e-12, 1.0)))  # add the chosen token log probability.
+    greedy_tokens_w.append(chosen_w)  # append the chosen token to the output.
+    prefix_w.append(chosen_w)  # condition the next step on the chosen token.
+    print("greedy step", step_w + 1, "tokens", tokens_w, "probs", probs_w, "chosen", chosen_w, "log score", round(greedy_logprob_w, 3))  # inspect the local decision.
+    if chosen_w == "<eos>":  # stop if the decoder emits EOS.
+        break  # end greedy decoding.
+print("greedy output:", greedy_tokens_w, "joint probability", round(float(np.exp(greedy_logprob_w)), 4))  # show the final greedy score.
+```
+
+```python
+beam_w = [(tuple(), 0.0)]  # initialize beam search with an empty sequence and log score zero.
+beam_width_w = 2  # keep the two best partial translations after each expansion.
+history_w = []  # store beam states for plotting and inspection.
+for step_w in range(3):  # run the same three-step budget as greedy decoding.
+    candidates_w = []  # collect every one-token extension of every beam item.
+    for prefix_w, score_w in beam_w:  # expand each current beam sequence.
+        tokens_w, probs_w = step_probs_w(prefix_w)  # get next-token probabilities for this prefix.
+        for token_w, prob_w in zip(tokens_w, probs_w):  # create one candidate per possible next token.
+            candidates_w.append((prefix_w + (token_w,), score_w + float(np.log(np.clip(prob_w, 1e-12, 1.0)))))  # add log probability to the prefix score.
+    beam_w = sorted(candidates_w, key=lambda item_w: item_w[1], reverse=True)[:beam_width_w]  # keep the top-k joint log scores.
+    history_w.append(beam_w)  # save this step's surviving beam.
+    print("beam step", step_w + 1, [(seq_w, round(score_w, 3)) for seq_w, score_w in beam_w])  # inspect surviving partial translations.
+best_beam_tokens_w, best_beam_logprob_w = beam_w[0]  # take the highest-scoring final beam sequence.
+print("beam output:", best_beam_tokens_w, "joint probability", round(float(np.exp(best_beam_logprob_w)), 4))  # show the final beam score.
+```
+
+```python
+plt.figure(figsize=(7.0, 4.0))  # create a compact comparison plot for search outcomes.
+search_labels_w = ["greedy\\n" + " ".join(greedy_tokens_w), "beam\\n" + " ".join(best_beam_tokens_w)]  # label bars with decoded sequences.
+search_probs_w = [float(np.exp(greedy_logprob_w)), float(np.exp(best_beam_logprob_w))]  # convert log scores back to joint probabilities.
+plt.bar(search_labels_w, search_probs_w, color=["slateblue", "darkorange"], alpha=0.85)  # plot the joint scores found by each search method.
+plt.title("2: Greedy versus beam search joint score")  # title the figure with the subsection number.
+plt.ylabel("joint sequence probability")  # label the vertical axis as the product of token probabilities.
+plt.ylim(0.0, max(search_probs_w) * 1.25)  # add headroom above the better sequence.
+plt.show()  # render the search comparison.
+```
+
+▶ What you'll see: greedy starts with the locally larger first token, but beam keeps the runner-up and finds a higher-probability complete sequence.
+
+*Why it's done this way: log scores turn products into sums, making partial translations easy to compare; keeping $k>1$ hypotheses costs more computation but reduces the chance that an early local choice ruins the whole sentence.*
+
+#### 3. Attention: score positions, softmax weights, and a context vector
+
+Attention lets a decoder query choose which source positions matter right now. Scaled dot-product attention computes
+
+$$
+\operatorname{scores}=\frac{qK^\top}{\sqrt{d}},\qquad
+\alpha=\operatorname{softmax}(\operatorname{scores}),\qquad
+c=\sum_i \alpha_i v_i.
+$$
+
+We build one query, three keys, and three values so the compatibility scores, weights, and final context vector can all be inspected. Dividing by $\sqrt{d}$ keeps dot products from growing too large in high dimensions, which keeps the softmax from saturating into almost-one-hot weights too early.
+
+```python
+query_w = np.array([1.0, 0.5, 0.0, 0.5])  # define one decoder query that asks for a source pattern.
+keys_w = np.array([[1.0, 0.4, 0.0, 0.3], [0.1, 0.2, 1.2, 0.1], [0.8, 0.5, 0.0, 0.7]])  # define three source-position keys.
+values_w = np.array([[2.0, 0.0], [0.0, 3.0], [1.5, 1.0]])  # define values that carry information to mix into context.
+source_labels_w = np.array(["I", "saw", "cats"])  # name the source positions for readable plots.
+dim_w = query_w.shape[0]  # measure the key/query dimensionality for scaling.
+raw_scores_w = keys_w @ query_w  # compute unscaled dot-product compatibility scores.
+scaled_scores_w = raw_scores_w / np.sqrt(dim_w)  # apply the scaled dot-product attention factor.
+print("raw scores:", np.round(raw_scores_w, 3))  # inspect unscaled query-key matches.
+print("scaled scores:", np.round(scaled_scores_w, 3))  # inspect scores after dividing by sqrt(d).
+```
+
+```python
+shifted_scores_w = scaled_scores_w - np.max(scaled_scores_w)  # subtract the max for a stable softmax.
+exp_scores_w = np.exp(shifted_scores_w)  # exponentiate shifted scores into positive weights.
+attention_weights_w = exp_scores_w / exp_scores_w.sum()  # normalize weights so they sum to one.
+context_w = attention_weights_w @ values_w  # compute the weighted sum of value vectors.
+print("attention weights:", np.round(attention_weights_w, 3))  # show how focus is distributed over source positions.
+print("weights sum:", round(float(attention_weights_w.sum()), 6))  # verify the softmax distribution sums to one.
+print("context vector:", np.round(context_w, 3))  # inspect the information passed to the decoder.
+```
+
+```python
+plt.figure(figsize=(6.8, 3.8))  # create a compact attention-weight figure.
+plt.bar(source_labels_w, attention_weights_w, color="teal", alpha=0.85)  # plot attention weights for each source position.
+plt.title("3: Attention weights over source positions")  # title the figure with the subsection number.
+plt.ylabel("attention weight")  # label the vertical axis as normalized focus.
+plt.ylim(0.0, 1.0)  # use the probability range so weights are immediately interpretable.
+plt.show()  # render the bar plot.
+```
+
+```python
+plt.figure(figsize=(5.6, 2.2))  # create a small heatmap-style figure.
+plt.imshow(attention_weights_w.reshape(1, -1), cmap="YlOrRd", aspect="auto", vmin=0.0, vmax=1.0)  # draw the same weights as a one-row attention map.
+plt.xticks(np.arange(len(source_labels_w)), source_labels_w)  # label source positions along the x-axis.
+plt.yticks([0], ["query"])  # label the single decoder query row.
+plt.colorbar(label="weight")  # add a colorbar so color intensity has numeric meaning.
+plt.title("3: Attention heatmap")  # title the heatmap with the subsection number.
+plt.show()  # render the heatmap.
+```
+
+▶ What you'll see: the source position whose key best matches the query receives the largest weight, and the context vector becomes a weighted blend of value vectors.
+
+*Why it's done this way: dot products measure relevance, the stable softmax turns relevance into a probability distribution, and the weighted sum lets the model focus on useful positions without discarding the others completely.*
+
+#### 4. BLEU: clipped n-gram precision plus a penalty for being too short
+
+BLEU compares a candidate translation against reference translations using modified precision. For each n-gram order, repeated candidate n-grams are clipped by how often they appear in the references:
+
+$$
+p_n=\frac{\sum_g \min(\operatorname{count}_{cand}(g),\operatorname{count}_{ref}(g))}{\sum_g \operatorname{count}_{cand}(g)}.
+$$
+
+The geometric mean of precisions is multiplied by a brevity penalty, so a candidate that says only one perfect word cannot game precision by being short:
+
+$$
+BP=\begin{cases}1,&c>r\\ \exp(1-r/c),&c\le r\end{cases}.
+$$
+
+We compute unigram and bigram BLEU by hand to expose the clipping and the length penalty.
+
+```python
+def ngrams_w(tokens_w, n_w):  # define a tiny contiguous n-gram extractor.
+    return [tuple(tokens_w[i_w:i_w + n_w]) for i_w in range(len(tokens_w) - n_w + 1)]  # slide a window of width n over tokens.
+def count_ngrams_w(tokens_w, n_w):  # define a count table without importing Counter.
+    counts_w = {}  # start an empty dictionary of n-gram counts.
+    for gram_w in ngrams_w(tokens_w, n_w):  # iterate through every extracted n-gram.
+        counts_w[gram_w] = counts_w.get(gram_w, 0) + 1  # increment this n-gram's count.
+    return counts_w  # return the completed count dictionary.
+candidate_w = "the cat sat".split()  # choose a candidate that is shorter than the reference.
+reference_w = "the cat sat on mat".split()  # choose one reference translation.
+print("candidate tokens:", candidate_w)  # inspect candidate tokens.
+print("reference tokens:", reference_w)  # inspect reference tokens.
+```
+
+```python
+precisions_w = []  # store modified precision for each n-gram order.
+bleu_details_w = []  # store readable numerator and denominator details.
+for n_w in [1, 2]:  # compute unigram and bigram modified precision.
+    cand_counts_w = count_ngrams_w(candidate_w, n_w)  # count candidate n-grams.
+    ref_counts_w = count_ngrams_w(reference_w, n_w)  # count reference n-grams.
+    clipped_total_w = 0  # accumulate clipped matches.
+    cand_total_w = max(1, sum(cand_counts_w.values()))  # count candidate n-grams while avoiding division by zero.
+    for gram_w, cand_count_w in cand_counts_w.items():  # inspect each candidate n-gram.
+        clipped_total_w += min(cand_count_w, ref_counts_w.get(gram_w, 0))  # add the reference-clipped match count.
+    precision_w = clipped_total_w / cand_total_w  # compute modified n-gram precision.
+    precisions_w.append(max(precision_w, 1e-12))  # store a log-safe precision.
+    bleu_details_w.append((n_w, clipped_total_w, cand_total_w, precision_w))  # keep details for printing.
+    print("n=", n_w, "clipped/total=", clipped_total_w, "/", cand_total_w, "precision=", round(precision_w, 3))  # show the precision arithmetic.
+```
+
+```python
+cand_len_w = len(candidate_w)  # compute candidate length c.
+ref_len_w = len(reference_w)  # compute reference length r.
+brevity_penalty_w = 1.0 if cand_len_w > ref_len_w else float(np.exp(1.0 - ref_len_w / max(cand_len_w, 1)))  # apply BLEU's brevity penalty.
+bleu_w = brevity_penalty_w * float(np.exp(np.mean(np.log(np.array(precisions_w)))))  # combine precisions geometrically and multiply by BP.
+no_bp_bleu_w = float(np.exp(np.mean(np.log(np.array(precisions_w)))))  # compute the score without BP for comparison.
+print("brevity penalty:", round(brevity_penalty_w, 3))  # show how much the short candidate is penalized.
+print("BLEU without BP:", round(no_bp_bleu_w, 3))  # show the score if length were ignored.
+print("BLEU with BP:", round(bleu_w, 3))  # show the final BLEU score.
+```
+
+```python
+plt.figure(figsize=(7.0, 4.0))  # create a compact BLEU component plot.
+bleu_labels_w = ["p1", "p2", "BP", "BLEU"]  # name the plotted BLEU components.
+bleu_values_w = [precisions_w[0], precisions_w[1], brevity_penalty_w, bleu_w]  # collect precision, penalty, and final score.
+plt.bar(bleu_labels_w, bleu_values_w, color=["steelblue", "steelblue", "gray", "purple"], alpha=0.85)  # plot each component side by side.
+plt.title("4: BLEU components with brevity penalty")  # title the figure with the subsection number.
+plt.ylabel("score")  # label the vertical axis as a bounded score.
+plt.ylim(0.0, 1.05)  # use the natural BLEU component range.
+plt.show()  # render the BLEU component plot.
+```
+
+▶ What you'll see: the n-gram precisions are high because the candidate words match the reference prefix, but the brevity penalty lowers the final BLEU score because the candidate stops early.
+
+*Why it's done this way: clipped precision prevents repeated lucky phrases from getting too much credit, and the brevity penalty prevents very short translations from winning by predicting only safe words.*
+
 ### 🟢 Basics (warm-up)
 
 #### B1. Softmax three attention scores

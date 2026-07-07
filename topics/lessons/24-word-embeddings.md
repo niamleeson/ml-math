@@ -348,6 +348,256 @@ plot_labeled_map(preview_coords, preview_words, "Data preview: tiny predefined v
 
 ▶ What you'll see: royalty, animal, technology, and the ambiguous `bank` point; `bank` is highlighted because it will become a failure case later.
 
+### 📖 Concept walkthrough — build each idea from scratch
+
+Before the warm-up examples, we build the word-embedding ideas from scratch, one small step at a time. Each concept explains not just *what* the code does but *why* this code and *why* this logic. Everything here uses only NumPy + Matplotlib and tiny inline data, so every lookup, probability, count, and cosine score is inspectable. Variables carry a `_w` suffix so they never collide with the examples below.
+
+```python
+import numpy as np  # NumPy gives us one-hot vectors, matrix lookup, dot products, softmax, and cosine similarity.
+import matplotlib.pyplot as plt  # Matplotlib lets us inspect tiny embedding spaces and probability changes visually.
+np.random.seed(23024)  # fix the seed so every printed value and plot in this walkthrough is reproducible.
+```
+
+#### 1. One-hot → dense lookup: the embedding matrix is the lookup table
+
+A one-hot vector stores only an identity: one position is $1$ and every other position is $0$. Multiplying that one-hot row by an embedding matrix $E$ selects exactly one row of $E$, so the matrix itself is the lookup table. We build the multiplication by hand because it shows why dense vectors beat sparse one-hot IDs: dense coordinates can share geometry, while one-hot vectors say every different word is equally unrelated.
+
+```python
+vocab_lookup_w = ["cat", "dog", "king", "queen"]  # define a tiny vocabulary whose row order will index the table.
+word_lookup_w = "king"  # choose one word to retrieve from the table.
+index_lookup_w = vocab_lookup_w.index(word_lookup_w)  # find the row position assigned to the chosen word.
+one_hot_lookup_w = np.zeros(len(vocab_lookup_w))  # start with a sparse all-zero one-hot row.
+one_hot_lookup_w[index_lookup_w] = 1.0  # put the single 1 at the chosen word's vocabulary index.
+print("vocabulary:", vocab_lookup_w)  # inspect the index order used by the lookup table.
+print("one-hot for", word_lookup_w, ":", one_hot_lookup_w)  # inspect the sparse identity code.
+```
+▶ What you'll see: `king` is represented by a length-4 vector with a single 1 in the `king` slot.
+
+```python
+E_lookup_w = np.array([[0.90, 0.10], [0.82, 0.18], [-0.35, 0.95], [-0.28, 0.88]])  # create one dense 2-D row per word.
+embedding_lookup_w = one_hot_lookup_w @ E_lookup_w  # multiply the one-hot row by E to select exactly one dense row.
+print("embedding matrix E (rows are words):\n", E_lookup_w)  # inspect the full lookup table.
+print("looked-up embedding:", embedding_lookup_w)  # inspect the dense vector selected by the one-hot row.
+print("same as E[row]?:", np.allclose(embedding_lookup_w, E_lookup_w[index_lookup_w]))  # verify selection equals direct row indexing.
+```
+The product works because $o_wE=0E_{0,:}+0E_{1,:}+1E_{2,:}+0E_{3,:}=E_{2,:}$. The zeros erase every other row, and the single one keeps only the target row.
+▶ What you'll see: matrix multiplication and direct row indexing return the same `king` vector.
+
+```python
+plt.figure(figsize=(5.0, 4.0))  # create a compact 2-D embedding plot.
+plt.scatter(E_lookup_w[:, 0], E_lookup_w[:, 1], s=80, c=["tab:blue", "tab:blue", "tab:orange", "tab:orange"])  # draw every dense row as a point.
+for label_lookup_w, vector_lookup_w in zip(vocab_lookup_w, E_lookup_w):  # loop through words and vectors for readable labels.
+    plt.text(vector_lookup_w[0] + 0.015, vector_lookup_w[1] + 0.015, label_lookup_w)  # place each word label beside its point.
+plt.scatter(embedding_lookup_w[0], embedding_lookup_w[1], s=220, facecolors="none", edgecolors="black", linewidths=2.0, label="lookup result")  # highlight the selected vector.
+plt.axhline(0.0, color="gray", lw=0.8)  # add a horizontal reference line for orientation.
+plt.axvline(0.0, color="gray", lw=0.8)  # add a vertical reference line for orientation.
+plt.xlabel("dense coordinate 1")  # label the first learned coordinate.
+plt.ylabel("dense coordinate 2")  # label the second learned coordinate.
+plt.title("1: one-hot row selects one embedding row")  # title the required subsection figure.
+plt.legend(loc="best")  # identify the highlighted lookup result.
+plt.show()  # render the dense lookup geometry.
+```
+▶ What you'll see: `cat` and `dog` sit near each other, `king` and `queen` sit near each other, and the looked-up row is highlighted.
+
+*Why it's done this way: the one-hot vector keeps the external word ID simple, while $E$ stores all learnable meaning in a compact dense table that nearby-context words can share.*
+
+#### 2. word2vec skip-gram: predict nearby words from a center word
+
+Skip-gram learns from local windows: given a center word, it tries to predict an observed nearby context word. The score for context $j$ is a dot product $\theta_j^\top e_c$, and a stable softmax turns all scores into probabilities:
+
+$$
+P(j\mid c)=\frac{\exp(\theta_j^\top e_c)}{\sum_k \exp(\theta_k^\top e_c)}
+$$
+
+We make one gradient-ish update by hand because it reveals the learning signal: increasing the true context dot product pulls co-occurring vectors together, while the softmax competition pushes probability away from alternatives.
+
+```python
+vocab_sg_w = ["king", "queen", "dog", "crown"]  # define a small vocabulary for one skip-gram prediction.
+center_sg_w = "king"  # choose the center word from a tiny local window.
+true_context_sg_w = "queen"  # choose the nearby word that the center should predict.
+center_index_sg_w = vocab_sg_w.index(center_sg_w)  # find the center index.
+true_index_sg_w = vocab_sg_w.index(true_context_sg_w)  # find the target context index.
+E_sg_w = np.array([[0.20, 0.90], [0.10, 0.85], [0.85, 0.05], [0.30, 0.70]])  # create tiny input embeddings e_c.
+Theta_sg_w = np.array([[0.15, 0.80], [0.05, 0.55], [0.70, 0.10], [0.25, 0.60]])  # create tiny output context vectors theta_j.
+e_center_sg_w = E_sg_w[center_index_sg_w].copy()  # select the center embedding used for prediction.
+print("center embedding:", e_center_sg_w)  # inspect e_c before computing scores.
+print("context matrix theta:\n", Theta_sg_w)  # inspect all candidate context vectors.
+```
+▶ What you'll see: the center vector and four candidate context vectors are tiny enough to inspect directly.
+
+```python
+def softmax_sg_w(scores_sg_w):  # define a stable softmax helper for the small vocabulary.
+    shifted_sg_w = scores_sg_w - np.max(scores_sg_w)  # subtract the max so exp never overflows.
+    exp_sg_w = np.exp(shifted_sg_w)  # exponentiate shifted scores to make positive weights.
+    return exp_sg_w / np.sum(exp_sg_w)  # normalize weights into probabilities that sum to 1.
+scores_before_sg_w = Theta_sg_w @ e_center_sg_w  # compute dot products theta_j^T e_c for every context candidate.
+probs_before_sg_w = softmax_sg_w(scores_before_sg_w)  # convert scores into prediction probabilities.
+print("dot-product scores before:", np.round(scores_before_sg_w, 3))  # inspect raw compatibility scores.
+print("softmax probabilities before:", dict(zip(vocab_sg_w, np.round(probs_before_sg_w, 3))))  # inspect the distribution over context words.
+print("P(true context):", round(probs_before_sg_w[true_index_sg_w], 3))  # isolate the probability assigned to the observed neighbor.
+```
+▶ What you'll see: the true context has a probability, but other context words still compete for mass.
+
+```python
+one_hot_target_sg_w = np.zeros(len(vocab_sg_w))  # create the one-hot target distribution for the observed context.
+one_hot_target_sg_w[true_index_sg_w] = 1.0  # mark the true context as probability 1 in the training label.
+learning_rate_sg_w = 0.8  # choose a visible step size for one educational update.
+grad_scores_sg_w = probs_before_sg_w - one_hot_target_sg_w  # compute the softmax-cross-entropy gradient with respect to scores.
+grad_center_sg_w = Theta_sg_w.T @ grad_scores_sg_w  # backpropagate score gradients into the center embedding.
+grad_theta_sg_w = grad_scores_sg_w[:, None] * e_center_sg_w[None, :]  # backpropagate into every context vector row.
+e_after_sg_w = e_center_sg_w - learning_rate_sg_w * grad_center_sg_w  # update the center vector to favor the true context.
+Theta_after_sg_w = Theta_sg_w - learning_rate_sg_w * grad_theta_sg_w  # update context vectors using the same local example.
+print("score gradient:", np.round(grad_scores_sg_w, 3))  # inspect which candidates are pushed down or pulled up.
+print("center before -> after:", np.round(e_center_sg_w, 3), "->", np.round(e_after_sg_w, 3))  # inspect the center-vector movement.
+```
+For the true context, `probability - target` is negative, so gradient descent increases $\theta_{\text{queen}}^\top e_{\text{king}}$. For non-target words it is positive, so the update lowers their relative scores.
+▶ What you'll see: the update direction explicitly favors the observed `queen` context.
+
+```python
+scores_after_sg_w = Theta_after_sg_w @ e_after_sg_w  # recompute context scores after the single update.
+probs_after_sg_w = softmax_sg_w(scores_after_sg_w)  # convert updated scores into probabilities.
+print("dot-product scores after:", np.round(scores_after_sg_w, 3))  # inspect updated compatibility scores.
+print("softmax probabilities after:", dict(zip(vocab_sg_w, np.round(probs_after_sg_w, 3))))  # compare the updated distribution.
+print("P(true context) before -> after:", round(probs_before_sg_w[true_index_sg_w], 3), "->", round(probs_after_sg_w[true_index_sg_w], 3))  # verify the desired probability rose.
+```
+▶ What you'll see: the probability assigned to the observed context increases after one local prediction step.
+
+```python
+x_positions_sg_w = np.arange(len(vocab_sg_w))  # create bar positions for the vocabulary.
+bar_width_sg_w = 0.36  # choose a width that lets before and after bars sit side by side.
+plt.figure(figsize=(6.0, 4.0))  # create a readable probability comparison figure.
+plt.bar(x_positions_sg_w - bar_width_sg_w / 2.0, probs_before_sg_w, width=bar_width_sg_w, label="before")  # plot the original probabilities.
+plt.bar(x_positions_sg_w + bar_width_sg_w / 2.0, probs_after_sg_w, width=bar_width_sg_w, label="after")  # plot the updated probabilities.
+plt.xticks(x_positions_sg_w, vocab_sg_w)  # label each bar group with its context word.
+plt.ylabel("softmax probability")  # label the probability axis.
+plt.ylim(0.0, max(probs_after_sg_w.max(), probs_before_sg_w.max()) + 0.15)  # leave headroom above the largest bar.
+plt.title("2: skip-gram raises the observed context probability")  # title the required subsection figure.
+plt.legend(loc="best")  # show before and after labels.
+plt.show()  # render the probability change.
+```
+▶ What you'll see: the `queen` bar rises because `king` was trained to predict its observed local neighbor.
+
+*Why it's done this way: skip-gram turns raw text order into many small supervised tasks, and each task pulls center/context vectors together only when they actually co-occur in a local window.*
+
+#### 3. GloVe: fit dot products to global co-occurrence counts
+
+GloVe uses a whole-corpus co-occurrence table instead of one local prediction at a time. For nonzero count $X_{ij}$, the simplified target is
+
+$$
+w_i^\top \tilde{w}_j \approx \log(X_{ij})
+$$
+
+We build a tiny count matrix because it shows the difference from word2vec: local windows produce the counts, but GloVe then fits all counts together as global statistics.
+
+```python
+sentences_glove_w = [["king", "queen", "crown"], ["king", "crown", "palace"], ["queen", "crown", "palace"], ["dog", "pet", "home"], ["dog", "pet", "cat"]]  # create a tiny corpus as token lists.
+vocab_glove_w = ["king", "queen", "crown", "palace", "dog", "pet", "cat", "home"]  # define a stable vocabulary order.
+w2i_glove_w = {word_glove_w: i_glove_w for i_glove_w, word_glove_w in enumerate(vocab_glove_w)}  # map each word to its matrix index.
+X_glove_w = np.zeros((len(vocab_glove_w), len(vocab_glove_w)))  # initialize a square co-occurrence count matrix.
+window_glove_w = 1  # count immediate left and right neighbors only.
+for sentence_glove_w in sentences_glove_w:  # scan every sentence in the tiny corpus.
+    for center_pos_glove_w, center_word_glove_w in enumerate(sentence_glove_w):  # visit every center word position.
+        for context_pos_glove_w in range(max(0, center_pos_glove_w - window_glove_w), min(len(sentence_glove_w), center_pos_glove_w + window_glove_w + 1)):  # restrict contexts to the local window.
+            if context_pos_glove_w != center_pos_glove_w:  # skip the center word itself.
+                X_glove_w[w2i_glove_w[center_word_glove_w], w2i_glove_w[sentence_glove_w[context_pos_glove_w]]] += 1.0  # add one count for this center-context pair.
+print("vocabulary:", vocab_glove_w)  # inspect the row and column order.
+print("co-occurrence matrix X:\n", X_glove_w.astype(int))  # inspect the global counts collected from all windows.
+```
+▶ What you'll see: related words such as `king`/`queen`/`crown` and `dog`/`pet` have nonzero co-occurrence counts.
+
+```python
+W_glove_w = np.array([[1.00, 0.25], [0.95, 0.30], [0.85, 0.35], [0.70, 0.45], [-0.80, 0.20], [-0.75, 0.15], [-0.70, 0.10], [-0.65, 0.05]])  # create trained-looking target vectors w_i.
+C_glove_w = np.array([[0.95, 0.30], [0.90, 0.35], [0.82, 0.38], [0.65, 0.50], [-0.78, 0.22], [-0.72, 0.18], [-0.68, 0.12], [-0.62, 0.08]])  # create trained-looking context vectors w_tilde_j.
+pairs_glove_w = [("king", "crown"), ("dog", "pet"), ("king", "pet"), ("queen", "palace")]  # choose a few pairs to inspect.
+for left_glove_w, right_glove_w in pairs_glove_w:  # compare fitted dot products with log counts.
+    i_glove_w = w2i_glove_w[left_glove_w]  # find the target row index.
+    j_glove_w = w2i_glove_w[right_glove_w]  # find the context column index.
+    count_glove_w = X_glove_w[i_glove_w, j_glove_w]  # read the global co-occurrence count.
+    dot_glove_w = W_glove_w[i_glove_w] @ C_glove_w[j_glove_w]  # compute the model's fitted dot product.
+    target_glove_w = np.log(count_glove_w) if count_glove_w > 0.0 else None  # compute log count only for observed pairs.
+    print(left_glove_w, right_glove_w, "count=", int(count_glove_w), "dot=", round(dot_glove_w, 3), "log(count)=", None if target_glove_w is None else round(target_glove_w, 3))  # inspect fit values.
+```
+The real objective also has biases and a weighting function, but the core signal is still a dot product matching a log count. The logarithm compresses frequent pairs so a count of $100$ is not treated as one hundred times more important than a count of $1$.
+▶ What you'll see: observed pairs have log-count targets, while unobserved pairs are ignored by the simplified fit.
+
+```python
+positive_mask_glove_w = X_glove_w > 0.0  # mark only pairs that contribute to the simplified objective.
+log_targets_glove_w = np.zeros_like(X_glove_w)  # create a matrix for log-count targets.
+log_targets_glove_w[positive_mask_glove_w] = np.log(X_glove_w[positive_mask_glove_w])  # fill log counts for observed pairs.
+fitted_glove_w = W_glove_w @ C_glove_w.T  # compute every fitted dot product w_i dot w_tilde_j.
+errors_glove_w = fitted_glove_w[positive_mask_glove_w] - log_targets_glove_w[positive_mask_glove_w]  # compare fitted values to targets only where counts are positive.
+print("mean squared fit error on observed pairs:", round(float(np.mean(errors_glove_w ** 2)), 3))  # summarize how well the toy vectors fit.
+print("number of observed pairs:", int(np.sum(positive_mask_glove_w)))  # count how many global statistics are being fit at once.
+```
+▶ What you'll see: GloVe evaluates all observed co-occurrence entries together, not just one center-context example.
+
+```python
+plt.figure(figsize=(6.0, 4.8))  # create a heatmap figure for the count matrix.
+plt.imshow(X_glove_w, cmap="Blues")  # visualize global co-occurrence intensity.
+plt.xticks(np.arange(len(vocab_glove_w)), vocab_glove_w, rotation=45, ha="right")  # label context-word columns.
+plt.yticks(np.arange(len(vocab_glove_w)), vocab_glove_w)  # label target-word rows.
+plt.colorbar(label="co-occurrence count")  # add a scale for the counts.
+plt.title("3: GloVe starts from a global co-occurrence matrix")  # title the required subsection figure.
+plt.tight_layout()  # prevent rotated labels from being clipped.
+plt.show()  # render the global count heatmap.
+```
+▶ What you'll see: the full matrix separates royalty contexts from pet contexts before any single prediction example is chosen.
+
+*Why it's done this way: GloVe keeps the same local-window evidence but accumulates it into a global table, so training can use corpus-level frequency ratios instead of only one sampled prediction at a time.*
+
+#### 4. Compare, solve analogies, and visualize: geometry becomes useful
+
+Once embeddings are trained, we compare words by direction with cosine similarity and solve analogies by vector offsets. The classic pattern is
+
+$$
+e_{\text{king}}-e_{\text{man}}+e_{\text{woman}}\approx e_{\text{queen}}
+$$
+
+We use small trained-looking 2-D vectors because the arithmetic and the scatter plot can be inspected directly. Linear offsets can encode relations when training consistently places a relation, such as gender or royalty, along a reusable direction.
+
+```python
+words_geo_w = ["man", "woman", "king", "queen", "prince", "princess", "dog", "cat"]  # define a tiny trained-looking vocabulary.
+V_geo_w = np.array([[0.00, 0.00], [1.00, 0.00], [0.10, 1.00], [1.10, 1.00], [0.15, 0.78], [1.15, 0.78], [-0.70, -0.40], [-0.55, -0.30]])  # encode gender mostly on x and royalty mostly on y.
+lookup_geo_w = {word_geo_w: V_geo_w[i_geo_w] for i_geo_w, word_geo_w in enumerate(words_geo_w)}  # create a dictionary from word to vector.
+query_geo_w = lookup_geo_w["king"] - lookup_geo_w["man"] + lookup_geo_w["woman"]  # form the analogy query vector.
+print("king - man + woman =", np.round(query_geo_w, 3))  # inspect the arithmetic result.
+print("queen vector       =", lookup_geo_w["queen"])  # compare against the expected answer.
+```
+▶ What you'll see: the query lands near the hand-built `queen` vector.
+
+```python
+def cosine_geo_w(a_geo_w, b_geo_w):  # define cosine similarity for comparing vector directions.
+    denom_geo_w = max(np.linalg.norm(a_geo_w) * np.linalg.norm(b_geo_w), 1e-12)  # guard against division by zero.
+    return float((a_geo_w @ b_geo_w) / denom_geo_w)  # return the normalized dot product.
+scores_geo_w = []  # collect candidate cosine scores.
+for word_geo_w in words_geo_w:  # score every word in the tiny vocabulary.
+    if word_geo_w not in {"king", "man", "woman"}:  # exclude the source words from the answer search.
+        scores_geo_w.append((word_geo_w, cosine_geo_w(query_geo_w, lookup_geo_w[word_geo_w])))  # store each candidate score.
+scores_geo_w = sorted(scores_geo_w, key=lambda item_geo_w: item_geo_w[1], reverse=True)  # rank candidates by descending cosine similarity.
+print("nearest by cosine:", [(word_geo_w, round(score_geo_w, 3)) for word_geo_w, score_geo_w in scores_geo_w])  # inspect the nearest-neighbor ranking.
+```
+Cosine similarity uses $\frac{a\cdot b}{\lVert a\rVert\lVert b\rVert}$, so it compares direction rather than raw length. That is helpful because embedding norms can reflect frequency or training details that are not the relation we want.
+▶ What you'll see: `queen` is the nearest valid answer to the analogy query.
+
+```python
+plt.figure(figsize=(6.0, 4.8))  # create a readable 2-D embedding map.
+plt.scatter(V_geo_w[:, 0], V_geo_w[:, 1], s=80, c="tab:purple")  # plot all trained-looking vectors.
+for word_geo_w, vector_geo_w in zip(words_geo_w, V_geo_w):  # label every point directly.
+    plt.text(vector_geo_w[0] + 0.025, vector_geo_w[1] + 0.025, word_geo_w)  # write the word near its vector.
+plt.scatter(query_geo_w[0], query_geo_w[1], s=230, facecolors="none", edgecolors="black", linewidths=2.0, label="king - man + woman")  # highlight the analogy query.
+plt.arrow(lookup_geo_w["man"][0], lookup_geo_w["man"][1], lookup_geo_w["woman"][0] - lookup_geo_w["man"][0], lookup_geo_w["woman"][1] - lookup_geo_w["man"][1], width=0.008, color="tab:blue", length_includes_head=True)  # draw the gender offset from man to woman.
+plt.arrow(lookup_geo_w["king"][0], lookup_geo_w["king"][1], lookup_geo_w["queen"][0] - lookup_geo_w["king"][0], lookup_geo_w["queen"][1] - lookup_geo_w["king"][1], width=0.008, color="tab:orange", length_includes_head=True)  # draw the parallel gender offset from king to queen.
+plt.xlabel("dimension 1")  # label the horizontal embedding coordinate.
+plt.ylabel("dimension 2")  # label the vertical embedding coordinate.
+plt.title("4: analogy offsets and nearest neighbors")  # title the required subsection figure.
+plt.legend(loc="best")  # identify the analogy query marker.
+plt.axis("equal")  # keep geometric offsets visually honest.
+plt.show()  # render the analogy geometry.
+```
+▶ What you'll see: the `man → woman` arrow is parallel to the `king → queen` arrow, and the query point lands on `queen`.
+
+*Why it's done this way: cosine nearest neighbors make trained vectors searchable, and analogy offsets work when many examples have forced the same relation to occupy a consistent linear direction.*
+
 ### 🟢 Basics (warm-up)
 
 #### B1. Look up one embedding with $e_w=Eo_w$

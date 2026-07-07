@@ -234,6 +234,294 @@ print("tagging", tag_X.shape, tagset)  # Show tagging dimensions and tag set.
 👀 Every input has shape `(examples, timesteps, features)`.
 
 
+
+### 📖 Concept walkthrough — build each idea from scratch
+
+Before the warm-up examples, we build the recurrent-network ideas from scratch, one small step at a time. Everything here uses only NumPy + Matplotlib and tiny inline data, so every hidden state, gate value, cell update, and blend is inspectable. Variables carry a `_w` suffix so they never collide with the examples below.
+
+```python
+import numpy as np  # NumPy gives us arrays, matrix products, and stable elementwise math for RNN cells.
+import matplotlib.pyplot as plt  # Matplotlib lets us see hidden states, gate curves, and memory blends visually.
+np.random.seed(23)  # Fix the seed so every printed value and plot is reproducible across notebook runs.
+```
+
+#### 1. Vanilla RNN hidden-state recurrence: one tanh memory update
+
+A vanilla RNN keeps a hidden vector $h_t$ by mixing the current input $x_t$ with the previous hidden state $h_{t-1}$. The basic update is
+
+$$
+h_t=\tanh(W_xx_t+W_hh_{t-1}+b).
+$$
+
+We build one tiny step by hand because the recurrence is the main idea: $W_hh_{t-1}$ carries information forward, while $W_xx_t$ lets the new input revise that memory. The $\tanh$ nonlinearity keeps each hidden coordinate bounded between $-1$ and $1$.
+
+```python
+x_step_w = np.array([0.7, -0.2])  # Store one small input vector x_t with two features.
+h_prev_w = np.array([0.3, -0.4, 0.1])  # Store the previous hidden state h_{t-1} with three memory coordinates.
+W_x_step_w = np.array([[0.5, -0.1], [-0.3, 0.8], [0.2, 0.4]])  # Map the 2-D input into the 3-D hidden space.
+W_h_step_w = np.array([[0.4, 0.1, -0.2], [0.0, 0.5, 0.3], [-0.1, 0.2, 0.6]])  # Reuse old hidden information through recurrent weights.
+b_step_w = np.array([0.05, -0.02, 0.03])  # Add one bias per hidden coordinate.
+print("x_t:", x_step_w)  # Inspect the current input.
+print("h_{t-1}:", h_prev_w)  # Inspect the memory entering this step.
+```
+▶ What you'll see: a tiny input vector and the previous hidden state that the RNN will combine.
+
+```python
+input_part_w = W_x_step_w @ x_step_w  # Compute W_x x_t, the contribution from the current input.
+recurrent_part_w = W_h_step_w @ h_prev_w  # Compute W_h h_{t-1}, the carried-forward memory contribution.
+preact_step_w = input_part_w + recurrent_part_w + b_step_w  # Add input, recurrence, and bias before tanh.
+h_step_w = np.tanh(preact_step_w)  # Apply tanh to produce the new bounded hidden state h_t.
+print("W_x x_t:", np.round(input_part_w, 3))  # Show how the input pushes each hidden coordinate.
+print("W_h h_{t-1}:", np.round(recurrent_part_w, 3))  # Show how the old memory pushes each coordinate.
+print("pre-activation:", np.round(preact_step_w, 3))  # Show the value before the nonlinearity.
+print("h_t:", np.round(h_step_w, 3))  # Show the final hidden state after tanh.
+```
+The recurrence is useful because $h_t$ is not computed from $x_t$ alone; it also depends on $h_{t-1}$, which already summarized earlier inputs. That repeated dependence is how sequence information moves forward.
+▶ What you'll see: the input contribution, recurrent contribution, pre-activation, and final $\tanh$ hidden vector.
+
+```python
+plt.figure(figsize=(5.5, 3.4))  # Create a compact bar chart for the new hidden vector.
+plt.bar(np.arange(len(h_step_w)), h_step_w, color="tab:purple")  # Draw one bar per hidden coordinate.
+plt.axhline(0.0, color="black", linewidth=1.0)  # Mark zero so positive and negative memory are easy to distinguish.
+plt.ylim(-1.0, 1.0)  # Use tanh's natural output range as the vertical scale.
+plt.xlabel("hidden coordinate")  # Label the coordinate index.
+plt.ylabel("h_t value")  # Label the hidden-state value.
+plt.title("1: vanilla RNN one-step hidden state")  # Title the subsection figure.
+plt.show()  # Render the bar chart.
+```
+▶ What you'll see: the three coordinates of the new hidden state, all bounded inside $[-1,1]$.
+
+*Why it's done this way: a vanilla RNN reuses one small learned update at every timestep, so the model can carry a compact summary forward instead of storing every past input separately.*
+
+#### 2. Unrolling through time: one update reused across a sequence
+
+Unrolling means writing the same RNN cell once per timestep: $h_1$ feeds $h_2$, $h_2$ feeds $h_3$, and so on. The important part is weight sharing: every copy uses the same $W_x$, $W_h$, and $b$, so the model learns one transition rule rather than a different rule for every position.
+
+We use a length-4 scalar sequence so the full trajectory is easy to print and plot.
+
+```python
+seq_unroll_w = np.array([0.2, 1.0, -0.5, 0.7])  # Create a four-step scalar sequence.
+W_x_unroll_w = np.array([[0.6], [-0.4]])  # Map each scalar input into a 2-D hidden state.
+W_h_unroll_w = np.array([[0.5, 0.1], [-0.2, 0.4]])  # Share the same recurrent matrix at every timestep.
+b_unroll_w = np.array([0.0, 0.05])  # Share the same bias at every timestep.
+h_unroll_w = np.zeros(2)  # Start with a zero hidden state before the first input.
+history_unroll_w = []  # Prepare a list to store h_t after every timestep.
+print("sequence:", seq_unroll_w)  # Inspect the inputs that will be read in order.
+print("initial h_0:", h_unroll_w)  # Inspect the starting memory.
+```
+▶ What you'll see: four scalar inputs and a zero initial hidden state.
+
+```python
+for t_w, x_scalar_w in enumerate(seq_unroll_w, start=1):  # Visit the sequence from left to right.
+    x_vec_w = np.array([x_scalar_w])  # Wrap the scalar as a length-1 vector for matrix multiplication.
+    preact_unroll_w = W_x_unroll_w @ x_vec_w + W_h_unroll_w @ h_unroll_w + b_unroll_w  # Reuse the same weights for this timestep.
+    h_unroll_w = np.tanh(preact_unroll_w)  # Update the hidden state with the vanilla RNN rule.
+    history_unroll_w.append(h_unroll_w.copy())  # Save a copy so later updates do not overwrite it.
+    print(f"t={t_w} x_t={x_scalar_w:+.2f} h_t={np.round(h_unroll_w, 3)}")  # Print each intermediate hidden state.
+history_unroll_w = np.array(history_unroll_w)  # Convert the saved states into a time-by-hidden array.
+```
+▶ What you'll see: each timestep's input and the hidden state produced after reading it.
+
+```python
+plt.figure(figsize=(6.0, 3.5))  # Create a time-series plot for hidden-state evolution.
+plt.plot(range(1, len(seq_unroll_w) + 1), history_unroll_w[:, 0], marker="o", label="hidden 0")  # Plot coordinate 0 over time.
+plt.plot(range(1, len(seq_unroll_w) + 1), history_unroll_w[:, 1], marker="s", label="hidden 1")  # Plot coordinate 1 over time.
+plt.axhline(0.0, color="black", linewidth=1.0)  # Mark zero as a reference line.
+plt.xticks(range(1, len(seq_unroll_w) + 1))  # Show integer timesteps on the x-axis.
+plt.xlabel("timestep")  # Label time.
+plt.ylabel("hidden value")  # Label hidden-state magnitude.
+plt.legend(loc="best")  # Identify the two hidden coordinates.
+plt.title("2: unrolled RNN shares one update rule")  # Title the subsection figure.
+plt.show()  # Render the hidden-state trajectory.
+```
+Unrolling is a bookkeeping view, not a new model: the same parameters appear in every unrolled copy. During learning, gradients from all timesteps add together because they all point back to those shared weights.
+▶ What you'll see: two hidden coordinates changing as the same recurrent rule processes four inputs.
+
+*Why it's done this way: sharing the same weights lets an RNN handle variable-length sequences and learn position-independent patterns like "update memory when this kind of input appears."*
+
+#### 3. Gates with sigmoid: a soft on/off valve for vectors
+
+A gate is a vector of numbers between 0 and 1, usually made with the sigmoid function
+
+$$
+\sigma(z)=\frac{1}{1+e^{-z}}.
+$$
+
+Multiplying $g\odot v$ keeps a fraction of each coordinate of $v$: values near 0 erase, values near 1 keep, and middle values partially pass information. We build the gate separately because LSTMs and GRUs are mostly clever ways to decide these soft valves.
+
+```python
+def sigmoid_w(z_w):  # Define the sigmoid gate nonlinearity for this walkthrough.
+    return 1.0 / (1.0 + np.exp(-np.clip(z_w, -60.0, 60.0)))  # Clip logits so exponentials stay numerically safe.
+
+logits_gate_w = np.array([-2.0, 0.0, 1.5])  # Choose three gate logits before sigmoid.
+gate_w = sigmoid_w(logits_gate_w)  # Convert logits into [0, 1] gate values.
+value_gate_w = np.array([10.0, -4.0, 2.0])  # Create a vector whose coordinates will be filtered.
+gated_value_w = gate_w * value_gate_w  # Apply elementwise gating g ⊙ v.
+print("gate logits:", logits_gate_w)  # Inspect the raw gate inputs.
+print("sigmoid gate:", np.round(gate_w, 3))  # Inspect the soft keep fractions.
+print("value v:", value_gate_w)  # Inspect the vector before gating.
+print("g ⊙ v:", np.round(gated_value_w, 3))  # Inspect the vector after gating.
+```
+▶ What you'll see: each coordinate of the vector is scaled by its own sigmoid-produced fraction.
+
+```python
+z_curve_w = np.linspace(-6.0, 6.0, 300)  # Create a range of possible gate logits.
+g_curve_w = sigmoid_w(z_curve_w)  # Convert every logit into a gate value.
+plt.figure(figsize=(5.5, 3.4))  # Create the sigmoid curve figure.
+plt.plot(z_curve_w, g_curve_w, linewidth=2.0, color="tab:green")  # Draw the soft valve shape.
+plt.scatter(logits_gate_w, gate_w, color="black", zorder=3, label="example gates")  # Mark the gates used above.
+plt.axhline(0.0, color="gray", linestyle=":")  # Mark the lower asymptote.
+plt.axhline(1.0, color="gray", linestyle=":")  # Mark the upper asymptote.
+plt.axhline(0.5, color="gray", linestyle="--", label="half-open")  # Mark the midpoint where z=0.
+plt.xlabel("gate logit z")  # Label the raw gate input.
+plt.ylabel("sigmoid gate σ(z)")  # Label the gate output.
+plt.legend(loc="best")  # Explain the example markers.
+plt.title("3: sigmoid gates are soft valves")  # Title the subsection figure.
+plt.show()  # Render the gate curve.
+```
+The sigmoid is useful for gates because its output is interpretable as a keep fraction. Elementwise multiplication then applies that fraction independently to every coordinate.
+▶ What you'll see: a smooth curve that saturates near 0 and 1, with $\sigma(0)=0.5$.
+
+*Why it's done this way: gates make memory differentiable and selective — the model can softly erase, keep, or mix information without a hard if/else decision.*
+
+#### 4. LSTM cell: forget, input, output gates plus additive cell memory
+
+An LSTM separates long-term cell memory $c_t$ from exposed hidden state $h_t$. Its core update is
+
+$$
+c_t=f\odot c_{t-1}+i\odot\widetilde c,
+\qquad
+h_t=o\odot\tanh(c_t).
+$$
+
+The forget gate $f$ decides how much old cell state remains, the input gate $i$ decides how much candidate memory $\widetilde c$ enters, and the output gate $o$ decides how much of the cell is exposed as $h_t$. We compute one cell by hand to see every valve and memory term.
+
+```python
+x_lstm_w = np.array([0.6, -0.1])  # Store the current input vector.
+h_prev_lstm_w = np.array([0.2, -0.3])  # Store the previous exposed hidden state.
+c_prev_lstm_w = np.array([0.8, -0.5])  # Store the previous internal cell memory.
+combo_lstm_w = np.concatenate([x_lstm_w, h_prev_lstm_w])  # Concatenate input and old hidden state for gate calculations.
+print("x_t:", x_lstm_w)  # Inspect the current input.
+print("h_{t-1}:", h_prev_lstm_w)  # Inspect the previous hidden state.
+print("c_{t-1}:", c_prev_lstm_w)  # Inspect the previous cell state.
+```
+▶ What you'll see: the three ingredients entering one LSTM timestep.
+
+```python
+W_f_lstm_w = np.array([[0.7, -0.2, 0.4, 0.1], [-0.3, 0.5, 0.2, 0.6]])  # Weights for the forget gate.
+b_f_lstm_w = np.array([0.6, 0.2])  # Positive forget bias encourages remembering at the start.
+W_i_lstm_w = np.array([[0.2, 0.4, -0.1, 0.3], [0.5, -0.3, 0.2, -0.2]])  # Weights for the input gate.
+b_i_lstm_w = np.array([-0.1, 0.0])  # Bias for deciding how much new candidate enters.
+W_c_lstm_w = np.array([[0.3, 0.2, 0.5, -0.4], [-0.4, 0.6, 0.1, 0.2]])  # Weights for the candidate cell proposal.
+b_c_lstm_w = np.array([0.0, 0.05])  # Bias for the candidate cell proposal.
+W_o_lstm_w = np.array([[0.4, -0.5, 0.2, 0.3], [0.1, 0.2, -0.3, 0.5]])  # Weights for the output gate.
+b_o_lstm_w = np.array([0.0, 0.1])  # Bias for deciding what cell content to expose.
+```
+
+```python
+f_lstm_w = sigmoid_w(W_f_lstm_w @ combo_lstm_w + b_f_lstm_w)  # Compute the forget gate f in [0, 1].
+i_lstm_w = sigmoid_w(W_i_lstm_w @ combo_lstm_w + b_i_lstm_w)  # Compute the input gate i in [0, 1].
+c_tilde_lstm_w = np.tanh(W_c_lstm_w @ combo_lstm_w + b_c_lstm_w)  # Compute candidate memory c tilde in [-1, 1].
+o_lstm_w = sigmoid_w(W_o_lstm_w @ combo_lstm_w + b_o_lstm_w)  # Compute the output gate o in [0, 1].
+print("forget f:", np.round(f_lstm_w, 3))  # Inspect how much old cell memory is kept.
+print("input i:", np.round(i_lstm_w, 3))  # Inspect how much candidate memory is admitted.
+print("candidate c_tilde:", np.round(c_tilde_lstm_w, 3))  # Inspect the proposed new memory.
+print("output o:", np.round(o_lstm_w, 3))  # Inspect how much memory will be exposed.
+```
+▶ What you'll see: all three gates plus the candidate memory vector for this one LSTM step.
+
+```python
+c_lstm_w = f_lstm_w * c_prev_lstm_w + i_lstm_w * c_tilde_lstm_w  # Update cell state with an additive keep-plus-write rule.
+h_lstm_w = o_lstm_w * np.tanh(c_lstm_w)  # Expose a gated, squashed version of the cell state as h_t.
+print("kept old memory f ⊙ c_{t-1}:", np.round(f_lstm_w * c_prev_lstm_w, 3))  # Show the retained old-memory term.
+print("written new memory i ⊙ c_tilde:", np.round(i_lstm_w * c_tilde_lstm_w, 3))  # Show the new-memory write term.
+print("new c_t:", np.round(c_lstm_w, 3))  # Inspect the updated internal cell state.
+print("new h_t:", np.round(h_lstm_w, 3))  # Inspect the exposed hidden state.
+```
+The additive cell state helps fight vanishing gradients because the path from $c_{t-1}$ to $c_t$ includes multiplication by $f$ and addition, not a fresh full matrix and $\tanh$ at every step. When $f\approx1$, the gradient through $c$ can flow largely unchanged.
+▶ What you'll see: the old-memory term and new-memory term add to make the new cell state.
+
+```python
+gate_names_lstm_w = ["forget", "input", "output"]  # Name the three sigmoid gates to compare.
+gate_means_lstm_w = [f_lstm_w.mean(), i_lstm_w.mean(), o_lstm_w.mean()]  # Average each gate across coordinates for a compact plot.
+plt.figure(figsize=(5.5, 3.4))  # Create the LSTM gate summary figure.
+plt.bar(gate_names_lstm_w, gate_means_lstm_w, color=["tab:blue", "tab:orange", "tab:green"])  # Plot mean openness of each gate.
+plt.ylim(0.0, 1.0)  # Use the natural sigmoid range.
+plt.ylabel("mean gate value")  # Label the gate openness scale.
+plt.title("4: LSTM gates control keep, write, reveal")  # Title the subsection figure.
+plt.show()  # Render the gate bar chart.
+```
+▶ What you'll see: forget, input, and output gates as soft valve values between 0 and 1.
+
+*Why it's done this way: the LSTM gives memory a nearly linear additive highway, then uses gates to decide what to keep, write, and reveal, making long-range dependencies easier to preserve than in a plain tanh recurrence.*
+
+#### 5. GRU cell: update and reset gates for a lighter memory blend
+
+A GRU compresses the gating idea into fewer moving parts than an LSTM. The update gate $z$ directly blends old hidden state with a candidate hidden state:
+
+$$
+h_t=(1-z)\odot h_{t-1}+z\odot\widetilde h.
+$$
+
+The reset gate $r$ controls how much previous state is used while forming the candidate $\widetilde h$. We build the blend explicitly because it shows the GRU's main simplification: no separate cell state, just a gated hidden-state update.
+
+```python
+x_gru_w = np.array([0.4, -0.6])  # Store the current input vector.
+h_prev_gru_w = np.array([0.7, -0.2])  # Store the previous GRU hidden state.
+combo_gru_w = np.concatenate([x_gru_w, h_prev_gru_w])  # Concatenate input and old hidden state for gates.
+W_z_gru_w = np.array([[0.5, -0.1, 0.3, 0.2], [-0.4, 0.6, 0.1, -0.2]])  # Weights for the update gate z.
+b_z_gru_w = np.array([0.0, 0.1])  # Bias for the update gate.
+W_r_gru_w = np.array([[0.2, 0.4, -0.3, 0.5], [0.6, -0.2, 0.2, 0.1]])  # Weights for the reset gate r.
+b_r_gru_w = np.array([0.1, -0.1])  # Bias for the reset gate.
+print("x_t:", x_gru_w)  # Inspect the current input.
+print("h_{t-1}:", h_prev_gru_w)  # Inspect the old hidden state before gating.
+```
+▶ What you'll see: the input and old hidden vector that the GRU will mix.
+
+```python
+z_gru_w = sigmoid_w(W_z_gru_w @ combo_gru_w + b_z_gru_w)  # Compute update gate z in [0, 1].
+r_gru_w = sigmoid_w(W_r_gru_w @ combo_gru_w + b_r_gru_w)  # Compute reset gate r in [0, 1].
+reset_hidden_gru_w = r_gru_w * h_prev_gru_w  # Apply reset gate before building the candidate hidden state.
+combo_candidate_gru_w = np.concatenate([x_gru_w, reset_hidden_gru_w])  # Combine input with reset-filtered old memory.
+W_h_gru_w = np.array([[0.3, -0.2, 0.7, 0.1], [-0.5, 0.4, 0.2, 0.6]])  # Weights for the candidate hidden state.
+b_h_gru_w = np.array([0.0, 0.05])  # Bias for the candidate hidden state.
+h_tilde_gru_w = np.tanh(W_h_gru_w @ combo_candidate_gru_w + b_h_gru_w)  # Compute the candidate hidden state.
+print("update z:", np.round(z_gru_w, 3))  # Inspect the old-vs-new blend fractions.
+print("reset r:", np.round(r_gru_w, 3))  # Inspect how much old hidden state enters the candidate.
+print("candidate h_tilde:", np.round(h_tilde_gru_w, 3))  # Inspect the proposed new hidden state.
+```
+▶ What you'll see: the update gate, reset gate, and candidate state for one GRU step.
+
+```python
+old_part_gru_w = (1.0 - z_gru_w) * h_prev_gru_w  # Compute the retained old-state contribution.
+new_part_gru_w = z_gru_w * h_tilde_gru_w  # Compute the admitted candidate-state contribution.
+h_gru_w = old_part_gru_w + new_part_gru_w  # Add both parts to form the new hidden state.
+print("(1-z) ⊙ h_{t-1}:", np.round(old_part_gru_w, 3))  # Show the old-memory share.
+print("z ⊙ h_tilde:", np.round(new_part_gru_w, 3))  # Show the new-candidate share.
+print("new h_t:", np.round(h_gru_w, 3))  # Inspect the final blended hidden state.
+```
+The update gate is a per-coordinate interpolation knob. If $z$ is near 0, the old hidden state passes through; if $z$ is near 1, the candidate mostly replaces it.
+▶ What you'll see: old and new contributions add coordinatewise to produce the final GRU state.
+
+```python
+z_grid_gru_w = np.linspace(0.0, 1.0, 101)  # Create possible scalar update-gate values from closed to open.
+old_scalar_gru_w = 0.7  # Choose one old hidden value to visualize.
+new_scalar_gru_w = -0.3  # Choose one candidate hidden value to visualize.
+blend_grid_gru_w = (1.0 - z_grid_gru_w) * old_scalar_gru_w + z_grid_gru_w * new_scalar_gru_w  # Blend old and new for every z.
+plt.figure(figsize=(5.5, 3.4))  # Create the GRU blend figure.
+plt.plot(z_grid_gru_w, blend_grid_gru_w, linewidth=2.0, color="tab:red")  # Draw how the hidden value changes with z.
+plt.scatter(z_gru_w, (1.0 - z_gru_w) * h_prev_gru_w + z_gru_w * h_tilde_gru_w, color="black", zorder=3, label="actual coordinates")  # Mark this cell's coordinate blends.
+plt.xlabel("update gate z")  # Label the gate axis.
+plt.ylabel("blended hidden value")  # Label the resulting hidden value.
+plt.legend(loc="best")  # Explain the marked coordinates.
+plt.title("5: GRU update gate blends old and new state")  # Title the subsection figure.
+plt.show()  # Render the blend plot.
+```
+▶ What you'll see: a straight interpolation from the old value at $z=0$ to the candidate value at $z=1$.
+
+*Why it's done this way: the GRU is a lighter gating scheme because it merges memory and hidden state into one vector and uses the update gate to perform the same keep-versus-write decision with fewer parameters than an LSTM.*
+
+
 ### 🟢 Basics (warm-up)
 
 #### B1. One tanh RNN hidden-state update

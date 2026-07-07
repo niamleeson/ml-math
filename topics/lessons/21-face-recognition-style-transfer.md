@@ -242,6 +242,258 @@ plt.show()  # render the toy content and style inputs.
 
 ▶ What you'll see: the content tensor has a simple object-like blob and edge; the style tensor has texture statistics such as blocks, swirls, or random high-frequency noise.
 
+### 📖 Concept walkthrough — build each idea from scratch
+
+Before the warm-up examples, we build the face-recognition and style-transfer ideas from scratch, one small step at a time. Everything here uses only NumPy + Matplotlib and tiny inline vectors or arrays, so every distance, loss, and matrix is inspectable. Variables carry a `_w` suffix so they never collide with the examples below.
+
+```python
+import numpy as np  # NumPy gives us tiny embedding vectors, distances, feature maps, and Gram matrices.
+import matplotlib.pyplot as plt  # Matplotlib lets us check verification thresholds, nearest matches, triplet distances, and style correlations visually.
+np.random.seed(0)  # fix the seed so every printed value and plot below is reproducible.
+```
+
+#### 1. Face verification vs recognition: one-to-one check vs one-to-many search
+
+Face verification asks, "Is this query the claimed identity?" and answers with one distance compared to a threshold. Face recognition asks, "Who is this query among all enrolled identities?" and answers by searching the whole gallery for the nearest embedding. We build both from the same tiny vectors because the modeling primitive is identical — compare embeddings by distance — but the decision question is different.
+
+```python
+alice_ref_w = np.array([0.10, 0.20, 0.90])  # store Alice's enrolled face embedding as a small numeric vector.
+alice_query_w = np.array([0.12, 0.18, 0.88])  # store a query embedding that should look like Alice.
+bob_ref_w = np.array([0.80, 0.10, 0.20])  # store Bob's enrolled face embedding for the gallery.
+chen_ref_w = np.array([0.20, 0.85, 0.10])  # store Chen's enrolled face embedding for the gallery.
+threshold_w = 0.12  # choose the maximum distance allowed for accepting a 1:1 verification claim.
+verify_distance_w = np.linalg.norm(alice_query_w - alice_ref_w)  # compute the query-to-claimed-reference distance.
+verify_accept_w = verify_distance_w < threshold_w  # accept only when the distance is below the threshold.
+print("verification distance:", round(verify_distance_w, 3))  # inspect the single 1:1 distance.
+print("accept Alice claim?", verify_accept_w)  # inspect the verification decision.
+```
+▶ What you'll see: the query is close to Alice's reference, so the 1:1 verification claim is accepted.
+
+```python
+gallery_names_w = np.array(["Alice", "Bob", "Chen"])  # name the enrolled gallery identities.
+gallery_embeddings_w = np.vstack([alice_ref_w, bob_ref_w, chen_ref_w])  # stack references into one 1:N gallery matrix.
+recognition_distances_w = np.linalg.norm(gallery_embeddings_w - alice_query_w, axis=1)  # compute one query-to-gallery distance per identity.
+best_index_w = int(np.argmin(recognition_distances_w))  # find the nearest gallery embedding.
+best_name_w = gallery_names_w[best_index_w]  # look up the nearest identity name.
+print("recognition distances:", dict(zip(gallery_names_w, np.round(recognition_distances_w, 3))))  # inspect every 1:N comparison.
+print("recognized as:", best_name_w)  # inspect the nearest-neighbor identity.
+```
+▶ What you'll see: recognition compares the same query to every enrolled person and chooses Alice as the nearest match.
+
+```python
+plt.figure(figsize=(5.6, 3.4))  # create a compact bar chart for the recognition distances.
+plt.bar(gallery_names_w, recognition_distances_w, color=["tab:green", "tab:blue", "tab:orange"])  # draw one distance bar per gallery identity.
+plt.axhline(threshold_w, color="crimson", linestyle="--", label="verification threshold")  # draw the 1:1 acceptance cutoff for comparison.
+plt.scatter([best_name_w], [recognition_distances_w[best_index_w]], color="black", zorder=3, label="nearest match")  # mark the winning gallery identity.
+plt.ylabel("Euclidean embedding distance")  # label the distance scale used by both tasks.
+plt.legend(loc="best")  # show what the threshold and marker mean.
+plt.title("1: verification threshold and recognition distances")  # title the concept plot.
+plt.show()  # render the distance comparison.
+```
+▶ What you'll see: Alice's bar is both the nearest recognition match and below the verification threshold.
+
+*Why it's done this way: verification and recognition reuse the same embedding distance, but verification is a yes/no thresholded 1:1 test while recognition is a nearest-neighbor 1:N search. Separating the two tasks makes it clear why a system can accept a claimed identity, search a gallery, or reject if all distances are too large.*
+
+#### 2. Siamese embeddings and one-shot learning: recognize a new identity from one example
+
+A Siamese model runs the same encoder on both images, so the output vectors live in one shared space where distance is meaningful. That matters for one-shot learning because a new person does not need a freshly trained classifier head; one enrolled embedding can be compared to a query immediately. We simulate the encoder's output directly as vectors and recognize the query by nearest embedding.
+
+```python
+one_shot_names_w = np.array(["Alice", "Bob", "Dora (one shot)"])  # include a brand-new identity with only one stored example.
+one_shot_gallery_w = np.array([[0.10, 0.20, 0.90], [0.80, 0.10, 0.20], [0.42, 0.72, 0.35]])  # store one embedding per identity.
+one_shot_query_w = np.array([0.39, 0.75, 0.33])  # create a query embedding from the new identity Dora.
+print("one-shot gallery:\n", one_shot_gallery_w)  # inspect the tiny gallery matrix.
+print("query embedding:", one_shot_query_w)  # inspect the query vector before comparing distances.
+```
+▶ What you'll see: Dora has only one reference vector, but it is already enough to enter the gallery.
+
+```python
+one_shot_distances_w = np.linalg.norm(one_shot_gallery_w - one_shot_query_w, axis=1)  # compare the query with each stored embedding.
+one_shot_index_w = int(np.argmin(one_shot_distances_w))  # choose the nearest embedding as the predicted identity.
+one_shot_prediction_w = one_shot_names_w[one_shot_index_w]  # translate the nearest index into a name.
+print("one-shot distances:", dict(zip(one_shot_names_w, np.round(one_shot_distances_w, 3))))  # inspect all comparison scores.
+print("predicted identity:", one_shot_prediction_w)  # inspect the one-shot recognition result.
+```
+The reason this works is that the model has learned a reusable similarity function $d(x,z)=\lVert f(x)-f(z)\rVert_2$, not a fixed list of class weights. Once embeddings are meaningful, adding a class means adding an example to the gallery.
+▶ What you'll see: the query is closest to Dora's single enrolled example, so the new identity is recognized without retraining.
+
+```python
+plt.figure(figsize=(5.6, 3.4))  # create a bar chart focused on one-shot nearest-neighbor matching.
+plt.bar(one_shot_names_w, one_shot_distances_w, color=["tab:blue", "tab:orange", "tab:green"])  # draw query-to-gallery distances.
+plt.scatter([one_shot_prediction_w], [one_shot_distances_w[one_shot_index_w]], color="black", zorder=3, label="nearest")  # mark the winning one-shot example.
+plt.ylabel("distance to query")  # label the vertical distance axis.
+plt.xticks(rotation=12)  # rotate the long one-shot label slightly so it remains readable.
+plt.legend(loc="best")  # show the nearest-match marker.
+plt.title("2: one-shot recognition by embedding distance")  # title the concept plot.
+plt.show()  # render the one-shot distance chart.
+```
+▶ What you'll see: Dora's single reference has the shortest bar, illustrating one-shot recognition.
+
+```python
+plt.figure(figsize=(5.2, 4.0))  # create a small two-coordinate embedding sketch.
+plt.scatter(one_shot_gallery_w[:, 0], one_shot_gallery_w[:, 1], s=90, color=["tab:blue", "tab:orange", "tab:green"], label="gallery")  # draw gallery embeddings using the first two coordinates.
+plt.scatter(one_shot_query_w[0], one_shot_query_w[1], s=140, marker="*", color="black", label="query")  # draw the query embedding as a star.
+for i_w, name_w in enumerate(one_shot_names_w):  # annotate each gallery point with its identity name.
+    plt.text(one_shot_gallery_w[i_w, 0] + 0.01, one_shot_gallery_w[i_w, 1] + 0.01, name_w, fontsize=8)  # place a readable label next to the point.
+plt.plot([one_shot_query_w[0], one_shot_gallery_w[one_shot_index_w, 0]], [one_shot_query_w[1], one_shot_gallery_w[one_shot_index_w, 1]], color="black", linestyle="--")  # connect the query to its nearest reference.
+plt.xlabel("embedding coordinate 1")  # label the horizontal embedding coordinate.
+plt.ylabel("embedding coordinate 2")  # label the vertical embedding coordinate.
+plt.legend(loc="best")  # show which marker is the query.
+plt.title("2: query lands near the one-shot example")  # title the geometry plot.
+plt.show()  # render the embedding sketch.
+```
+▶ What you'll see: the query star sits nearest to Dora's lone gallery point in embedding space.
+
+*Why it's done this way: Siamese embeddings turn identity prediction into metric lookup, so a new identity can be enrolled by storing one vector. The shared encoder supplies the reusable geometry, and nearest-neighbor comparison supplies the one-shot decision.*
+
+#### 3. Triplet loss: make positives closer than negatives by a margin
+
+Triplet loss trains on an anchor $a$, a positive $p$ from the same identity, and a negative $n$ from a different identity. The loss is
+
+$$
+\max\left(0, \lVert a-p\rVert^2 - \lVert a-n\rVert^2 + \alpha\right)
+$$
+
+It is zero only when $\lVert a-p\rVert^2 + \alpha \le \lVert a-n\rVert^2$, so the negative must be farther away by at least the margin. We compute the loss, then take one hand-built step that pulls the positive toward the anchor and pushes the negative away.
+
+```python
+anchor_w = np.array([0.20, 0.30])  # create a 2-D anchor embedding for one identity.
+positive_w = np.array([0.55, 0.48])  # create a same-identity positive that is too far from the anchor.
+negative_w = np.array([0.65, 0.35])  # create a different-identity negative that is too close to the anchor.
+margin_w = 0.25  # require the negative squared distance to exceed the positive squared distance by this amount.
+d_ap_before_w = np.sum((anchor_w - positive_w) ** 2)  # compute squared anchor-positive distance before the update.
+d_an_before_w = np.sum((anchor_w - negative_w) ** 2)  # compute squared anchor-negative distance before the update.
+loss_before_w = max(0.0, d_ap_before_w - d_an_before_w + margin_w)  # compute triplet loss before the update.
+print("before d(a,p)^2:", round(d_ap_before_w, 3))  # inspect positive distance before training.
+print("before d(a,n)^2:", round(d_an_before_w, 3))  # inspect negative distance before training.
+print("before triplet loss:", round(loss_before_w, 3))  # inspect whether the margin is violated.
+```
+▶ What you'll see: the negative is not far enough beyond the positive, so the triplet loss is positive.
+
+```python
+learning_rate_w = 0.45  # choose a visible step size for this toy update.
+positive_after_w = positive_w - learning_rate_w * 2.0 * (positive_w - anchor_w)  # pull the positive toward the anchor.
+negative_after_w = negative_w + learning_rate_w * 2.0 * (negative_w - anchor_w)  # push the negative farther from the anchor.
+d_ap_after_w = np.sum((anchor_w - positive_after_w) ** 2)  # recompute squared anchor-positive distance after the update.
+d_an_after_w = np.sum((anchor_w - negative_after_w) ** 2)  # recompute squared anchor-negative distance after the update.
+loss_after_w = max(0.0, d_ap_after_w - d_an_after_w + margin_w)  # recompute triplet loss after the update.
+print("after d(a,p)^2:", round(d_ap_after_w, 3))  # inspect the reduced positive distance.
+print("after d(a,n)^2:", round(d_an_after_w, 3))  # inspect the enlarged negative distance.
+print("after triplet loss:", round(loss_after_w, 3))  # inspect how the margin violation changed.
+```
+The margin prevents the model from settling for "positive is just barely closer." It creates a safety buffer, so embeddings stay useful even when new images are noisy or identities look similar.
+▶ What you'll see: the positive moves closer, the negative moves farther, and the loss drops.
+
+```python
+dist_before_w = np.array([d_ap_before_w, d_an_before_w])  # collect before-update squared distances for plotting.
+dist_after_w = np.array([d_ap_after_w, d_an_after_w])  # collect after-update squared distances for plotting.
+x_triplet_w = np.arange(2)  # create two bar positions for positive and negative distances.
+plt.figure(figsize=(5.8, 3.6))  # create a compact before/after distance chart.
+plt.bar(x_triplet_w - 0.18, dist_before_w, width=0.36, label="before", color="lightgray")  # draw distances before the update.
+plt.bar(x_triplet_w + 0.18, dist_after_w, width=0.36, label="after", color="tab:purple")  # draw distances after the update.
+plt.axhline(d_ap_after_w + margin_w, color="crimson", linestyle="--", label="after positive + margin")  # show the required negative-distance target after the update.
+plt.xticks(x_triplet_w, ["$\\lVert a-p\\rVert^2$", "$\\lVert a-n\\rVert^2$"])  # label the two squared distances.
+plt.ylabel("squared distance")  # label the vertical distance scale.
+plt.legend(loc="best")  # show before/after and margin meanings.
+plt.title("3: triplet update separates positive and negative")  # title the triplet-loss plot.
+plt.show()  # render the before/after comparison.
+```
+▶ What you'll see: the positive-distance bar shrinks, the negative-distance bar grows, and the margin condition becomes easier to satisfy.
+
+```python
+plt.figure(figsize=(5.0, 4.0))  # create a 2-D embedding movement plot.
+plt.scatter(anchor_w[0], anchor_w[1], s=130, color="black", label="anchor")  # draw the fixed anchor point.
+plt.scatter(positive_w[0], positive_w[1], s=90, color="tab:green", alpha=0.45, label="positive before")  # draw the original positive point.
+plt.scatter(negative_w[0], negative_w[1], s=90, color="tab:red", alpha=0.45, label="negative before")  # draw the original negative point.
+plt.scatter(positive_after_w[0], positive_after_w[1], s=120, marker="*", color="tab:green", label="positive after")  # draw the moved positive point.
+plt.scatter(negative_after_w[0], negative_after_w[1], s=120, marker="*", color="tab:red", label="negative after")  # draw the moved negative point.
+plt.plot([positive_w[0], positive_after_w[0]], [positive_w[1], positive_after_w[1]], color="tab:green", linestyle="--")  # show the positive moving toward the anchor.
+plt.plot([negative_w[0], negative_after_w[0]], [negative_w[1], negative_after_w[1]], color="tab:red", linestyle="--")  # show the negative moving away from the anchor.
+plt.xlabel("embedding coordinate 1")  # label the horizontal embedding coordinate.
+plt.ylabel("embedding coordinate 2")  # label the vertical embedding coordinate.
+plt.legend(loc="best", fontsize=8)  # keep all point meanings visible.
+plt.title("3: embedding motion from triplet loss")  # title the motion plot.
+plt.show()  # render the triplet geometry.
+```
+▶ What you'll see: the positive star moves toward the anchor while the negative star moves away.
+
+*Why it's done this way: triplet loss trains the embedding space by relative comparisons instead of fixed class labels. The margin $\alpha$ forces a useful buffer, so same-identity pairs become not just closer than different-identity pairs, but closer by enough to be reliable.*
+
+#### 4. Neural style transfer: content loss and Gram-matrix style loss
+
+Neural style transfer does not compare final class labels; it compares internal activations. Content loss keeps the generated activation map spatially close to the content activation map, while style loss compares Gram matrices of channel co-activations. We use tiny feature maps because the core math is just squared differences and $G=F^\top F$ for flattened features $F$.
+
+$$
+J_{\text{content}}=\frac{1}{2}\sum_{i,j,k}\left(a^{(G)}_{ijk}-a^{(C)}_{ijk}\right)^2
+$$
+
+$$
+J_{\text{style}}=\frac{1}{(2n_Hn_Wn_C)^2}\sum_{k,k'}\left(G^{(S)}_{kk'}-G^{(G)}_{kk'}\right)^2
+$$
+
+```python
+content_features_w = np.array([[[1.0, 0.0], [0.8, 0.1]], [[0.2, 0.7], [0.0, 1.0]]])  # create a 2x2x2 content activation map with spatial structure.
+style_features_w = np.array([[[1.0, 1.0], [0.9, 0.8]], [[0.2, 0.1], [0.1, 0.2]]])  # create a style activation map with strong channel co-activation in the top row.
+generated_features_w = np.array([[[0.7, 0.2], [0.6, 0.2]], [[0.2, 0.5], [0.1, 0.8]]])  # create a generated activation map that partially matches both targets.
+print("content shape:", content_features_w.shape)  # inspect the height, width, and channel count.
+print("style shape:", style_features_w.shape)  # inspect that style uses the same activation shape.
+print("generated shape:", generated_features_w.shape)  # inspect that generated activations are comparable.
+```
+▶ What you'll see: all three toy feature maps have shape 2 by 2 by 2, so we can compare them directly.
+
+```python
+content_difference_w = generated_features_w - content_features_w  # subtract activations at matching spatial locations and channels.
+content_loss_w = 0.5 * np.sum(content_difference_w ** 2)  # compute one-half squared content loss.
+print("content difference tensor:\n", np.round(content_difference_w, 2))  # inspect where generated content differs from target content.
+print("content loss:", round(float(content_loss_w), 4))  # inspect the scalar content penalty.
+```
+Content loss preserves layout because it compares activation values at the same spatial positions. If a generated feature moves to the wrong location, the squared difference grows even if the channels are similar overall.
+▶ What you'll see: the tensor shows location-by-location mismatches, and the scalar summarizes their squared size.
+
+```python
+def gram_style_w(activation_w):  # define a Gram helper for activations shaped height by width by channels.
+    h_w, width_w, channels_w = activation_w.shape  # read the spatial and channel dimensions.
+    features_w = activation_w.reshape(h_w * width_w, channels_w)  # flatten spatial locations into rows while keeping channels as columns.
+    return features_w.T @ features_w  # compute G = F^T F, the channel-by-channel co-activation matrix.
+gram_style_target_w = gram_style_w(style_features_w)  # compute the target style Gram matrix.
+gram_generated_w = gram_style_w(generated_features_w)  # compute the generated Gram matrix.
+style_loss_w = np.sum((gram_style_target_w - gram_generated_w) ** 2) / float((2 * 2 * 2 * 2) ** 2)  # compute a small normalized Gram loss.
+print("style Gram matrix:\n", np.round(gram_style_target_w, 3))  # inspect target channel correlations.
+print("generated Gram matrix:\n", np.round(gram_generated_w, 3))  # inspect generated channel correlations.
+print("style loss:", round(float(style_loss_w), 5))  # inspect the scalar style penalty.
+```
+The Gram matrix captures style because each entry sums how often two channels activate together across all spatial positions. Since the spatial rows are summed away, it keeps texture and co-activation statistics while mostly ignoring exact layout.
+▶ What you'll see: two 2x2 Gram matrices whose differences become the style loss.
+
+```python
+fig_style_w, axes_style_w = plt.subplots(1, 2, figsize=(6.4, 3.0))  # create side-by-side Gram-matrix panels.
+image0_style_w = axes_style_w[0].imshow(gram_style_target_w, cmap="magma")  # display the target style Gram matrix.
+axes_style_w[0].set_title("4: style Gram target")  # title the target Gram panel.
+axes_style_w[0].set_xlabel("channel")  # label the target panel x-axis as channels.
+axes_style_w[0].set_ylabel("channel")  # label the target panel y-axis as channels.
+image1_style_w = axes_style_w[1].imshow(gram_generated_w, cmap="magma")  # display the generated Gram matrix.
+axes_style_w[1].set_title("4: generated Gram")  # title the generated Gram panel.
+axes_style_w[1].set_xlabel("channel")  # label the generated panel x-axis as channels.
+axes_style_w[1].set_ylabel("channel")  # label the generated panel y-axis as channels.
+plt.colorbar(image0_style_w, ax=axes_style_w[0], fraction=0.046)  # add a color scale for the target correlations.
+plt.colorbar(image1_style_w, ax=axes_style_w[1], fraction=0.046)  # add a color scale for the generated correlations.
+plt.tight_layout()  # reduce overlap between panels and colorbars.
+plt.show()  # render the Gram-matrix comparison.
+```
+▶ What you'll see: brighter cells indicate stronger channel co-activations, the toy stand-in for visual texture.
+
+```python
+alpha_w = 1.0  # choose the content weight in the total style-transfer objective.
+beta_w = 8.0  # choose the style weight so the small normalized style loss still matters.
+total_loss_w = alpha_w * content_loss_w + beta_w * style_loss_w  # combine content and style losses into one objective.
+print("weighted content term:", round(float(alpha_w * content_loss_w), 4))  # inspect the contribution from content preservation.
+print("weighted style term:", round(float(beta_w * style_loss_w), 4))  # inspect the contribution from style matching.
+print("total loss:", round(float(total_loss_w), 4))  # inspect the final generated-image objective.
+```
+▶ What you'll see: $\alpha$ and $\beta$ decide how much the generated activation prioritizes layout versus texture statistics.
+
+*Why it's done this way: content loss compares feature maps in place to preserve object layout, while Gram-matrix style loss compares channel correlations to preserve texture without requiring the same spatial arrangement. The weighted objective lets neural style transfer trade off recognizable content against the desired style.*
+
 ### 🟢 Basics (warm-up)
 
 #### B1. Cosine similarity between two face embeddings

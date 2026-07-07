@@ -380,6 +380,187 @@ else:  # branch for 2-D point data.
 
 ▶ What you'll see: for `synthetic_images`, small 8×8 objects with different spatial patterns; for `ring`, points around a circle; for `imbalanced_modes`, one dominant cluster and two rarer clusters, which is a GAN failure case.
 
+### 📖 Concept walkthrough — build each idea from scratch
+
+Before the warm-up examples, we build the advanced-CNN ideas from scratch, one small step at a time. Everything here uses only NumPy + Matplotlib and tiny inline data, so every residual, channel mix, parameter count, score, and loss is inspectable. Variables carry a `_w` suffix so they never collide with the examples below.
+
+```python
+import numpy as np  # NumPy gives us tiny arrays for residuals, channel mixing, sigmoid scores, and losses.
+import matplotlib.pyplot as plt  # Matplotlib lets us visualize gradients, parameter savings, and real-vs-fake samples.
+np.random.seed(22)  # fix randomness so every walkthrough printout and plot is reproducible.
+```
+
+#### 1. ResNet: learn a residual and keep a shortcut
+
+A residual block writes the target mapping as $y=F(x)+x$ instead of asking stacked layers to learn the whole $H(x)$ directly. The shortcut carries the original signal forward, while the main path only has to learn the correction $F(x)=H(x)-x$. If the best mapping is close to identity, setting $F(x)\approx0$ is easier than relearning $x$ through many nonlinear layers.
+
+```python
+x_res_w = np.array([1.0, -2.0, 0.5, 3.0])  # create one tiny activation vector entering a residual block.
+F_res_w = np.array([0.08, -0.04, 0.02, 0.05])  # create a small learned residual correction from the main path.
+y_res_w = F_res_w + x_res_w  # add the shortcut so the block output is y=F(x)+x.
+print("input x:", x_res_w)  # inspect the activation that bypasses the main path.
+print("residual F(x):", F_res_w)  # inspect the small correction learned by the block.
+print("output y=F(x)+x:", np.round(y_res_w, 3))  # inspect the shortcut-plus-correction output.
+```
+▶ What you'll see: the output is almost the input, with only small residual edits added coordinate by coordinate.
+
+```python
+F_zero_w = np.zeros_like(x_res_w)  # make the residual path exactly zero to test the identity case.
+y_identity_w = F_zero_w + x_res_w  # add the shortcut to see what happens when F(x)=0.
+identity_error_w = np.max(np.abs(y_identity_w - x_res_w))  # measure whether the block changed the input at all.
+print("zero residual output:", y_identity_w)  # inspect the output when the main path learns nothing.
+print("max identity error:", identity_error_w)  # verify that the shortcut passes x through exactly.
+```
+▶ What you'll see: with $F(x)=0$, the residual block becomes the identity map.
+
+The key gradient difference is that a residual block has derivative $\frac{dy}{dx}=\frac{dF}{dx}+1$. Even when the main-path derivative is small, the shortcut contributes a direct $+1$ route for gradient flow, so backpropagation is less likely to shrink toward zero.
+
+```python
+layers_res_w = np.arange(1, 31)  # represent depth from 1 to 30 repeated blocks.
+plain_slope_w = 0.82  # choose a small per-layer derivative for a plain stack.
+residual_slope_w = 1.0 + 0.02  # choose a shortcut derivative plus a small residual derivative.
+grad_plain_w = plain_slope_w ** layers_res_w  # multiply plain derivatives through depth, causing exponential shrinkage.
+grad_skip_w = residual_slope_w ** layers_res_w  # multiply residual derivatives that include the shortcut path.
+print("plain gradient after 30 layers:", round(float(grad_plain_w[-1]), 5))  # inspect the vanishing plain-stack gradient.
+print("skip gradient after 30 layers:", round(float(grad_skip_w[-1]), 5))  # inspect the shortcut-preserved gradient scale.
+```
+▶ What you'll see: the plain stack's gradient shrinks rapidly, while the shortcut path keeps the gradient much larger.
+
+```python
+plt.figure(figsize=(6.0, 4.0))  # create a compact gradient-flow comparison figure.
+plt.plot(layers_res_w, grad_plain_w, marker="o", label="plain stack")  # plot the shrinking gradient without a shortcut.
+plt.plot(layers_res_w, grad_skip_w, marker="s", label="residual shortcut")  # plot the gradient path that includes the identity shortcut.
+plt.axhline(1.0, color="black", linewidth=1.0, linestyle="--", label="unit gradient")  # mark the scale of an unchanged gradient.
+plt.xlabel("number of layers")  # label the depth axis.
+plt.ylabel("relative gradient magnitude")  # label the backpropagated-gradient axis.
+plt.title("1: ResNet shortcut keeps gradients flowing")  # title the plot with the walkthrough number.
+plt.legend()  # show which curve is plain and which uses a shortcut.
+plt.show()  # render the gradient-flow figure.
+```
+▶ What you'll see: the plain curve decays toward zero, while the residual curve stays near a useful scale.
+
+*Why it's done this way: the model only has to learn the difference from the identity, and the shortcut gives both activations and gradients a low-resistance path through deep networks.*
+
+#### 2. Inception: mix channels cheaply with a $1\times1$ bottleneck
+
+An Inception module uses parallel branches so the network can test several feature scales at the same spatial location. A $1\times1$ convolution is the cheapest branch and also a bottleneck: at each pixel it performs a small linear combination across channels, reducing channel count before expensive $3\times3$ or $5\times5$ filters. That makes the parameter count drop from $k\times k\times C_{in}\times C_{out}$ to $C_{in}\times C_b + k\times k\times C_b\times C_{out}$.
+
+```python
+image_inc_w = np.array([[[1.0, 10.0, 100.0], [2.0, 20.0, 200.0]], [[3.0, 30.0, 300.0], [4.0, 40.0, 400.0]]])  # create a 2x2 image with 3 channels.
+weights_1x1_w = np.array([[0.5, 0.1], [0.05, -0.2], [0.01, 0.3]])  # create 3 input-channel by 2 output-channel mixing weights.
+bias_1x1_w = np.array([0.0, 1.0])  # add one bias per output channel.
+mixed_inc_w = image_inc_w @ weights_1x1_w + bias_1x1_w  # apply a 1x1 convolution as per-pixel channel mixing.
+print("input shape HxWxC:", image_inc_w.shape)  # inspect the starting spatial and channel dimensions.
+print("1x1 weights shape Cin x Cout:", weights_1x1_w.shape)  # inspect the channel-mixing matrix shape.
+print("mixed output shape:", mixed_inc_w.shape)  # inspect the reduced channel count after the 1x1 convolution.
+print("top-left mixed pixel:", np.round(mixed_inc_w[0, 0], 2))  # inspect one pixel's two channel mixtures.
+```
+▶ What you'll see: each pixel keeps its spatial position, but its three channels are mixed into two new channels.
+
+```python
+branch_1x1_w = mixed_inc_w[..., :1]  # make a tiny 1x1-style branch with one output channel.
+branch_3x3_w = np.mean(image_inc_w, axis=2, keepdims=True)  # mimic a larger-filter branch by averaging channels into one map.
+branch_pool_w = np.max(image_inc_w, axis=2, keepdims=True)  # mimic a pooling branch by keeping the strongest channel value.
+inception_out_w = np.concatenate([branch_1x1_w, branch_3x3_w, branch_pool_w], axis=2)  # concatenate parallel branch outputs along channels.
+print("branch shapes:", branch_1x1_w.shape, branch_3x3_w.shape, branch_pool_w.shape)  # inspect every parallel branch shape.
+print("concatenated Inception shape:", inception_out_w.shape)  # inspect the channel-stacked module output.
+```
+▶ What you'll see: parallel branches preserve the same height and width, then concatenate their feature channels.
+
+```python
+k_inc_w = 5  # choose a large 5x5 convolution to make parameter savings visible.
+Cin_inc_w = 64  # choose the number of input channels entering a branch.
+Cb_inc_w = 16  # choose a smaller bottleneck channel count produced by a 1x1 convolution.
+Cout_inc_w = 128  # choose the number of output channels from the expensive convolution.
+params_direct_w = k_inc_w * k_inc_w * Cin_inc_w * Cout_inc_w + Cout_inc_w  # count parameters for a direct 5x5 convolution.
+params_bottleneck_w = Cin_inc_w * Cb_inc_w + Cb_inc_w + k_inc_w * k_inc_w * Cb_inc_w * Cout_inc_w + Cout_inc_w  # count 1x1 bottleneck plus 5x5 parameters.
+savings_w = 100.0 * (1.0 - params_bottleneck_w / params_direct_w)  # convert the parameter reduction into a percentage.
+print("direct 5x5 params:", params_direct_w)  # inspect the expensive baseline parameter count.
+print("1x1 bottleneck + 5x5 params:", params_bottleneck_w)  # inspect the reduced parameter count.
+print("parameter savings %:", round(float(savings_w), 1))  # inspect how much the bottleneck saves.
+```
+▶ What you'll see: the bottleneck branch uses far fewer parameters because the large filter sees only $C_b$ channels.
+
+```python
+plt.figure(figsize=(5.5, 4.0))  # create a compact bar chart for parameter counts.
+plt.bar(["direct 5x5", "1x1 + 5x5"], [params_direct_w, params_bottleneck_w], color=["tab:red", "tab:green"])  # compare direct and bottlenecked branches.
+plt.ylabel("parameter count")  # label the vertical axis with the counted quantity.
+plt.title("2: Inception bottleneck reduces parameters")  # title the plot with the walkthrough number.
+plt.show()  # render the parameter-count chart.
+```
+▶ What you'll see: the bottleneck bar is much shorter than the direct large-convolution bar.
+
+*Why it's done this way: $1\times1$ convolutions are cheap channel mixers because they use no spatial window, so Inception can reduce channels first and spend expensive spatial filters only on a compact representation.*
+
+#### 3. GAN: train a generator against a discriminator
+
+A GAN has a generator $G(z)$ that turns noise into fake samples and a discriminator $D(x)$ that estimates $P(\text{real}\mid x)$. The discriminator maximizes real scores and minimizes fake scores, while the generator changes its samples so $D(G(z))$ looks real. A guarded binary-cross-entropy version is:
+
+$$
+\mathcal{L}_D=-\frac{1}{m}\sum_i\left[\log D(x_i)+\log(1-D(G(z_i)))\right],
+\qquad
+\mathcal{L}_G=-\frac{1}{m}\sum_i\log D(G(z_i)).
+$$
+
+```python
+rng_gan_w = np.random.default_rng(22)  # create a local random generator so this section is reproducible.
+real_gan_w = rng_gan_w.normal(loc=2.0, scale=0.35, size=80)  # sample a tiny one-dimensional real distribution.
+z_gan_w = rng_gan_w.normal(loc=0.0, scale=1.0, size=80)  # sample generator noise values.
+g_mu_w = -1.2  # start the generator mean far from the real mean.
+g_scale_w = 0.25  # set a small generator scale for fake-sample spread.
+fake_gan_w = g_mu_w + g_scale_w * z_gan_w  # map noise to fake samples with a simple affine generator.
+print("real mean/std:", round(float(real_gan_w.mean()), 3), round(float(real_gan_w.std()), 3))  # inspect the real distribution summary.
+print("fake mean/std before:", round(float(fake_gan_w.mean()), 3), round(float(fake_gan_w.std()), 3))  # inspect the generator's starting distribution summary.
+```
+▶ What you'll see: the fake samples begin far to the left of the real samples.
+
+```python
+def sigmoid_gan_w(t_w):  # define the discriminator's probability squashing function.
+    return 1.0 / (1.0 + np.exp(-t_w))  # convert a real-valued score into a value between 0 and 1.
+
+disc_a_w = 1.4  # choose a positive discriminator slope so larger x looks more real.
+disc_b_w = -0.8  # choose an intercept that places the decision region near the toy data.
+eps_gan_w = 1e-8  # guard all logarithms from log(0).
+D_real_w = sigmoid_gan_w(disc_a_w * real_gan_w + disc_b_w)  # compute discriminator probabilities for real samples.
+D_fake_w = sigmoid_gan_w(disc_a_w * fake_gan_w + disc_b_w)  # compute discriminator probabilities for fake samples.
+loss_D_w = -np.mean(np.log(np.clip(D_real_w, eps_gan_w, 1.0)) + np.log(np.clip(1.0 - D_fake_w, eps_gan_w, 1.0)))  # compute discriminator loss.
+loss_G_w = -np.mean(np.log(np.clip(D_fake_w, eps_gan_w, 1.0)))  # compute non-saturating generator loss.
+print("mean D(real):", round(float(D_real_w.mean()), 3))  # inspect how real the discriminator thinks real samples are.
+print("mean D(fake):", round(float(D_fake_w.mean()), 3))  # inspect how real the discriminator thinks fake samples are.
+print("loss_D, loss_G:", round(float(loss_D_w), 3), round(float(loss_G_w), 3))  # inspect both adversarial losses.
+```
+▶ What you'll see: $D(\text{real})$ is high, $D(\text{fake})$ is low, and the generator loss is large.
+
+The generator update follows the loss gradient through the fixed discriminator. For $D(x)=\sigma(ax+b)$ and $\mathcal{L}_G=-\log D(x)$, the derivative with respect to a fake sample is $-a(1-D(x))$; subtracting that gradient moves samples in the direction that increases $D(x)$.
+
+```python
+lr_gan_w = 0.9  # choose a visible one-step learning rate for the fake samples.
+grad_fake_w = -disc_a_w * (1.0 - D_fake_w)  # compute d[-log D(fake)]/d fake for the fixed discriminator.
+fake_step_w = fake_gan_w - lr_gan_w * grad_fake_w  # move fake samples one adversarial step toward higher discriminator scores.
+D_fake_step_w = sigmoid_gan_w(disc_a_w * fake_step_w + disc_b_w)  # score the moved fake samples with the same discriminator.
+loss_G_step_w = -np.mean(np.log(np.clip(D_fake_step_w, eps_gan_w, 1.0)))  # recompute generator loss after the step.
+print("fake mean before/after:", round(float(fake_gan_w.mean()), 3), round(float(fake_step_w.mean()), 3))  # inspect movement toward the real mean.
+print("mean D(fake) before/after:", round(float(D_fake_w.mean()), 3), round(float(D_fake_step_w.mean()), 3))  # inspect whether fake samples look more real.
+print("generator loss before/after:", round(float(loss_G_w), 3), round(float(loss_G_step_w), 3))  # inspect whether the generator objective improved.
+```
+▶ What you'll see: one generator step shifts fake samples rightward, raises $D(\text{fake})$, and lowers generator loss.
+
+```python
+bins_gan_w = np.linspace(-2.0, 3.2, 24)  # create shared histogram bins so real and fake distributions are comparable.
+plt.figure(figsize=(6.2, 4.0))  # create a compact distribution comparison figure.
+plt.hist(real_gan_w, bins=bins_gan_w, alpha=0.55, density=True, label="real", color="tab:blue")  # plot real data density.
+plt.hist(fake_gan_w, bins=bins_gan_w, alpha=0.45, density=True, label="fake before", color="tab:red")  # plot fake density before the generator step.
+plt.hist(fake_step_w, bins=bins_gan_w, alpha=0.45, density=True, label="fake after one G step", color="tab:green")  # plot fake density after one adversarial step.
+plt.xlabel("one-dimensional sample value")  # label the sample axis.
+plt.ylabel("density")  # label the histogram density axis.
+plt.title("3: GAN real vs fake distributions")  # title the plot with the walkthrough number.
+plt.legend()  # show which histogram belongs to real, before, and after samples.
+plt.show()  # render the GAN histogram comparison.
+```
+▶ What you'll see: the post-step fake histogram moves closer to the real histogram, though it is not fully matched after one step.
+
+*Why it's done this way: the discriminator supplies a learned training signal for samples that have no labels, and the generator follows that signal to make fakes that increasingly fool the discriminator while the discriminator learns to catch them.*
+
 ### 🟢 Basics (warm-up)
 
 #### B1. Apply one $1\times1$ convolution to a tiny volume

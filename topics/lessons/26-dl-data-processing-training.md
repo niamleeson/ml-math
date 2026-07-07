@@ -311,6 +311,239 @@ else:  # handle image-like sources with a montage.
 
 ▶ What you'll see: a scatterplot for tabular sources or a montage for image-like sources. The raw view tells you whether normalization, augmentation, or model capacity is likely to be the limiting factor.
 
+### 📖 Concept walkthrough — build each idea from scratch
+
+Before the warm-up examples, we build the data-processing and training ideas from scratch, one small step at a time. Everything here uses only NumPy + Matplotlib and tiny inline data, so every array, transformation, gradient, and loss curve is inspectable. Variables carry a `_w` suffix so they never collide with the examples below.
+
+```python
+import numpy as np  # use NumPy for tiny arrays, vectorized normalization, augmentation, and gradients.
+import matplotlib.pyplot as plt  # use Matplotlib so every preprocessing and optimization step can be checked visually.
+np.random.seed(230)  # fix randomness so the walkthrough prints and figures are reproducible.
+```
+
+#### 1. Normalize inputs before training
+
+Neural-network gradients behave better when input features have comparable scales. We standardize each feature with:
+
+$$
+\tilde{x}=\frac{x-\mu}{\sigma}
+$$
+
+where $\mu$ is the feature mean and $\sigma$ is the feature standard deviation. This approach centers every column near zero and gives every column unit spread, so a large-unit feature cannot dominate dot products, gradients, or the loss geometry.
+
+```python
+X_raw_norm_w = np.array([[-2.0, -100.0], [-1.0, -100.0], [1.0, -100.0], [2.0, -100.0], [-2.0, 100.0], [-1.0, 100.0], [1.0, 100.0], [2.0, 100.0]])  # create two features with very different numerical scales but simple independent directions.
+y_norm_w = np.array([-0.512, -0.006, 1.006, 1.512, -1.512, -1.006, 0.006, 0.512])  # create a tiny regression target so loss surfaces are inspectable.
+print("raw feature matrix:\n", X_raw_norm_w)  # inspect the unnormalized inputs before any training step.
+print("feature means:", np.round(X_raw_norm_w.mean(axis=0), 3))  # print each raw feature mean to expose the large offset difference.
+print("feature stds:", np.round(X_raw_norm_w.std(axis=0), 3))  # print each raw feature spread to expose the scale difference.
+```
+▶ What you'll see: feature 2 is tens of times larger than feature 1, so raw gradients will be dominated by that column.
+
+```python
+mu_norm_w = X_raw_norm_w.mean(axis=0, keepdims=True)  # compute one mean per feature for centering.
+sigma_norm_w = X_raw_norm_w.std(axis=0, keepdims=True)  # compute one standard deviation per feature for scaling.
+X_scaled_norm_w = (X_raw_norm_w - mu_norm_w) / sigma_norm_w  # standardize each feature using (x-mu)/sigma.
+print("normalized feature matrix:\n", np.round(X_scaled_norm_w, 3))  # inspect the transformed inputs after scaling.
+print("normalized means:", np.round(X_scaled_norm_w.mean(axis=0), 3))  # verify that each transformed feature is centered near zero.
+print("normalized stds:", np.round(X_scaled_norm_w.std(axis=0), 3))  # verify that each transformed feature has unit spread.
+```
+▶ What you'll see: both normalized columns now have mean $0$ and standard deviation $1$.
+
+```python
+fig_norm_w, axes_norm_w = plt.subplots(1, 2, figsize=(9.5, 3.8))  # create side-by-side axes for raw versus normalized geometry.
+axes_norm_w[0].scatter(X_raw_norm_w[:, 0], X_raw_norm_w[:, 1], c=y_norm_w, cmap="viridis", s=80, edgecolors="black")  # plot raw features where one axis uses much larger units.
+axes_norm_w[0].set_title("1: raw feature scales")  # title the raw-scale scatterplot.
+axes_norm_w[0].set_xlabel("feature 1")  # label the small-scale raw feature.
+axes_norm_w[0].set_ylabel("feature 2")  # label the large-scale raw feature.
+axes_norm_w[1].scatter(X_scaled_norm_w[:, 0], X_scaled_norm_w[:, 1], c=y_norm_w, cmap="viridis", s=80, edgecolors="black")  # plot standardized features on comparable axes.
+axes_norm_w[1].set_title("1: standardized feature scales")  # title the normalized scatterplot.
+axes_norm_w[1].set_xlabel("standardized feature 1")  # label the centered and scaled first feature.
+axes_norm_w[1].set_ylabel("standardized feature 2")  # label the centered and scaled second feature.
+plt.tight_layout()  # keep labels and titles from overlapping.
+plt.show()  # render the before-and-after scatterplots.
+```
+▶ What you'll see: the raw scatter is stretched by unequal units, while the standardized scatter uses balanced axes.
+
+```python
+w1_raw_grid_norm_w, w2_raw_grid_norm_w = np.meshgrid(np.linspace(-1.2, 1.2, 120), np.linspace(-0.08, 0.08, 120))  # build a raw-weight grid with a narrow range for the large-scale feature.
+W_raw_grid_norm_w = np.column_stack([w1_raw_grid_norm_w.ravel(), w2_raw_grid_norm_w.ravel()])  # flatten raw-weight pairs into rows for vectorized loss evaluation.
+loss_raw_norm_w = np.mean((X_raw_norm_w @ W_raw_grid_norm_w.T - y_norm_w[:, None]) ** 2, axis=0).reshape(w1_raw_grid_norm_w.shape)  # compute MSE over every raw-weight pair.
+w1_scaled_grid_norm_w, w2_scaled_grid_norm_w = np.meshgrid(np.linspace(-2.0, 2.0, 120), np.linspace(-2.0, 2.0, 120))  # build a balanced weight grid for standardized features.
+W_scaled_grid_norm_w = np.column_stack([w1_scaled_grid_norm_w.ravel(), w2_scaled_grid_norm_w.ravel()])  # flatten standardized-weight pairs into rows for vectorized loss evaluation.
+loss_scaled_norm_w = np.mean((X_scaled_norm_w @ W_scaled_grid_norm_w.T - y_norm_w[:, None]) ** 2, axis=0).reshape(w1_scaled_grid_norm_w.shape)  # compute MSE over every standardized-weight pair.
+cond_raw_norm_w = np.linalg.cond((X_raw_norm_w.T @ X_raw_norm_w) / len(X_raw_norm_w))  # measure raw curvature imbalance through the Hessian condition number.
+cond_scaled_norm_w = np.linalg.cond((X_scaled_norm_w.T @ X_scaled_norm_w) / len(X_scaled_norm_w))  # measure normalized curvature imbalance after scaling.
+print("condition number before normalization:", round(cond_raw_norm_w, 1))  # print how ill-conditioned the raw quadratic loss is.
+print("condition number after normalization:", round(cond_scaled_norm_w, 1))  # print how much rounder the normalized quadratic loss is.
+fig_loss_norm_w, axes_loss_norm_w = plt.subplots(1, 2, figsize=(10.0, 3.9))  # create side-by-side contour plots for the two loss surfaces.
+axes_loss_norm_w[0].contour(w1_raw_grid_norm_w, w2_raw_grid_norm_w, loss_raw_norm_w, levels=18, cmap="magma")  # draw elongated raw-loss contours.
+axes_loss_norm_w[0].set_title("1: elongated loss before normalization")  # title the raw loss surface.
+axes_loss_norm_w[0].set_xlabel("raw weight 1")  # label the first raw-weight axis.
+axes_loss_norm_w[0].set_ylabel("raw weight 2")  # label the second raw-weight axis.
+axes_loss_norm_w[1].contour(w1_scaled_grid_norm_w, w2_scaled_grid_norm_w, loss_scaled_norm_w, levels=18, cmap="magma")  # draw the rounder normalized-loss contours.
+axes_loss_norm_w[1].set_title("1: rounder loss after normalization")  # title the normalized loss surface.
+axes_loss_norm_w[1].set_xlabel("normalized weight 1")  # label the first normalized-weight axis.
+axes_loss_norm_w[1].set_ylabel("normalized weight 2")  # label the second normalized-weight axis.
+plt.tight_layout()  # keep the contour labels readable.
+plt.show()  # render the loss-surface comparison.
+```
+▶ What you'll see: the raw loss has long, skinny contours, while the normalized loss is much rounder.
+
+Unequal scales make gradient descent zig-zag because the steep direction forces small safe steps, while the shallow direction still needs many updates. Normalization reduces this ill-conditioning, so the same learning rate can move more directly toward the minimum.
+
+*Why it's done this way: standardization uses only simple training-set statistics, but it changes the optimization geometry from stretched to balanced. That makes gradient descent less sensitive to feature units and usually speeds convergence.*
+
+#### 2. Augment data without changing labels
+
+Data augmentation creates extra training views from an existing example while keeping the same target label. For image-like arrays, flips, small shifts, small rotations, and mild noise can teach invariances without collecting new labels. We use explicit NumPy transforms so it is clear which pixels move and why the class should remain the same.
+
+```python
+image_aug_w = np.zeros((7, 7), dtype=float)  # create one tiny grayscale image with a dark background.
+image_aug_w[1:6, 3] = 1.0  # draw a bright vertical stroke as the class-defining object.
+image_aug_w[2, 2:5] = 0.8  # add a short crossbar so rotation and shifting are visible.
+label_aug_w = "vertical mark"  # name the label that should stay unchanged under mild transforms.
+print("label:", label_aug_w)  # print the semantic label before augmentation.
+print("original image array:\n", image_aug_w)  # inspect the actual pixel values of the source image.
+```
+▶ What you'll see: a tiny numeric image whose label describes the object, not its exact pixel coordinates.
+
+```python
+flip_aug_w = image_aug_w[:, ::-1]  # flip left-to-right because this label does not depend on mirror direction.
+shift_aug_w = np.roll(image_aug_w, shift=1, axis=1)  # shift one pixel right to mimic a small change in object position.
+noise_aug_w = np.clip(image_aug_w + np.random.normal(0.0, 0.08, image_aug_w.shape), 0.0, 1.0)  # add mild sensor-like noise while keeping pixels valid.
+print("flip label:", label_aug_w)  # show that the flipped view keeps the same target.
+print("shift label:", label_aug_w)  # show that the shifted view keeps the same target.
+print("noise label:", label_aug_w)  # show that the noisy view keeps the same target.
+```
+▶ What you'll see: several transformed views all reuse the original label.
+
+```python
+angle_aug_w = np.deg2rad(12.0)  # choose a small rotation angle that should preserve the visual class.
+coords_aug_w = np.indices(image_aug_w.shape).astype(float)  # create row and column coordinate grids for every output pixel.
+center_aug_w = (np.array(image_aug_w.shape) - 1.0) / 2.0  # compute the image center so rotation happens around the middle.
+y_centered_aug_w = coords_aug_w[0] - center_aug_w[0]  # center the output row coordinates before inverse rotation.
+x_centered_aug_w = coords_aug_w[1] - center_aug_w[1]  # center the output column coordinates before inverse rotation.
+source_y_aug_w = np.cos(angle_aug_w) * y_centered_aug_w + np.sin(angle_aug_w) * x_centered_aug_w + center_aug_w[0]  # map output rows back to source rows with inverse rotation.
+source_x_aug_w = -np.sin(angle_aug_w) * y_centered_aug_w + np.cos(angle_aug_w) * x_centered_aug_w + center_aug_w[1]  # map output columns back to source columns with inverse rotation.
+source_y_idx_aug_w = np.clip(np.rint(source_y_aug_w).astype(int), 0, image_aug_w.shape[0] - 1)  # round source rows to nearest valid pixels.
+source_x_idx_aug_w = np.clip(np.rint(source_x_aug_w).astype(int), 0, image_aug_w.shape[1] - 1)  # round source columns to nearest valid pixels.
+rotate_aug_w = image_aug_w[source_y_idx_aug_w, source_x_idx_aug_w]  # sample the original image to make the rotated view.
+print("rotation degrees:", 12)  # print the small rotation amount for inspection.
+print("rotate label:", label_aug_w)  # show that the rotated view keeps the same target.
+```
+▶ What you'll see: the small rotation is built from coordinate math, not a black-box image library.
+
+```python
+images_aug_w = [image_aug_w, flip_aug_w, shift_aug_w, rotate_aug_w, noise_aug_w]  # collect the original and augmented images for one montage.
+titles_aug_w = ["original", "flip", "shift", "rotate", "noise"]  # create a short title for each image variant.
+fig_aug_w, axes_aug_w = plt.subplots(1, len(images_aug_w), figsize=(11.0, 2.7))  # create one row of image panels.
+axes_aug_w = np.atleast_1d(axes_aug_w).ravel()  # flatten axes so the loop works even if the panel count changes.
+for ax_aug_w, image_variant_aug_w, title_aug_w in zip(axes_aug_w, images_aug_w, titles_aug_w):  # draw each image variant in a matching panel.
+    ax_aug_w.imshow(image_variant_aug_w, cmap="gray", vmin=0.0, vmax=1.0)  # display the tiny array as a grayscale image.
+    ax_aug_w.set_title(title_aug_w)  # label the transform used for this panel.
+    ax_aug_w.axis("off")  # hide pixel ticks so the visual pattern is the focus.
+fig_aug_w.suptitle("2: label-preserving image augmentation", y=1.05)  # title the full augmentation montage.
+plt.tight_layout()  # reduce spacing conflicts between panel titles.
+plt.show()  # render the augmented image variants.
+```
+▶ What you'll see: the object moves or changes slightly, but the semantic label remains the same.
+
+Augmentation enlarges the effective dataset because the learner sees more plausible input variations without needing new manual labels. It reduces overfitting by discouraging a model from memorizing exact pixel locations, brightness, or noise patterns that should not define the class.
+
+*Why it's done this way: each transform is small enough to preserve the label but different enough to make memorization harder. The important rule is semantic safety: augmentation helps only when the transformed example should truly keep the same target.*
+
+#### 3. Mini-batch gradient descent
+
+For mean squared error on a linear model, the full gradient is an average over all $m$ examples:
+
+$$
+\nabla_w J=\frac{2}{m}\sum_{i=1}^{m}(wx_i+b-y_i)x_i
+$$
+
+Full-batch gradient descent uses every example per update, SGD uses one example, and mini-batch gradient descent uses a small subset. Mini-batches trade some gradient noise for much cheaper steps than full-batch training and much smoother progress than single-sample SGD.
+
+```python
+x_gd_w = np.linspace(-2.0, 2.0, 12)  # create twelve one-dimensional training inputs.
+y_gd_w = 1.4 * x_gd_w - 0.3 + np.random.normal(0.0, 0.18, size=x_gd_w.shape)  # create noisy linear targets from a known trend.
+print("x values:", np.round(x_gd_w, 2))  # inspect the tiny input vector.
+print("y values:", np.round(y_gd_w, 2))  # inspect the noisy target vector.
+plt.figure(figsize=(5.8, 3.8))  # create a figure for the tiny regression data.
+plt.scatter(x_gd_w, y_gd_w, s=70, edgecolors="black", color="tab:purple")  # plot the points that gradients will fit.
+plt.title("3: tiny regression data for gradient descent")  # title the data plot.
+plt.xlabel("x")  # label the input axis.
+plt.ylabel("y")  # label the target axis.
+plt.show()  # render the data before optimization.
+```
+▶ What you'll see: twelve noisy points following an approximately straight line.
+
+```python
+w0_gd_w = 0.0  # start all methods from the same slope.
+b0_gd_w = 0.0  # start all methods from the same intercept.
+pred_full_gd_w = w0_gd_w * x_gd_w + b0_gd_w  # compute predictions for the full dataset at the starting point.
+error_full_gd_w = pred_full_gd_w - y_gd_w  # compute full-dataset residuals at the starting point.
+grad_full_gd_w = np.array([2.0 * np.mean(error_full_gd_w * x_gd_w), 2.0 * np.mean(error_full_gd_w)])  # compute the exact full-batch gradient.
+idx_sgd_gd_w = 0  # choose one example for a single-sample SGD gradient estimate.
+grad_sgd_gd_w = np.array([2.0 * (w0_gd_w * x_gd_w[idx_sgd_gd_w] + b0_gd_w - y_gd_w[idx_sgd_gd_w]) * x_gd_w[idx_sgd_gd_w], 2.0 * (w0_gd_w * x_gd_w[idx_sgd_gd_w] + b0_gd_w - y_gd_w[idx_sgd_gd_w])])  # compute one-example gradient estimate.
+idx_mini_gd_w = np.array([0, 3, 6, 9])  # choose four examples for a mini-batch gradient estimate.
+error_mini_gd_w = (w0_gd_w * x_gd_w[idx_mini_gd_w] + b0_gd_w) - y_gd_w[idx_mini_gd_w]  # compute mini-batch residuals at the starting point.
+grad_mini_gd_w = np.array([2.0 * np.mean(error_mini_gd_w * x_gd_w[idx_mini_gd_w]), 2.0 * np.mean(error_mini_gd_w)])  # compute the mini-batch gradient estimate.
+print("full-batch gradient:", np.round(grad_full_gd_w, 3), "cost = 12 examples")  # print the stable but expensive exact gradient.
+print("single-sample gradient:", np.round(grad_sgd_gd_w, 3), "cost = 1 example")  # print the noisy but cheap SGD gradient.
+print("mini-batch gradient:", np.round(grad_mini_gd_w, 3), "cost = 4 examples")  # print the intermediate mini-batch gradient.
+```
+▶ What you'll see: the single-sample gradient can point differently from the full gradient, while the mini-batch estimate is closer but still cheaper.
+
+```python
+lr_gd_w = 0.08  # choose one learning rate for all three methods.
+steps_gd_w = 35  # choose the same number of parameter updates for all three methods.
+batch_size_gd_w = 4  # choose four examples per mini-batch update.
+params_full_gd_w = np.array([w0_gd_w, b0_gd_w], dtype=float)  # store full-batch slope and intercept together.
+params_sgd_gd_w = np.array([w0_gd_w, b0_gd_w], dtype=float)  # store SGD slope and intercept together.
+params_mini_gd_w = np.array([w0_gd_w, b0_gd_w], dtype=float)  # store mini-batch slope and intercept together.
+losses_full_gd_w = []  # allocate full-batch loss history.
+losses_sgd_gd_w = []  # allocate SGD loss history measured on the full dataset.
+losses_mini_gd_w = []  # allocate mini-batch loss history measured on the full dataset.
+for step_gd_w in range(steps_gd_w):  # run the same number of updates for each method.
+    pred_all_full_gd_w = params_full_gd_w[0] * x_gd_w + params_full_gd_w[1]  # compute full-batch predictions for the exact update.
+    err_all_full_gd_w = pred_all_full_gd_w - y_gd_w  # compute residuals for every example in the exact update.
+    grad_all_full_gd_w = np.array([2.0 * np.mean(err_all_full_gd_w * x_gd_w), 2.0 * np.mean(err_all_full_gd_w)])  # average the exact full gradient.
+    params_full_gd_w = params_full_gd_w - lr_gd_w * grad_all_full_gd_w  # update full-batch parameters.
+    idx_one_gd_w = step_gd_w % len(x_gd_w)  # cycle through one example at a time for SGD.
+    err_one_gd_w = params_sgd_gd_w[0] * x_gd_w[idx_one_gd_w] + params_sgd_gd_w[1] - y_gd_w[idx_one_gd_w]  # compute one-example residual for SGD.
+    grad_one_gd_w = np.array([2.0 * err_one_gd_w * x_gd_w[idx_one_gd_w], 2.0 * err_one_gd_w])  # compute the one-example SGD gradient.
+    params_sgd_gd_w = params_sgd_gd_w - lr_gd_w * grad_one_gd_w  # update SGD parameters using the noisy estimate.
+    idx_batch_gd_w = (np.arange(batch_size_gd_w) + step_gd_w * batch_size_gd_w) % len(x_gd_w)  # cycle through four-example mini-batches.
+    pred_batch_gd_w = params_mini_gd_w[0] * x_gd_w[idx_batch_gd_w] + params_mini_gd_w[1]  # compute mini-batch predictions.
+    err_batch_gd_w = pred_batch_gd_w - y_gd_w[idx_batch_gd_w]  # compute mini-batch residuals.
+    grad_batch_gd_w = np.array([2.0 * np.mean(err_batch_gd_w * x_gd_w[idx_batch_gd_w]), 2.0 * np.mean(err_batch_gd_w)])  # average the mini-batch gradient estimate.
+    params_mini_gd_w = params_mini_gd_w - lr_gd_w * grad_batch_gd_w  # update mini-batch parameters.
+    losses_full_gd_w.append(np.mean((params_full_gd_w[0] * x_gd_w + params_full_gd_w[1] - y_gd_w) ** 2))  # record full-batch method loss on all data.
+    losses_sgd_gd_w.append(np.mean((params_sgd_gd_w[0] * x_gd_w + params_sgd_gd_w[1] - y_gd_w) ** 2))  # record SGD method loss on all data.
+    losses_mini_gd_w.append(np.mean((params_mini_gd_w[0] * x_gd_w + params_mini_gd_w[1] - y_gd_w) ** 2))  # record mini-batch method loss on all data.
+print("final full-batch params:", np.round(params_full_gd_w, 3))  # print the final exact-update slope and intercept.
+print("final SGD params:", np.round(params_sgd_gd_w, 3))  # print the final one-example-update slope and intercept.
+print("final mini-batch params:", np.round(params_mini_gd_w, 3))  # print the final mini-batch-update slope and intercept.
+```
+▶ What you'll see: all methods move toward a useful line, but their update paths differ because their gradients use different amounts of data.
+
+```python
+plt.figure(figsize=(7.2, 4.4))  # create a shared loss-trajectory figure.
+plt.plot(losses_full_gd_w, label="full batch: smooth, costly")  # plot the full-batch loss curve.
+plt.plot(losses_sgd_gd_w, label="single sample: noisy, cheap")  # plot the SGD loss curve.
+plt.plot(losses_mini_gd_w, label="mini-batch: middle ground")  # plot the mini-batch loss curve.
+plt.xlabel("parameter update")  # label the horizontal axis by update count.
+plt.ylabel("mean squared error on all data")  # label the vertical axis by full-dataset loss.
+plt.title("3: full-batch vs SGD vs mini-batch loss trajectories")  # title the optimization comparison.
+plt.legend()  # show which curve belongs to each training method.
+plt.show()  # render the three loss trajectories.
+```
+▶ What you'll see: full-batch descent is smooth, single-sample SGD is noisier, and mini-batch descent usually lands between them.
+
+Mini-batches work because averaging a few examples reduces gradient noise compared with one-example SGD, while each update costs far less than scanning the full dataset. That is why deep-learning training loops usually shuffle data and update on mini-batches rather than using every example every step.
+
+*Why it's done this way: full gradients are accurate but expensive, and one-sample gradients are cheap but jumpy. Mini-batches provide a practical compromise: enough averaging for stable progress and enough updates per epoch for efficient learning.*
+
 ### 🟢 Basics (warm-up)
 
 #### B1. Normalize one tiny feature array
