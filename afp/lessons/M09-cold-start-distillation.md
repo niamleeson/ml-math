@@ -18,6 +18,8 @@ Two sub-lessons:
 - **M9.1 Cold-start & the cold→warm handoff** — priors, confidence blends, and exit criteria.
 - **M9.2 Transfer & distillation** — reuse signal and compress expensive teachers.
 
+<p class="cur-colab"><a class="cur-colab-btn" href="https://colab.research.google.com/github/niamleeson/ml-math/blob/main/afp/notebooks/M09-cold-start-distillation.ipynb" target="_blank" rel="noopener">▶ Open the runnable cold-start, transfer &amp; distillation notebook in Google Colab</a></p>
+
 ---
 
 ## M9.1 · Cold-start & the cold→warm handoff (priors, confidence blend, exit criteria)
