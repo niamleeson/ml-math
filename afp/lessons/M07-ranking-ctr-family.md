@@ -23,6 +23,10 @@ Three sub-lessons:
 
 <p class="cur-colab"><a class="cur-colab-btn" href="https://colab.research.google.com/github/niamleeson/ml-math/blob/main/afp/notebooks/M07-ranking-ctr-family.ipynb" target="_blank" rel="noopener">▶ Open the runnable pCTR pipeline notebook in Google Colab</a></p>
 
+**Then build the full production-shaped ranker.** This second companion notebook trains **one shared-bottom multi-task model** that predicts **CTR + VTR + LTR together** using **user-history** features, evaluates each head (AUC + calibration), blends them into a multi-objective serving score, and proves history helps with an ablation — the shape of a real ranking system, explained for a new student.
+
+<p class="cur-colab"><a class="cur-colab-btn" href="https://colab.research.google.com/github/niamleeson/ml-math/blob/main/afp/notebooks/M07-full-ranking-pipeline.ipynb" target="_blank" rel="noopener">▶ Open the full multi-task pipeline notebook (CTR + VTR + LTR + history) in Google Colab</a></p>
+
 ---
 
 ## M7.1 · pCTR/pVTR models & the calibration link
