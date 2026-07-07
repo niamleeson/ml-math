@@ -209,6 +209,215 @@ plt.show()  # render the raw-data scatter before any model is fit.
 
 ▶ What you'll see: an unlabeled point cloud. For `blobs`, three compact groups are visually obvious; for `moons`, the two curved groups already hint that spherical centroids will struggle.
 
+### 📖 Concept walkthrough — build each idea from scratch
+
+Before the warm-up examples, we build every Key Idea concept from scratch, one small step at a time. Each concept explains not just *what* the code does but *why* this code and *why* this logic. Everything here uses only NumPy + Matplotlib and tiny inline data, so you can read each printed value and watch the idea assemble. Variables carry a `_w` suffix so they never collide with the examples below.
+
+```python
+import numpy as np  # NumPy for vectorized distances and means — the core of every clustering step.
+import matplotlib.pyplot as plt  # Matplotlib because clustering is best understood visually, step by step.
+np.random.seed(229)  # fix the seed so every printed number and plot below is reproducible.
+```
+
+#### 1. k-means: the assign → update loop and why it always decreases distortion
+
+k-means answers "group these points into $k$ blobs" by repeating two cheap steps: **assign** each point to its nearest centroid, then **update** each centroid to the mean of its members. We build it by hand because the magic is subtle: each step separately lowers the same cost $J=\sum_i\lVert x^{(i)}-\mu_{c^{(i)}}\rVert^2$, so the loop can only ever go downhill. Seeing the distortion drop monotonically is the whole intuition.
+
+```python
+X_w = np.array([[1.0, 1.0], [1.5, 2.0], [1.2, 0.8],      # a tight lower-left group,
+                [5.0, 5.0], [5.5, 4.8], [4.8, 5.2]])      # and a tight upper-right group.
+mu_w = np.array([[0.0, 0.0], [6.0, 6.0]])                 # deliberately OFF-CENTER starts, so we can watch them move.
+print("points:\n", X_w)                                    # inspect the raw 2-D points.
+print("initial centroids:\n", mu_w)                        # inspect where the two centers begin.
+```
+▶ What you'll see: six points in two obvious groups, with centroids that start far from both.
+
+```python
+d_w = np.linalg.norm(X_w[:, None, :] - mu_w[None, :, :], axis=2)  # distance from every point (rows) to every centroid (cols).
+print("distance matrix (points x centroids):\n", np.round(d_w, 2))  # inspect the raw distances we assign on.
+```
+We use broadcasting `X_w[:, None, :] - mu_w[None, :, :]` because it forms all point×centroid differences at once (shape 6×2×2) without a Python loop — the same trick scales to millions of points.
+▶ What you'll see: each row shows a point's distance to centroid 0 and centroid 1; the smaller entry is the cluster it should join.
+
+```python
+c_w = np.argmin(d_w, axis=1)  # assignment step: each point picks the column (centroid) with the smallest distance.
+print("assignments:", c_w)     # 0 = lower-left centroid, 1 = upper-right centroid.
+```
+▶ What you'll see: the first three points snap to one centroid, the last three to the other.
+
+```python
+mu_new_w = np.array([X_w[c_w == j].mean(axis=0) for j in range(2)])  # update step: move each centroid to the mean of its members.
+print("updated centroids:\n", np.round(mu_new_w, 3))                  # inspect the new centers.
+```
+The mean is not an arbitrary choice: for squared-distance cost, the point that minimizes total squared distance to a set is exactly their mean — so the update step provably makes $J$ as small as possible for the current assignment.
+▶ What you'll see: both centroids jump to the middle of their assigned group.
+
+```python
+def distortion_w(X, mu, c):                       # J = total squared distance from each point to its centroid.
+    return float(np.sum((X - mu[c]) ** 2))         # mu[c] broadcasts each point's assigned centroid back onto it.
+print("J before update:", round(distortion_w(X_w, mu_w, c_w), 3))       # cost with the old centroids.
+print("J after update :", round(distortion_w(X_w, mu_new_w, c_w), 3))   # cost after moving centroids — must be lower.
+```
+▶ What you'll see: distortion drops sharply after a single update.
+
+```python
+mu_iter_w = np.array([[0.0, 0.0], [6.0, 6.0]])   # restart from the off-center centroids to record the full run.
+history_w = []                                    # collect distortion after each full iteration.
+for step_w in range(5):                           # a few iterations is plenty for this toy.
+    dist_w = np.linalg.norm(X_w[:, None, :] - mu_iter_w[None, :, :], axis=2)  # recompute distances.
+    assign_w = np.argmin(dist_w, axis=1)          # assignment step.
+    mu_iter_w = np.array([X_w[assign_w == j].mean(axis=0) for j in range(2)])  # update step.
+    history_w.append(distortion_w(X_w, mu_iter_w, assign_w))  # record the new cost.
+print("distortion per iteration:", np.round(history_w, 3))    # should be non-increasing.
+```
+▶ What you'll see: the cost decreases (never rises) and quickly flattens — that is convergence.
+
+```python
+fig, ax = plt.subplots(1, 2, figsize=(8, 3.2))                     # left: final clusters; right: the cost curve.
+ax[0].scatter(X_w[:, 0], X_w[:, 1], c=assign_w, cmap="viridis", s=80)  # color points by final cluster.
+ax[0].scatter(mu_iter_w[:, 0], mu_iter_w[:, 1], marker="X", s=200, c="red")  # mark final centroids.
+ax[0].set_title("1: final k-means clusters")                       # label the geometry.
+ax[1].plot(range(1, len(history_w) + 1), history_w, marker="o")    # plot distortion vs iteration.
+ax[1].set_xlabel("iteration"); ax[1].set_ylabel("distortion J"); ax[1].set_title("1: J decreases monotonically")
+plt.tight_layout(); plt.show()                                     # render both panels.
+```
+▶ What you'll see: two clean clusters with centroids at their hearts, beside a downward-only cost curve.
+
+*Why it's done this way: alternating "assign then average" is coordinate descent on $J$ — each half-step is optimal given the other, so the loop is guaranteed to converge (to a local minimum), which is why k-means is both simple and stable.*
+
+#### 2. EM as soft assignment: responsibilities instead of hard labels
+
+k-means forces every point into exactly one cluster. But a point on the border between two blobs is genuinely ambiguous, and pretending it belongs 100% to one side throws away information. EM keeps a **responsibility** — a probability that the point came from each cluster — computed from how close (and how likely) each cluster is. We build a one-step soft assignment to see a boundary point split, say, 55/45 instead of 100/0.
+
+```python
+mu_a_w, mu_b_w = np.array([1.2, 1.2]), np.array([5.1, 5.0])  # two cluster centers (from concept 1).
+x_border_w = np.array([3.1, 3.0])                             # a point sitting almost exactly between them.
+d_a_w = np.sum((x_border_w - mu_a_w) ** 2)                    # squared distance to cluster A.
+d_b_w = np.sum((x_border_w - mu_b_w) ** 2)                    # squared distance to cluster B.
+print("squared dist to A:", round(d_a_w, 3), " to B:", round(d_b_w, 3))  # nearly equal → ambiguous.
+```
+▶ What you'll see: the border point is almost equidistant from both centers.
+
+```python
+beta_w = 0.5                                                  # a "sharpness" (inverse-variance) knob for the soft weights.
+w_a_w = np.exp(-beta_w * d_a_w)                               # unnormalized weight for A: closer ⇒ larger (Gaussian-shaped).
+w_b_w = np.exp(-beta_w * d_b_w)                               # unnormalized weight for B.
+print("unnormalized weights:", round(w_a_w, 4), round(w_b_w, 4))  # raw likelihood-like scores.
+```
+We use $e^{-\beta d^2}$ because it is the shape of a Gaussian bump centered on each cluster: a point's weight for a cluster is how likely that Gaussian would have generated it. Exponentiating a negative distance also guarantees positive weights we can normalize into probabilities.
+▶ What you'll see: two positive weights, larger for the nearer center.
+
+```python
+resp_a_w = w_a_w / (w_a_w + w_b_w)                           # normalize so responsibilities sum to 1 (a probability).
+resp_b_w = w_b_w / (w_a_w + w_b_w)                           # the complementary responsibility.
+print("responsibility A: {:.1%}  B: {:.1%}".format(resp_a_w, resp_b_w))  # e.g. ~55% / ~45%.
+hard_w = "A" if d_a_w < d_b_w else "B"                        # what k-means would have said (all-or-nothing).
+print("k-means hard label would be:", hard_w)                # 100% one side — throws away the tie.
+```
+▶ What you'll see: a soft split near 50/50, versus k-means' brittle 100/0 verdict.
+
+```python
+grid_w = np.linspace(0, 6, 60)                                # sample positions along the A→B axis.
+line_pts_w = np.array([[t, t] for t in grid_w])               # points on the diagonal between the centers.
+rA_w = np.exp(-beta_w * np.sum((line_pts_w - mu_a_w) ** 2, axis=1))  # weight for A along the line.
+rB_w = np.exp(-beta_w * np.sum((line_pts_w - mu_b_w) ** 2, axis=1))  # weight for B along the line.
+respA_line_w = rA_w / (rA_w + rB_w)                           # responsibility for A at each position.
+plt.figure(figsize=(5, 3)); plt.plot(grid_w, respA_line_w, color="purple")  # how A's responsibility varies.
+plt.axhline(0.5, ls="--", c="gray"); plt.xlabel("position along A→B"); plt.ylabel("responsibility for A")
+plt.title("2: soft assignment varies smoothly"); plt.show()   # render the smooth transition.
+```
+▶ What you'll see: responsibility slides smoothly from 1 to 0 across the boundary, instead of a hard step.
+
+*Why it's done this way: real cluster memberships are uncertain near boundaries; keeping a probability (the E-step) lets the later M-step weight each point's contribution honestly, which is exactly what k-means' hard cutoff cannot do.*
+
+#### 3. Hierarchical linkage: merge nearest clusters and read the tree
+
+Hierarchical clustering avoids picking $k$ up front. It starts with every point as its own cluster and repeatedly merges the two **nearest** clusters, recording the merge heights as a tree (dendrogram). The twist is that "nearest" between *groups* is not one number — single, complete, and average linkage each define it differently, and that choice changes the shapes you recover.
+
+```python
+pts_w = np.array([[0.0, 0.0], [0.3, 0.1], [3.0, 3.0], [3.2, 2.8]])  # two close pairs, far apart.
+n_w = len(pts_w)                                                     # number of starting singleton clusters.
+D_w = np.linalg.norm(pts_w[:, None, :] - pts_w[None, :, :], axis=2)  # full pairwise distance matrix.
+print("pairwise distances:\n", np.round(D_w, 2))                     # inspect who is closest to whom.
+```
+▶ What you'll see: points 0&1 are very close, 2&3 are very close, and the two pairs are far apart.
+
+```python
+np.fill_diagonal(D_w, np.inf)                # ignore self-distance (0) so argmin finds a real pair.
+i_w, j_w = np.unravel_index(np.argmin(D_w), D_w.shape)  # locate the globally closest pair of clusters.
+print("first merge: points", i_w, "and", j_w, "at distance", round(D_w[i_w, j_w], 3))  # the earliest merge.
+```
+We set the diagonal to infinity because the closest "pair" would otherwise always be a point with itself (distance 0); this one-line guard is the standard way to exclude self-matches from an argmin.
+▶ What you'll see: the algorithm merges the tightest pair first — the leaves of the tree.
+
+```python
+A_w, B_w = np.array([[0.0, 0.0], [0.3, 0.1]]), np.array([[3.0, 3.0], [3.2, 2.8]])  # the two merged groups.
+cross_w = np.linalg.norm(A_w[:, None, :] - B_w[None, :, :], axis=2)  # all distances between the groups.
+single_w, complete_w, average_w = cross_w.min(), cross_w.max(), cross_w.mean()  # three linkage definitions.
+print("single (min):", round(single_w, 3), " complete (max):", round(complete_w, 3), " average:", round(average_w, 3))
+```
+Single linkage uses the closest pair (chains groups together, can find long shapes), complete uses the farthest pair (favors compact balls), and average splits the difference — same groups, three different "distances," hence three different trees.
+▶ What you'll see: three different group-to-group distances from the *same* two clusters.
+
+```python
+plt.figure(figsize=(5, 3))                                      # a minimal dendrogram sketch.
+plt.plot([0, 0, 1, 1], [0, single_w, single_w, 0], c="steelblue")   # left pair merges low.
+plt.plot([2, 2, 3, 3], [0, single_w, single_w, 0], c="steelblue")   # right pair merges low.
+plt.plot([0.5, 0.5, 2.5, 2.5], [single_w, complete_w, complete_w, single_w], c="crimson")  # the two groups merge high.
+plt.xticks([0, 1, 2, 3], ["p0", "p1", "p2", "p3"]); plt.ylabel("merge height (distance)")
+plt.title("3: dendrogram — near pairs merge low, far groups high"); plt.show()
+```
+▶ What you'll see: a tree whose low bars are the tight pairs and whose tall bar joins the two far-apart groups.
+
+*Why it's done this way: merging by distance and recording the heights turns clustering into a whole hierarchy you can cut at any level, so you decide the number of clusters after seeing the structure rather than guessing $k$ first.*
+
+#### 4. Silhouette: scoring clusters when there are no labels
+
+Unsupervised clustering has no ground truth to check against, so we need an *internal* quality score. The silhouette compares, for each point, how tight its own cluster is ($a$ = mean distance to its clustermates) against how far the nearest *other* cluster is ($b$). The score $s=\frac{b-a}{\max(a,b)}$ lands in $[-1,1]$: near 1 means "snug in its cluster and far from others," near 0 means "on a boundary," negative means "probably mis-assigned."
+
+```python
+clustered_w = np.array([[0.0, 0.0], [0.4, 0.2], [0.1, 0.5],   # cluster 0: three tight points,
+                        [4.0, 4.0], [4.3, 3.8]])               # cluster 1: two tight points.
+labels_w = np.array([0, 0, 0, 1, 1])                           # their cluster assignments.
+target_w = 0                                                   # score the first point (index 0).
+```
+▶ What you'll see: a small labeled dataset where point 0 clearly belongs to cluster 0.
+
+```python
+same_w = [k for k in range(len(clustered_w)) if labels_w[k] == labels_w[target_w] and k != target_w]  # clustermates.
+a_w = np.mean([np.linalg.norm(clustered_w[target_w] - clustered_w[k]) for k in same_w])  # mean intra-cluster distance.
+print("a (own-cluster tightness):", round(a_w, 3))            # small a = snug fit.
+```
+We exclude the point itself (`k != target_w`) because a point's distance to itself is 0 and would dishonestly shrink $a$; $a$ should measure distance to *other* members only.
+▶ What you'll see: a small $a$, confirming point 0 sits close to its clustermates.
+
+```python
+other_w = [k for k in range(len(clustered_w)) if labels_w[k] != labels_w[target_w]]  # points in the other cluster.
+b_w = np.mean([np.linalg.norm(clustered_w[target_w] - clustered_w[k]) for k in other_w])  # mean nearest-other distance.
+s_w = (b_w - a_w) / max(a_w, b_w)                             # the silhouette score for this point.
+print("b (distance to other cluster):", round(b_w, 3))        # large b = well separated.
+print("silhouette s:", round(s_w, 3))                         # (b - a) / max(a, b), near 1 here.
+assert -1.0 <= s_w <= 1.0                                      # the score is always bounded in [-1, 1].
+```
+Dividing by $\max(a,b)$ is the normalization that forces the score into $[-1,1]$: whichever of "tightness" or "separation" is larger sets the scale, so the number is comparable across datasets of any size.
+▶ What you'll see: a silhouette near 1 — point 0 is tight and well separated.
+
+```python
+all_s_w = []                                                   # compute the silhouette for every point.
+for t_w in range(len(clustered_w)):                            # loop over all points.
+    same = [k for k in range(len(clustered_w)) if labels_w[k] == labels_w[t_w] and k != t_w]  # its clustermates.
+    other = [k for k in range(len(clustered_w)) if labels_w[k] != labels_w[t_w]]  # the other cluster.
+    a = np.mean([np.linalg.norm(clustered_w[t_w] - clustered_w[k]) for k in same])   # intra distance.
+    b = np.mean([np.linalg.norm(clustered_w[t_w] - clustered_w[k]) for k in other])  # nearest-other distance.
+    all_s_w.append((b - a) / max(a, b))                        # store each point's silhouette.
+plt.figure(figsize=(5, 3)); plt.bar(range(len(all_s_w)), all_s_w, color="seagreen")  # bar per point.
+plt.axhline(np.mean(all_s_w), ls="--", c="k", label=f"mean={np.mean(all_s_w):.2f}")  # overall score.
+plt.xlabel("point"); plt.ylabel("silhouette"); plt.legend(); plt.title("4: per-point silhouette"); plt.show()
+```
+▶ What you'll see: all bars near 1 with a high mean — evidence the two clusters are real and well separated.
+
+*Why it's done this way: with no labels to score against, silhouette turns "are these clusters good?" into one bounded, comparable number per point, so you can compare different $k$ values or algorithms objectively.*
+
 ### 🟢 Basics (warm-up)
 
 #### B1. Squared distance from one point to one centroid
