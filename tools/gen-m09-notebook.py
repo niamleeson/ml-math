@@ -35,8 +35,9 @@ knowledge so you need fewer labels: **transfer learning** and **distillation**.
 - **Part A · Cold-start & the confidence blend:** why an early "2 clicks / 20 impressions"
   is a lie, how the blend `p = (1-c)·prior + c·learned` with `c = n/(n+k)` bridges safely,
   the exit criteria, and why this protects ad **budgets**.
-- **Part B · Transfer learning:** with only a few labels a from-scratch model flounders —
-  reuse a model trained on a related task and watch it recover. Plus **negative transfer**.
+- **Part B · Transfer learning:** reuse an **old model** on a new surface and **add new
+  features** it never saw — see exactly how features are added and how training/inference
+  flow, why it beats training from scratch on few labels, plus **negative transfer**.
 - **Part C · Distillation:** train a small, fast **student** to imitate a strong, slow
   **teacher** — including **temperature** and "dark knowledge," and the quality-vs-latency
   tradeoff.
@@ -237,111 +238,280 @@ print("raw would overspend on the 15% spike; blended ranks the proven ad highest
 md("---\n# Part B · Transfer learning")
 
 md(r"""
-## Step 9 · The setup — few target labels, a related source
+## Step 9 · The scenario — reuse an OLD model on a NEW surface
 
-**Transfer** = reuse a model trained on a **related task with lots of data** (the *source*)
-to help a **new task with few labels** (the *target*). We build a hard, high-dimensional
-task (40 features). The **source** model sees 40,000 labels; the **target** has only a
-handful. First, how good is the source on its own?
+Imagine your team already has a mature **events-ranking model** ("the **old model**"). It was
+trained on **tons** of data using a rich set of **shared features** (audience fit, creative
+quality, advertiser history, topic signals — 25 engineered features in total).
+
+Now a **new Event Ads surface** launches. It has:
+- the **same 25 shared features**, **plus**
+- **2 brand-new features the old model never saw** — `is_video` (is the creative a video?)
+  and `is_weekend` — and
+- only a **few hundred labels** so far (it's new).
+
+**The goal:** don't throw away the old model, and don't ignore the new features. We'll
+**reuse the old model AND add the two new features** into a small **new model**. Along the
+way you'll see exactly how a feature is "added," and how training and inference flow.
+""")
+
+md(r"""
+## Step 10 · Build the OLD model (trained on lots of data, shared features only)
+
+First we create the old model. It learns the relationship between the **25 shared features**
+and clicks from **40,000** rows — so it has genuinely mastered that signal. Keep in mind it
+has **never seen** `is_video` or `is_weekend`; those didn't exist on the old surface.
 """)
 code(r"""
-D = 40
+D_SHARED = 25
 gen = np.random.default_rng(0)
-w_true = gen.normal(0, 1, D) * np.array([1.0]*8 + [0.15]*32)   # 8 strong + 32 weak features
-def make(n, seed, w=w_true):
-    r = np.random.default_rng(seed); X = r.normal(0, 1, (n, D))
-    y = (r.random(n) < 1/(1+np.exp(-(X @ w - 0.2)))).astype(int)
-    return X, y
+w_shared = gen.normal(0, 1, D_SHARED) * np.array([1.0]*6 + [0.25]*19)   # a few strong + many weak signals
 
-Xs, ys = make(40000, 1)                                  # SOURCE: plenty of labels
-source = LogisticRegression(max_iter=2000).fit(Xs, ys)
-Xte, yte = make(8000, 99)                                # shared test set
-print("source model AUC (trained on 40k):", round(roc_auc_score(yte, source.predict_proba(Xte)[:,1]), 3))
+def gen_shared(n, rng):
+    return rng.normal(0, 1, (n, D_SHARED))     # 25 standardized engineered features (0 = average)
+
+# OLD MODEL: the mature model, trained on 40k rows using the shared features ONLY
+r = np.random.default_rng(1)
+Xs = gen_shared(40000, r)
+ys = (r.random(40000) < 1/(1 + np.exp(-(Xs @ w_shared - 0.3)))).astype(int)
+old_model = LogisticRegression(max_iter=3000).fit(Xs, ys)
+print(f"OLD model trained on {len(Xs):,} rows x {D_SHARED} shared features")
+print(f"OLD model input width: {old_model.coef_.shape[1]} features  (it ONLY knows these 25)")
+
+# The NEW task: same 25 shared features + 2 NEW ones (is_video, is_weekend), explained next.
+w_new = np.array([1.6, -1.1])   # the true effect of the new features (video helps, weekend hurts)
+def gen_new(n, seed):
+    r = np.random.default_rng(seed)
+    Xshared    = gen_shared(n, r)
+    is_video   = r.integers(0, 2, n).astype(float)
+    is_weekend = r.integers(0, 2, n).astype(float)
+    Xextra     = np.column_stack([is_video, is_weekend])
+    logit = Xshared @ w_shared + Xextra @ w_new - 0.3
+    y = (r.random(n) < 1/(1 + np.exp(-logit))).astype(int)
+    return Xshared, Xextra, y
+
+# held-out test set for the NEW task (used later to score models)
+Xsh_test, Xnew_test, y_test = gen_new(6000, 99)
+print("OLD model AUC on the NEW task using shared signal only:",
+      round(roc_auc_score(y_test, old_model.predict_proba(Xsh_test)[:, 1]), 3),
+      "\n  -> decent, but it's blind to the 2 new features, so it's capped.")
 """)
 
 md(r"""
-## Step 10 · From-scratch flounders with few labels
+## Step 11 · The OLD model squashes MANY features into ONE number
 
-Train a fresh model on only the target's few labels. With 40 features and ~100–200 rows it
-**overfits** and generalizes poorly. Watch AUC climb only as labels pile up.
+Take **5 example impressions**. Each has the 25 shared features (a wide table). When we ask
+the old model to score them, it turns each **row of 25 numbers into a single prediction** — a
+click probability. That one number is the old model's whole opinion, distilled. Watch 25
+columns become 1.
 """)
 code(r"""
-def scratch_auc(n_labels, seed=7):
-    Xt, yt = make(n_labels, seed)
-    m = LogisticRegression(max_iter=2000).fit(Xt, yt)
-    return roc_auc_score(yte, m.predict_proba(Xte)[:,1])
+# 5 example impressions we'll follow all the way through
+Xsh_demo, Xnew_demo, y_demo = gen_new(5, 123)
 
-label_counts = [100, 200, 500, 1000, 2000, 10000]
-scratch = [scratch_auc(n) for n in label_counts]
-for n, a in zip(label_counts, scratch):
-    print(f"  {n:>6} labels -> scratch AUC {a:.3f}")
+# show the first 4 of the 25 shared columns (the rest exist, just hidden for readability)
+demo_shared = pd.DataFrame(Xsh_demo[:, :4].round(2), columns=[f"f{i+1}" for i in range(4)])
+demo_shared.insert(0, "impression", [f"imp {i+1}" for i in range(5)])
+demo_shared["...(25 total)"] = "..."
+print("STEP 11a — the 5 impressions' SHARED features (showing 4 of 25 columns):")
+print(demo_shared.to_string(index=False))
+
+# the old model turns those 25 columns into ONE probability per row
+old_pred_demo = old_model.predict_proba(Xsh_demo)[:, 1]
+print("\nSTEP 11b — OLD model's output = ONE number per impression (25 features -> 1):")
+for i, p in enumerate(old_pred_demo):
+    print(f"   imp {i+1}:  25 shared features  ->  old_model prob = {p:.3f}")
 """)
 
 md(r"""
-## Step 11 · Transfer to the rescue
+## Step 12 · The NEW task has extra features the old model never saw
 
-Simplest transfer: feed the **source model's prediction** (its logit) into the target model
-as a ready-made, information-rich feature. Now the target only has to learn *how much to
-trust* the source — one weight — so even **100 labels** get near the source's ceiling. Plot
-the two learning curves.
+Those same 5 impressions also carry **2 new features** — `is_video` and `is_weekend`. The old
+model **cannot** use them: it was built with exactly 25 inputs, so it has no slot for these.
+They're brand-new signal that only exists on the new surface.
 """)
 code(r"""
-def src_feat(X):
-    p = np.clip(source.predict_proba(X)[:,1], 1e-6, 1-1e-6)
-    return np.log(p/(1-p)).reshape(-1, 1)                 # the source's logit as ONE feature
-
-def transfer_auc(n_labels, seed=7):
-    Xt, yt = make(n_labels, seed)
-    m = LogisticRegression(max_iter=2000).fit(src_feat(Xt), yt)
-    return roc_auc_score(yte, m.predict_proba(src_feat(Xte))[:,1])
-
-transfer = [transfer_auc(n) for n in label_counts]
-ceiling = roc_auc_score(yte, source.predict_proba(Xte)[:,1])
-for n, a in zip(label_counts, transfer):
-    print(f"  {n:>6} labels -> transfer AUC {a:.3f}")
-
-plt.figure(figsize=(6.5,3.6))
-plt.plot(label_counts, scratch, "o-", color=RED, label="from scratch")
-plt.plot(label_counts, transfer, "o-", color=GREEN, label="transfer (reuse source)")
-plt.axhline(ceiling, color=GRAY, ls="--", label="source ceiling")
-plt.xscale("log"); plt.xlabel("# target labels (log)"); plt.ylabel("test AUC"); plt.legend()
-plt.title("transfer reaches the ceiling with ~100 labels; scratch needs ~10,000"); plt.show()
+demo_new = pd.DataFrame({"impression": [f"imp {i+1}" for i in range(5)],
+                         "is_video":   Xnew_demo[:, 0].astype(int),
+                         "is_weekend": Xnew_demo[:, 1].astype(int)})
+print("STEP 12 — the SAME 5 impressions' NEW features (old model never saw these):")
+print(demo_new.to_string(index=False))
+print("\nThe old model expects", old_model.coef_.shape[1], "inputs, so it literally can't eat these 2.")
+print("But the NEW model we build next CAN combine the old model's opinion WITH these.")
 """)
 
 md(r"""
-## Step 12 · The catch — **negative transfer**
+## Step 13 · "Adding a feature" = gluing another column on
 
-Transfer is a *hypothesis*, not a guarantee. If the source solved a **different** problem,
-its signal is misleading and transfer does **worse than scratch**. We build a "mismatched"
-source (trained toward unrelated weights) and reuse it — AUC collapses. Always validate the
-source–target fit.
+A model's input is just a **table**: one row per impression, one **column per feature**.
+Adding a feature means **pasting on another column** (`np.hstack` = stack side by side). We
+build the **new model's input** as three columns:
+
+`[ old_model's prediction | is_video | is_weekend ]`
+
+The old model (all 25 of its features) is now compressed into **column 0**; the two new
+features are columns 1 and 2.
 """)
 code(r"""
-w_bad = np.random.default_rng(0).normal(0, 1, D)                 # a DIFFERENT objective
-Xb, yb = make(40000, 2, w=w_bad)
-bad_source = LogisticRegression(max_iter=2000).fit(Xb, yb)
-def bad_feat(X):
-    p = np.clip(bad_source.predict_proba(X)[:,1], 1e-6, 1-1e-6)
-    return np.log(p/(1-p)).reshape(-1, 1)
+def old_feature(Xshared):
+    # the old model's probability, shaped as ONE column to glue on
+    return old_model.predict_proba(Xshared)[:, 1].reshape(-1, 1)
 
-Xt, yt = make(200, 7)
-a_scratch  = roc_auc_score(yte, LogisticRegression(max_iter=2000).fit(Xt, yt).predict_proba(Xte)[:,1])
-a_good     = roc_auc_score(yte, LogisticRegression(max_iter=2000).fit(src_feat(Xt), yt).predict_proba(src_feat(Xte))[:,1])
-a_bad      = roc_auc_score(yte, LogisticRegression(max_iter=2000).fit(bad_feat(Xt), yt).predict_proba(bad_feat(Xte))[:,1])
-print("with 200 target labels:")
-print(f"  scratch                    AUC {a_scratch:.3f}")
-print(f"  transfer from GOOD source   AUC {a_good:.3f}  (helps)")
-print(f"  transfer from MISMATCHED src AUC {a_bad:.3f}  (hurts! negative transfer)")
-plt.figure(figsize=(5.5,3.2))
-plt.bar(["scratch","good\ntransfer","mismatched\ntransfer"], [a_scratch, a_good, a_bad], color=[GRAY, GREEN, RED])
-plt.ylabel("test AUC"); plt.title("a wrong source is worse than no source"); plt.show()
+col_old   = old_feature(Xsh_demo)      # column 0: the old model's opinion
+cols_new  = Xnew_demo                  # columns 1,2: is_video, is_weekend
+glued     = np.hstack([col_old, cols_new])   # <-- adding features = gluing columns
+
+show = pd.DataFrame(glued.round(3), columns=["old_pred", "is_video", "is_weekend"])
+show.insert(0, "impression", [f"imp {i+1}" for i in range(5)])
+print("STEP 13 — the NEW model's input table (3 glued columns):")
+print(show.to_string(index=False))
+print("\ncolumn 0 = old model's opinion (25 feats squashed),  columns 1-2 = the new features.")
+print("shape went from", col_old.shape, "+", cols_new.shape, "->", glued.shape, "(same rows, more columns)")
+""")
+
+md(r"""
+## Step 14 · Train the NEW model — it learns ONE weight per column
+
+Now fit a small **new model** on that 3-column input using the new surface's few hundred
+labels. A linear model just learns **one weight per column** — how much each matters. Expect
+a **big weight on `old_pred`** (the old model already did the hard work) and real weights on
+the two new features.
+""")
+code(r"""
+# training data for the new surface: only 300 labels
+Xsh_tr, Xnew_tr, y_tr = gen_new(300, 7)
+X_train = np.hstack([old_feature(Xsh_tr), Xnew_tr])     # [old_pred | is_video | is_weekend]
+new_model = LogisticRegression(max_iter=3000).fit(X_train, y_tr)
+
+names = ["old_pred", "is_video", "is_weekend"]
+weights = new_model.coef_[0]
+print("STEP 14 — weights the NEW model learned (300 labels):")
+for nm, w in zip(names, weights):
+    print(f"   {nm:>11}: {w:+.2f}")
+print(f"   {'bias':>11}: {new_model.intercept_[0]:+.2f}")
+
+plt.figure(figsize=(5.5, 3.2))
+colors = [BLUE, GREEN, RED]
+plt.bar(names, weights, color=colors)
+plt.axhline(0, color="k", lw=.8)
+plt.ylabel("learned weight"); plt.title("one weight per column (big trust on the old model)")
+plt.show()
+print("old_pred gets the largest weight -> the new model leans heavily on the old model,")
+print("then adjusts with is_video (helps) and is_weekend (hurts).")
+""")
+
+md(r"""
+## Step 15 · Inference for ONE impression, end to end
+
+Let's score a single new impression by hand so the flow is concrete:
+**shared features → old model → one number → glue on the 2 new features → weighted sum →
+sigmoid → final probability.** We'll reproduce `predict_proba` with plain arithmetic.
+""")
+code(r"""
+# take one fresh impression
+Xsh_one, Xnew_one, _ = gen_new(1, 2024)
+
+# 1) shared features -> old model -> one number
+old_p = old_model.predict_proba(Xsh_one)[:, 1][0]
+print("1) old model reads its 25 shared features -> old_pred =", round(old_p, 3))
+
+# 2) grab the 2 new features
+v, wk = Xnew_one[0]
+print(f"2) new features -> is_video = {int(v)}, is_weekend = {int(wk)}")
+
+# 3) glue into the new model's 3-number input
+x = np.array([old_p, v, wk])
+print("3) glued input for the new model:", x.round(3))
+
+# 4) weighted sum = w . x + bias  (the new model's core computation)
+w = new_model.coef_[0]; b = new_model.intercept_[0]
+score = float(np.dot(w, x) + b)
+terms = "  +  ".join(f"{wi:+.2f}*{xi:g}" for wi, xi in zip(w, x))
+print(f"4) score = {terms}  {b:+.2f}  =  {score:.3f}")
+
+# 5) sigmoid -> probability
+prob = 1/(1 + np.exp(-score))
+print(f"5) probability = sigmoid({score:.3f}) = {prob:.3f}")
+print("   check vs model.predict_proba:", round(float(new_model.predict_proba(x.reshape(1,-1))[:,1][0]), 3), "(matches)")
+""")
+
+md(r"""
+## Step 16 · Does it actually help? scratch vs old-only vs transfer
+
+Three ways to serve the new surface, across different label budgets:
+- **from scratch** — train on all 27 raw features (25 shared + 2 new) using only the few
+  labels. With so many features and so few rows it **overfits**.
+- **old model only** — reuse the old model as-is. It's stuck below the ceiling because it
+  **can't see the 2 new features**.
+- **transfer** — old model's prediction **plus** the 2 new features (what we built). Best of
+  both: the old model's mastery **and** the new signal.
+""")
+code(r"""
+def score_scratch(n):
+    Xsh, Xnew, y = gen_new(n, 7)
+    m = LogisticRegression(max_iter=3000).fit(np.hstack([Xsh, Xnew]), y)
+    return roc_auc_score(y_test, m.predict_proba(np.hstack([Xsh_test, Xnew_test]))[:, 1])
+
+def score_transfer(n):
+    Xsh, Xnew, y = gen_new(n, 7)
+    m = LogisticRegression(max_iter=3000).fit(np.hstack([old_feature(Xsh), Xnew]), y)
+    return roc_auc_score(y_test, m.predict_proba(np.hstack([old_feature(Xsh_test), Xnew_test]))[:, 1])
+
+label_counts = [100, 200, 500, 1000, 5000]
+scratch  = [score_scratch(n)  for n in label_counts]
+transfer = [score_transfer(n) for n in label_counts]
+old_only = roc_auc_score(y_test, old_model.predict_proba(Xsh_test)[:, 1])
+
+print(f"{'labels':>7}{'scratch':>10}{'old-only':>10}{'transfer':>10}")
+for n, s, t in zip(label_counts, scratch, transfer):
+    print(f"{n:>7}{s:>10.3f}{old_only:>10.3f}{t:>10.3f}")
+
+plt.figure(figsize=(6.5, 3.6))
+plt.plot(label_counts, scratch, "o-", color=RED, label="from scratch (all raw)")
+plt.axhline(old_only, color=GRAY, ls="--", label="old model only (blind to new feats)")
+plt.plot(label_counts, transfer, "o-", color=GREEN, label="transfer (old_pred + new feats)")
+plt.xscale("log"); plt.xlabel("# new-surface labels (log)"); plt.ylabel("test AUC"); plt.legend()
+plt.title("transfer wins with few labels; scratch needs far more"); plt.show()
+""")
+
+md(r"""
+## Step 17 · The catch — negative transfer
+
+Transfer is a *hypothesis*, not a guarantee. If the old model solved a **different** problem,
+its prediction is misleading and leaning on it does **worse than scratch**. We build a
+**mismatched** old model (trained toward unrelated weights) and reuse it — AUC drops. Always
+validate that the old model actually fits the new task (e.g., beats a scratch baseline).
+""")
+code(r"""
+# a mismatched "old model": trained on the same features but a DIFFERENT relationship
+w_wrong = np.random.default_rng(777).normal(0, 1, D_SHARED)
+rb = np.random.default_rng(2); Xb = gen_shared(40000, rb)
+yb = (rb.random(40000) < 1/(1 + np.exp(-(Xb @ w_wrong - 0.3)))).astype(int)
+wrong_model = LogisticRegression(max_iter=3000).fit(Xb, yb)
+def wrong_feature(Xshared):
+    return wrong_model.predict_proba(Xshared)[:, 1].reshape(-1, 1)
+
+Xsh, Xnew, y = gen_new(300, 7)
+a_scratch = score_scratch(300)
+a_good    = score_transfer(300)
+a_bad     = roc_auc_score(y_test,
+              LogisticRegression(max_iter=3000).fit(np.hstack([wrong_feature(Xsh), Xnew]), y)
+              .predict_proba(np.hstack([wrong_feature(Xsh_test), Xnew_test]))[:, 1])
+print("with 300 labels:")
+print(f"  scratch                     AUC {a_scratch:.3f}")
+print(f"  transfer from GOOD old model  AUC {a_good:.3f}  (helps)")
+print(f"  transfer from WRONG old model AUC {a_bad:.3f}  (hurts! negative transfer)")
+plt.figure(figsize=(5.5, 3.2))
+plt.bar(["scratch", "good\ntransfer", "wrong\ntransfer"], [a_scratch, a_good, a_bad],
+        color=[GRAY, GREEN, RED])
+plt.ylabel("test AUC"); plt.title("a wrong old model is worse than no old model"); plt.show()
 """)
 
 # =================================================================== PART C
 md("---\n# Part C · Distillation")
 
 md(r"""
-## Step 13 · Teacher vs student
+## Step 18 · Teacher vs student
 
 **Distillation** trains a small, **fast student** to imitate a big, **slow teacher**. Why?
 The teacher may be too slow to serve online, or you may have lots of **unlabeled** traffic
@@ -366,7 +536,7 @@ print("teacher AUC (strong, but slow to serve):", round(auc_teacher, 3))
 """)
 
 md(r"""
-## Step 14 · Temperature & "dark knowledge"
+## Step 19 · Temperature & "dark knowledge"
 
 A **hard label** says only 0 or 1. The teacher's **probability** says much more: a negative
 scored 0.45 is "almost a click," while 0.02 is "clearly not." That extra shading is **dark
@@ -390,7 +560,7 @@ print("hard labels would be", (p_teacher>0.5).astype(int), "- the student would 
 """)
 
 md(r"""
-## Step 15 · Distill — the teacher teaches the student
+## Step 20 · Distill — the teacher teaches the student
 
 Two students, both light logistic models (with interaction features so they *can* learn a
 bit):
@@ -428,7 +598,7 @@ plt.ylabel("test AUC"); plt.ylim(0.7, 0.9); plt.title("distillation lifts the sm
 """)
 
 md(r"""
-## Step 16 · The quality-vs-latency tradeoff
+## Step 21 · The quality-vs-latency tradeoff
 
 The distilled student is a little **below** the teacher but **much cheaper to serve**. That
 trade can be a win: if latency is the bottleneck, a 5 ms student at slightly lower AUC beats
@@ -448,7 +618,7 @@ print(f"teacher: AUC {auc_teacher:.3f} @ ~40 ms   vs   student: AUC {auc_distill
 """)
 
 md(r"""
-## Step 17 · The catch — distillation copies the teacher's bias
+## Step 22 · The catch — distillation copies the teacher's bias
 
 Distillation makes serving cheaper; it does **not** fix a bad teacher. If the teacher learned
 from a biased policy, the student inherits that bias. So keep the teacher as an offline
