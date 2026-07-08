@@ -130,7 +130,7 @@ assert len(pairs) == len(skipped_items)
 
 ## M7.3 · Multi-objective ranking & CTR architectures
 
-**The idea.** Real rankers rarely optimize only clicks. A LinkedIn feed, ads, jobs, or Creator Marketplace ranker might care about click, dwell, conversion, predicted value, negative feedback, quality, diversity, and budget pacing. Modern architectures often share a backbone and emit multiple heads.
+**The idea.** Real rankers rarely optimize only clicks. In a feed, ads, jobs, or marketplace-style ranker, the product might care about click, dwell, conversion, predicted value, negative feedback, quality, diversity, and budget pacing. Modern architectures often share a backbone and emit multiple heads.
 
 **Everyday analogy.** A hiring committee does not choose a candidate from one number alone. One interviewer scores skills, another estimates culture fit, another checks compensation expectations, and the final decision weighs those signals with explicit tradeoffs. A multi-objective ranker does the same with click, dwell, value, and risk heads; the weights are a product decision, not an accidental scale mismatch.
 

@@ -7,6 +7,8 @@ RAG turns an LLM from a memory-only generator into a grounded product system. In
 
 Query understanding adds the product layer: convert messy natural language into typed intent and slots, then refuse or clarify when confidence is low. This is central for Search Ads, Creator Marketplace, support assistants, and any system where executing the wrong interpretation is worse than asking a follow-up.
 
+**Example note.** The policy snippets, schemas, and thresholds below are toy examples to teach the failure modes and safeguards.
+
 **By the end you can answer:**
 - What is RAG, and why ground generation in retrieved evidence?
 - How do retrieval and reranking feed the generator?
@@ -205,7 +207,7 @@ Confidence is below `0.75`, so the product should not execute a narrow search. I
 Do you mean Java programming or coffee, and should NY mean New York City or New York State?
 ```
 
-**Validation rules.** A production query-understanding layer should check:
+**Validation rules.** A robust query-understanding layer should check:
 
 - intent is one of the allowed actions;
 - required slots for that intent are present;

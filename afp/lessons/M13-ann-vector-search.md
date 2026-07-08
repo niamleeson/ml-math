@@ -7,6 +7,8 @@ Vector search turns embeddings into a production retrieval system. Exact nearest
 
 ANN is not free speed. It trades recall for latency and memory. The engineering job is to measure the loss against an exact baseline, sweep the knobs, and choose an operating point that satisfies product quality, latency, memory, freshness, and filtering constraints.
 
+**Example note.** The corpus sizes, recall, latency, and memory values in this lesson are synthetic operating examples for learning the tradeoff. They are not Creator Marketplace production measurements.
+
 **By the end you can answer:**
 - Why does exact kNN not scale, and what does ANN trade away?
 - How does HNSW work, including the graph idea and efSearch?
@@ -57,7 +59,7 @@ HNSW is often strong when high recall matters and memory is available. It can su
 - **Partition family (IVF):** assign each vector to one coarse centroid; with 1,000 lists and `nprobe=10`, search about 1% of the corpus before rerank.
 - **Quantization family (PQ / IVF-PQ / ScaNN):** store compressed codes; a 768-d float32 vector is 3,072 bytes, while a 64-byte PQ code is 48× smaller before metadata and rerank vectors.
 
-**Method operating points, concretely.** On the same 5M-vector creator index with recall measured against exact top-50:
+**Method operating points, concretely.** On the same illustrative 5M-vector creator index with recall measured against exact top-50:
 
 | Method | What it is | Example operating point |
 |---|---|---|
@@ -65,7 +67,7 @@ HNSW is often strong when high recall matters and memory is available. It can su
 | **IVF-PQ** | coarse partitions plus compressed vector codes | `nprobe=32` + 500 exact rerank → recall@50 0.94, p95 19 ms, memory 6 GB; choose under an 8 GB shard budget |
 | **ScaNN** | partition + anisotropic/vector quantization + reorder/rerank | 2,000 leaves, 80 probes, 1,000 reorder → recall@50 0.96, p95 17 ms, memory 9 GB; choose when the serving stack supports its MIPS-tuned rerank path |
 
-**Worked example — exact scan vs selected partitions.** A Creator Marketplace index has 10M creator vectors. Exact search compares the advertiser query to all 10M. IVF with 1,000 lists and `nprobe=10` searches about 100k vectors, then reranks. It may miss a niche creator if that creator sits in the 11th-nearest list, so recall must be measured against exact top-k.
+**Worked example — exact scan vs selected partitions.** In a toy Creator Marketplace-style index with 10M creator vectors, exact search compares the advertiser query to all 10M. IVF with 1,000 lists and `nprobe=10` searches about 100k vectors, then reranks. It may miss a niche creator if that creator sits in the 11th-nearest list, so recall must be measured against exact top-k.
 
 ```python
 import numpy as np
@@ -116,7 +118,7 @@ The correct worked example shape is S7: knob-sweep → tradeoff curve → operat
 
 **Step 3 — pick an operating point.** Choose the cheapest point that satisfies quality. Do not maximize recall blindly if it blows the p95 budget or starves the reranker.
 
-**Concrete HNSW sweep.** Same 5M-vector creator index, recall against exact top-50:
+**Concrete HNSW sweep.** Same illustrative 5M-vector creator index, recall against exact top-50:
 
 | Index | Knob | Recall@50 | p95 latency | Memory | Notes |
 |---|---:|---:|---:|---:|---|
@@ -127,7 +129,7 @@ The correct worked example shape is S7: knob-sweep → tradeoff curve → operat
 
 If the SLO is recall@50 ≥ 0.95 and p95 ≤ 25 ms, `efSearch=160` is the operating point. If p95 must be ≤ 15 ms, the team either accepts `efSearch=80`, improves the reranker to recover quality, or changes the index/hardware budget.
 
-**Concrete IVF-PQ sweep.** Same corpus compressed with IVF-PQ:
+**Concrete IVF-PQ sweep.** Same illustrative corpus compressed with IVF-PQ:
 
 | Index | Knob | Recall@50 | p95 latency | Memory | Notes |
 |---|---:|---:|---:|---:|---|
@@ -163,7 +165,7 @@ Use hybrid when queries include exact creator names, product names, rare industr
 | Frequent updates/freshness | Often easier than rebuilding compressed indexes, implementation-dependent | Harder if coarse/PQ rebuilds are needed | Depends on serving stack |
 | Rare exact terms or filters | Add lexical/filter layer | Add lexical/filter layer | Hybrid dense+BM25 |
 
-**Worked operating decision.** A Creator Marketplace service has 20 ms p95 retrieval budget, 8 GB memory budget per shard, and recall@50 target of 0.94. HNSW at `efSearch=160` reaches 0.97 recall but uses 18 GB, so it misses memory. IVF-PQ at `nprobe=64` reaches 0.95 recall in 29 ms, so it misses latency. IVF-PQ at `nprobe=32` with a small exact rerank of 500 candidates reaches 0.94 in 19 ms and 6 GB. That is the selected point, with hybrid lexical retrieval added for exact creator-name queries.
+**Worked operating decision.** In an illustrative Creator Marketplace-style service, assume a 20 ms p95 retrieval budget, 8 GB memory budget per shard, and recall@50 target of 0.94. HNSW at `efSearch=160` reaches 0.97 recall but uses 18 GB, so it misses memory. IVF-PQ at `nprobe=64` reaches 0.95 recall in 29 ms, so it misses latency. IVF-PQ at `nprobe=32` with a small exact rerank of 500 candidates reaches 0.94 in 19 ms and 6 GB. That is the selected point, with hybrid lexical retrieval added for exact creator-name queries.
 
 **You'll be able to say:** *"I tune ANN by comparing approximate results to an exact or high-quality baseline, plotting recall@k against p50/p95 latency and memory, then choosing the cheapest point that satisfies product quality. HNSW is often strong for high recall and mutable-ish serving with more memory; IVF-PQ is attractive when memory is tight and large batches tolerate quantization; hybrid dense+BM25 helps when lexical constraints, rare terms, or exact names matter."*
 

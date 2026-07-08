@@ -1,8 +1,8 @@
 /* =====================================================================
-   build-curriculum.js — dependency-free generator for the "Curriculum"
-   section (AFP-AI Learning Guide). Converts afp/lessons/M<NN>-*.md into
-   lessons/curriculum.js, whose objects are pushed into window.LESSONS so
-   the main app renders them (superGroup "Curriculum", template
+   build-curriculum.js — dependency-free generator for the "Recommender
+   System ML" section (AFP-AI Learning Guide). Converts afp/lessons/M<NN>-*.md
+   into lessons/curriculum.js, whose objects are pushed into window.LESSONS so
+   the main app renders them (superGroup "Recommender System ML", template
    "curriculum"). One lesson page per module; the nav section is the module's
    Domain. Math ($...$/$$...$$) preserved for MathJax; code fences to highlight.js.
    Isolated from the app's own engine and from the AI Cheat Sheet build.
@@ -147,7 +147,7 @@ const data = files.map((f, i) => {
     id: "cur-" + f.replace(/\.md$/, ""),
     title: conv.title || f.replace(/\.md$/, ""),
     module: domainOf(n),
-    superGroup: "Curriculum",
+    superGroup: "Recommender System ML",
     template: "curriculum",
     meta: domainOf(n) + " · Maps to: " + mapsTo,
     prevId: i > 0 ? "cur-" + files[i - 1].replace(/\.md$/, "") : "",

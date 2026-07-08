@@ -5,6 +5,8 @@
 
 Cold-start is the moment when the model has the least evidence but the product still has to decide. New users, new items, and new systems do not wait for perfect labels. The safe pattern is to begin with priors, content, and guardrails, then hand off to learned evidence only when the evidence is strong enough.
 
+**Example note.** The thresholds, AUCs, and latency numbers below are toy values for practicing the handoff logic. They are not AFP project targets or production measurements.
+
 **By the end you can answer:**
 - What are cold-start types (item/user/system), and why do they break learned models?
 - How do content features, popularity priors, and heuristics bridge cold-start?
@@ -52,7 +54,7 @@ Cold-start bridges are deliberately boring:
 - **Cold item:** a new Event Ad has category, creative text, audience, and advertiser history but 0 impressions, so it starts from a category prior and safe pacing cap.
 - **Cold user:** a first-session member has no long-term history, so the ranker uses location, device, current query, and broad popularity instead of a member embedding.
 - **Cold system/marketplace:** a new creator marketplace surface has no reliable labels, so launch uses heuristics plus transferred representations while exploration collects unbiased logs.
-- **Warm item:** after the Event Ad reaches 1,000 impressions, 20+ clicks, and stable slice calibration, its learned CTR estimate gradually receives more weight than the prior.
+- **Warm item:** in a toy handoff rule, after the Event Ad reaches 1,000 impressions, 20+ clicks, and stable slice calibration, its learned CTR estimate gradually receives more weight than the prior.
 
 
 A genuine confidence blend combines the prior and learned estimate:
@@ -73,13 +75,13 @@ p_blend = (1 - confidence) * p_prior + confidence * p_learned
 assert round(p_blend, 4) == 0.0118
 ```
 
-**Exit criteria.** A cold→warm handoff needs explicit gates, not intuition:
+**Exit criteria.** A cold→warm handoff needs explicit gates, not intuition. These example gates are deliberately simple so you can see the shape of the decision:
 
 The handoff can be gradual rather than binary. Increase learned-model weight as evidence grows, but keep a rollback path when calibration, pacing, or guardrails become unstable.
 
 
-- Minimum impressions, such as **≥1,000**.
-- Minimum positives, such as **≥20** clicks/conversions.
+- Minimum impressions, such as **≥1,000** in this toy example.
+- Minimum positives, such as **≥20** clicks/conversions in this toy example.
 - Stable calibration on the relevant slice.
 - Pacing stability for ads budgets.
 - Guardrail metrics not regressing.
@@ -120,13 +122,13 @@ Check source-target fit explicitly:
 
 **Concrete reuse handoff examples.**
 
-- **Transfer:** initialize a new Event Ads model from a mature events-ranking model because both use audience, category, creative, and advertiser-history features; then fine-tune on the first 1k target labels.
-- **Distillation:** use a 40 ms cross-feature teacher offline to label launch traffic, then train a 5 ms student two-tower/ranker to serve the same early decisions until target labels mature.
+- **Transfer:** as an illustrative setup, initialize a new Event Ads model from a mature events-ranking model because both use audience, category, creative, and advertiser-history features; then fine-tune on the first 1k target labels.
+- **Distillation:** as an illustrative setup, use a 40 ms cross-feature teacher offline to label launch traffic, then train a 5 ms student two-tower/ranker to serve the same early decisions until target labels mature.
 
 
 **Naive → break.** Train a target model from scratch with **1k labels**. It underfits and has unstable calibration. Or copy a source model blindly and get negative transfer because the source objective is shifted.
 
-**Fix.** Initialize from a related source, freeze or fine-tune shared layers, and compare against scratch with the same target validation. Transfer is a hypothesis, not a guarantee. A real number target: transfer reaches target AUC **0.70** with **1k** labels where scratch needs **10k** labels.
+**Fix.** Initialize from a related source, freeze or fine-tune shared layers, and compare against scratch with the same target validation. Transfer is a hypothesis, not a guarantee. Toy target: transfer reaches target AUC **0.70** with **1k** labels where scratch needs **10k** labels.
 
 **Distillation.** A teacher may be accurate but too slow. A student learns from the teacher's soft labels. With temperature $T$, teacher probabilities are softened so the student sees more than hard 0/1 outcomes. The distillation term commonly uses KL divergence:
 
@@ -134,7 +136,7 @@ $$\mathcal{L}_{distill}=T^2\,\mathrm{KL}\left(\mathrm{softmax}(z_t/T)\;\|\;\math
 
 The $T^2$ factor keeps gradient scales comparable as temperature changes. The practical idea is that the teacher's relative probabilities carry "dark knowledge": which wrong answers or lower-ranked items are almost plausible.
 
-**Worked example — quality/latency tradeoff.** A teacher ranker gets AUC **0.78** but takes **40 ms**. A distilled student gets AUC **0.76** at **5 ms**. If serving latency is the bottleneck, the student may be the right production model. If the teacher's output is also used to warm-start a target with few labels, validate that the student improves early learning without copying source bias.
+**Worked example — quality/latency tradeoff.** In a toy latency budget, a teacher ranker gets AUC **0.78** but takes **40 ms**. A distilled student gets AUC **0.76** at **5 ms**. If serving latency is the bottleneck, the student may be the right serving model. If the teacher's output is also used to warm-start a target with few labels, validate that the student improves early learning without copying source bias.
 
 ```python
 teacher_ms = 40

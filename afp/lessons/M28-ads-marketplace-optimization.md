@@ -5,6 +5,8 @@
 
 An ads marketplace turns predictions into allocation, payment, and delivery over time. M8 gave you calibrated probabilities; M27 gave you optimization, constraints, and shadow prices. This capstone connects them: a calibrated pCTR becomes an expected value, the auction allocates scarce attention, pacing decides whether a campaign should compete now, and guardrails keep advertiser, member, and platform outcomes safe.
 
+**Example note.** The auction bids, pCTR values, pacing multipliers, delivery goals, and guardrail thresholds below are toy numbers for hand calculation. They are not Search Ads, Instream Ads, Event Ads, or AFP production rules.
+
 **By the end you can answer:**
 - What is the value of an impression, and why is it calibrated pCTR × bid rather than raw model score × bid?
 - Why does calibration matter for marketplace allocation and advertiser/member outcomes?
@@ -94,7 +96,7 @@ $$\frac{0.100}{0.020}=5.00,$$
 
 so B pays about $5.00 per click, capped by B's $8.00 bid. Real production systems include reserves, quality adjustments, and auction-specific pricing details, but the hand calculation is the core: calibrated value ranks the ads; the next competitor determines the price.
 
-**Instream and quality guardrails.** Instream Ads may include member-experience constraints such as predicted hide-rate or completion-quality thresholds. If C has the highest pCTR but violates a video-quality or policy guardrail, it may be ineligible; the auction should choose among the remaining eligible ads rather than blindly maximizing click value.
+**Instream and quality guardrails.** Instream-style serving can be modeled with member-experience constraints such as predicted hide-rate or completion-quality thresholds. If C has the highest pCTR but violates a video-quality or policy guardrail, it may be ineligible; the auction should choose among the remaining eligible ads rather than blindly maximizing click value.
 
 **You'll be able to say:** *"For CPC ads, expected value per impression is calibrated pCTR × bid. Calibration matters because allocation compares probabilities times money; raw scores can mis-rank ads and harm advertiser/member outcomes. A second-price or GSP-style auction ranks by value or quality-adjusted value, allocates the slot(s), and charges the minimum price needed to keep the position, often derived from the next competitor's score."*
 
@@ -151,7 +153,7 @@ $$
 \text{s.t.}\quad & \sum_t x_t \ge 40 && \text{reserved sponsor must receive 40 impressions}\\
 & x_t \le e_t && \text{only eligible impressions can be used}\\
 & \sum_{t\in member\ m} x_t \le 3 && \text{frequency cap per member}\\
-& \text{predicted hide-rate allocation} \le 0.5\% && \text{member guardrail}\\
+& \text{toy predicted hide-rate allocation} \le 0.5\% && \text{member guardrail example}\\
 & 0\le x_t\le1.
 \end{aligned}
 $$
@@ -181,7 +183,7 @@ Do not treat every guardrail as just another score term. Some are hard constrain
 | **Guaranteed delivery** | A reserved Event Ads sponsor needs 10 more impressions and forecasts only 12 remaining eligible impressions, so the allocator must deliver about $10/12=83.3\%$ of that remaining supply to satisfy $\sum_t x_t\ge10$. | The delivery constraint can reserve or prioritize eligible impressions even when a pure auction would choose another campaign. |
 | **Multi-objective / guardrails** | In Instream Ads, C has pCTR 0.050 and bid 5.00 dollars, value $0.250$, but predicted hide-rate is 0.8% against a hard 0.5% threshold. | C is filtered or throttled despite the highest click value; the auction proceeds with member-safe eligible ads such as A or B. |
 
-**End-to-end loop.** For Search Ads, Instream Ads, and Event Ads, the production loop is:
+**End-to-end loop.** Conceptually, Search Ads, Instream Ads, and Event Ads can be taught with this marketplace loop:
 
 1. Generate eligible ads for the request.
 2. Predict calibrated pCTR and other quality outcomes.
@@ -200,7 +202,7 @@ If calibration is wrong, step 3 misvalues ads. If optimization is wrong, step 4 
 ---
 
 ## Resources
-- Budget Pacing at LinkedIn (Agarwal et al., 2014) (the pacing control loop in production)
+- Budget Pacing at LinkedIn (Agarwal et al., 2014) (published pacing-control example)
 
 ## Papers
 - Budget Pacing for Targeted Online Advertisements at LinkedIn (Agarwal et al., 2014)
