@@ -37,7 +37,8 @@ knowledge so you need fewer labels: **transfer learning** and **distillation**.
   the exit criteria, and why this protects ad **budgets**.
 - **Part B · Transfer learning:** reuse an **old model** on a new surface and **add new
   features** it never saw — see exactly how features are added and how training/inference
-  flow, why it beats training from scratch on few labels, plus **negative transfer**.
+  flow, why it beats training from scratch on few labels, plus **negative transfer**. Then
+  **redo it all in PyTorch**, with the old model as a **frozen sub-module inside** the new one.
 - **Part C · Distillation:** train a small, fast **student** to imitate a strong, slow
   **teacher** — including **temperature** and "dark knowledge," and the quality-vs-latency
   tradeoff.
@@ -507,11 +508,206 @@ plt.bar(["scratch", "good\ntransfer", "wrong\ntransfer"], [a_scratch, a_good, a_
 plt.ylabel("test AUC"); plt.title("a wrong old model is worse than no old model"); plt.show()
 """)
 
+md("---\n# Part B (continued) · The same process in PyTorch")
+
+md(r"""
+## Step 18 · Why a PyTorch version — and a *literal* "built on top of"
+
+Steps 10–16 wired the two models together with data (glue a column, `hstack`). PyTorch lets
+us make the **"new model built on top of the old model"** literal: the old model becomes a
+**frozen sub-module living *inside* the new model**. Same idea, same result — but now it's one
+object, which is how real deep-learning transfer usually looks.
+
+We'll redo the walkthrough as small neural nets:
+1. build & train the **old net**, 2. **freeze** it, 3. wrap it inside a **new net** with a
+small **head** over `[old_logit | is_video | is_weekend]`, 4. train **only the head**,
+5. trace inference, 6. check it beats scratch. (Reuses the same data from Step 10.)
+""")
+
+md(r"""
+## Step 19 · Build & train the OLD net (`nn.Linear` → a logit)
+
+The old net is a single linear layer mapping the 25 shared features to **one logit** (a raw
+score; no sigmoid inside — `BCEWithLogitsLoss` applies it during training, which is the
+numerically stable pattern). We train it on the 40,000 source rows and log the loss.
+""")
+code(r"""
+import torch, torch.nn as nn
+torch.manual_seed(0)
+
+def T(a): return torch.tensor(np.asarray(a, dtype="float32"))
+def new_task_tensors(n, seed):
+    Xsh, Xnew, y = gen_new(n, seed)          # reuse the SAME data generator from Step 10
+    return T(Xsh), T(Xnew), T(y).reshape(-1, 1)
+
+# source data for the old net (40k rows, shared features only)
+rs = np.random.default_rng(1)
+Xs_np = gen_shared(40000, rs)
+ys_np = (rs.random(40000) < 1/(1 + np.exp(-(Xs_np @ w_shared - 0.3)))).astype("float32")
+Xs_t, ys_t = T(Xs_np), T(ys_np).reshape(-1, 1)
+
+class OldNet(nn.Module):
+    def __init__(self):
+        super().__init__(); self.lin = nn.Linear(D_SHARED, 1)   # 25 features -> 1 logit
+    def forward(self, x):
+        return self.lin(x)                                      # returns a LOGIT (no sigmoid)
+
+torch_old = OldNet()
+opt = torch.optim.Adam(torch_old.parameters(), lr=0.05)
+loss_fn = nn.BCEWithLogitsLoss()
+old_losses = []
+for epoch in range(300):
+    opt.zero_grad()
+    loss = loss_fn(torch_old(Xs_t), ys_t)
+    loss.backward(); opt.step(); old_losses.append(loss.item())
+    if epoch % 60 == 0:
+        print(f"  epoch {epoch:>3}: training loss {loss.item():.4f}")
+
+Xsh_te_t, Xnew_te_t, y_te_t = new_task_tensors(6000, 99)
+with torch.no_grad():
+    auc_old_torch = roc_auc_score(y_te_t.numpy(), torch.sigmoid(torch_old(Xsh_te_t)).numpy())
+print("OLD net AUC on the new task (shared signal only):", round(auc_old_torch, 3))
+plt.figure(figsize=(5.5, 3)); plt.plot(old_losses, color=BLUE)
+plt.xlabel("epoch"); plt.ylabel("BCE loss"); plt.title("old net training loss"); plt.show()
+""")
+
+md(r"""
+## Step 20 · Freeze the OLD net
+
+Transfer means we **don't** want to disturb what the old model learned. Setting
+`requires_grad = False` on its parameters **freezes** them — gradients won't update them. Then
+we confirm it still turns 25 features into one logit for our 5 demo impressions.
+""")
+code(r"""
+for p in torch_old.parameters():
+    p.requires_grad = False
+print("old net frozen:", all(not p.requires_grad for p in torch_old.parameters()))
+
+Xsh_d, Xnew_d, _ = new_task_tensors(5, 123)
+with torch.no_grad():
+    demo_logits = torch_old(Xsh_d).squeeze(1)
+print("\n5 demo impressions -> old net logit (25 features -> 1 number):")
+for i, z in enumerate(demo_logits.tolist()):
+    print(f"   imp {i+1}: logit {z:+.3f}  (prob {torch.sigmoid(torch.tensor(z)):.3f})")
+""")
+
+md(r"""
+## Step 21 · The NEW net **contains** the frozen old net
+
+Here's the literal "built on top of." `NewNet` holds **`self.old`** (the frozen old net) as a
+sub-module, plus a tiny **`self.head`** — a `Linear(3, 1)` over `[old_logit, is_video,
+is_weekend]`. In `forward`, it runs the old net (no grad), **concatenates** its logit with the
+2 new features, and passes that to the head. Printing the module shows the old net nested
+inside the new one.
+""")
+code(r"""
+class NewNet(nn.Module):
+    def __init__(self, old_net):
+        super().__init__()
+        self.old  = old_net                 # <-- the OLD model lives INSIDE the new model
+        self.head = nn.Linear(1 + 2, 1)     # [old_logit, is_video, is_weekend] -> 1 logit
+    def forward(self, Xshared, Xnew):
+        with torch.no_grad():
+            old_logit = self.old(Xshared)   # old net runs, frozen
+        z = torch.cat([old_logit, Xnew], dim=1)   # glue columns (same idea as np.hstack)
+        return self.head(z)
+
+model = NewNet(torch_old)
+print(model)
+print("\ntrainable parameters (only the head):")
+for name, p in model.named_parameters():
+    if p.requires_grad:
+        print("  ", name, tuple(p.shape))
+""")
+
+md(r"""
+## Step 22 · Train ONLY the head (old net stays frozen)
+
+We hand the optimizer **only `model.head.parameters()`**, so training updates the head and
+leaves the old net untouched. We prove it by printing one old-net weight before and after —
+it doesn't move. The head learns how much to trust the old net's logit and what the 2 new
+features add.
+""")
+code(r"""
+before = torch_old.lin.weight[0, 0].item()
+opt = torch.optim.Adam(model.head.parameters(), lr=0.05)   # ONLY the head is optimized
+Xsh_tr_t, Xnew_tr_t, y_tr_t = new_task_tensors(300, 7)     # only 300 labels
+head_losses = []
+for epoch in range(400):
+    opt.zero_grad()
+    loss = loss_fn(model(Xsh_tr_t, Xnew_tr_t), y_tr_t)
+    loss.backward(); opt.step(); head_losses.append(loss.item())
+    if epoch % 80 == 0:
+        print(f"  epoch {epoch:>3}: training loss {loss.item():.4f}")
+after = torch_old.lin.weight[0, 0].item()
+
+print(f"\nold net weight[0,0] before {before:.5f} -> after {after:.5f}  (unchanged = truly frozen)")
+w = model.head.weight.detach().numpy().ravel()
+print(f"head learned weights -> old_logit {w[0]:+.2f}, is_video {w[1]:+.2f}, is_weekend {w[2]:+.2f}")
+plt.figure(figsize=(5.5, 3)); plt.plot(head_losses, color=GREEN)
+plt.xlabel("epoch"); plt.ylabel("BCE loss"); plt.title("new head training loss"); plt.show()
+""")
+
+md(r"""
+## Step 23 · Inference through the composed net (one impression)
+
+Now one call to `model(...)` runs the **whole chain** — old net → glue → head → logit. We
+unpack it by hand to see each stage, then confirm the manual result equals the module's
+output.
+""")
+code(r"""
+Xsh_one, Xnew_one, _ = new_task_tensors(1, 2024)
+with torch.no_grad():
+    old_logit = model.old(Xsh_one)                 # stage 1: old net
+    z = torch.cat([old_logit, Xnew_one], dim=1)    # stage 2: glue
+    head_logit = model.head(z)                     # stage 3: head
+    prob = torch.sigmoid(head_logit)               # stage 4: probability
+
+print(f"1) old net logit          = {old_logit.item():+.3f}")
+print(f"2) glued input to head    = {z.numpy().ravel().round(3)}   [old_logit, is_video, is_weekend]")
+print(f"3) head logit             = {head_logit.item():+.3f}")
+print(f"4) final probability      = sigmoid = {prob.item():.3f}")
+with torch.no_grad():
+    print("   check: torch.sigmoid(model(...)) =", round(torch.sigmoid(model(Xsh_one, Xnew_one)).item(), 3), "(matches)")
+""")
+
+md(r"""
+## Step 24 · Does it help? transfer net vs scratch net
+
+Finally, train a **from-scratch** net on all 27 raw features with the same 300 labels, and
+compare to the transfer net. Same lesson as the sklearn version: with few labels, standing on
+the frozen old net wins.
+""")
+code(r"""
+class ScratchNet(nn.Module):
+    def __init__(self):
+        super().__init__(); self.lin = nn.Linear(D_SHARED + 2, 1)   # all 27 raw features
+    def forward(self, x): return self.lin(x)
+
+Xall_tr = torch.cat([Xsh_tr_t, Xnew_tr_t], dim=1)
+Xall_te = torch.cat([Xsh_te_t, Xnew_te_t], dim=1)
+scratch_net = ScratchNet()
+opt = torch.optim.Adam(scratch_net.parameters(), lr=0.05)
+for epoch in range(400):
+    opt.zero_grad(); loss = loss_fn(scratch_net(Xall_tr), y_tr_t); loss.backward(); opt.step()
+
+with torch.no_grad():
+    auc_scratch_t  = roc_auc_score(y_te_t.numpy(), torch.sigmoid(scratch_net(Xall_te)).numpy())
+    auc_transfer_t = roc_auc_score(y_te_t.numpy(), torch.sigmoid(model(Xsh_te_t, Xnew_te_t)).numpy())
+print(f"scratch net (27 raw, 300 labels)      AUC {auc_scratch_t:.3f}")
+print(f"transfer net (frozen old + head)      AUC {auc_transfer_t:.3f}")
+plt.figure(figsize=(5, 3.2))
+plt.bar(["scratch\nnet", "transfer\nnet"], [auc_scratch_t, auc_transfer_t], color=[GRAY, GREEN])
+plt.ylabel("test AUC"); plt.ylim(0.7, 0.87)
+plt.title("PyTorch: transfer (old net inside) beats scratch"); plt.show()
+print("\nSame story as Steps 10-16 — only now the old model is a frozen sub-module of the new one.")
+""")
+
 # =================================================================== PART C
 md("---\n# Part C · Distillation")
 
 md(r"""
-## Step 18 · Teacher vs student
+## Step 25 · Teacher vs student
 
 **Distillation** trains a small, **fast student** to imitate a big, **slow teacher**. Why?
 The teacher may be too slow to serve online, or you may have lots of **unlabeled** traffic
@@ -536,7 +732,7 @@ print("teacher AUC (strong, but slow to serve):", round(auc_teacher, 3))
 """)
 
 md(r"""
-## Step 19 · Temperature & "dark knowledge"
+## Step 26 · Temperature & "dark knowledge"
 
 A **hard label** says only 0 or 1. The teacher's **probability** says much more: a negative
 scored 0.45 is "almost a click," while 0.02 is "clearly not." That extra shading is **dark
@@ -560,7 +756,7 @@ print("hard labels would be", (p_teacher>0.5).astype(int), "- the student would 
 """)
 
 md(r"""
-## Step 20 · Distill — the teacher teaches the student
+## Step 27 · Distill — the teacher teaches the student
 
 Two students, both light logistic models (with interaction features so they *can* learn a
 bit):
@@ -598,7 +794,7 @@ plt.ylabel("test AUC"); plt.ylim(0.7, 0.9); plt.title("distillation lifts the sm
 """)
 
 md(r"""
-## Step 21 · The quality-vs-latency tradeoff
+## Step 28 · The quality-vs-latency tradeoff
 
 The distilled student is a little **below** the teacher but **much cheaper to serve**. That
 trade can be a win: if latency is the bottleneck, a 5 ms student at slightly lower AUC beats
@@ -618,7 +814,7 @@ print(f"teacher: AUC {auc_teacher:.3f} @ ~40 ms   vs   student: AUC {auc_distill
 """)
 
 md(r"""
-## Step 22 · The catch — distillation copies the teacher's bias
+## Step 29 · The catch — distillation copies the teacher's bias
 
 Distillation makes serving cheaper; it does **not** fix a bad teacher. If the teacher learned
 from a biased policy, the student inherits that bias. So keep the teacher as an offline
