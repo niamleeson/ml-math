@@ -61,7 +61,7 @@ conditional independence and explaining away.
 | A5 | Learn CPTs with MLE and Laplace smoothing | Small categorical dataset with a zero-count parent/child combination | Notebook: raw-count table, smoothed CPT table, posterior bars showing zero-count failure fixed | ~7 |
 
 ## Part 4 — Colab Notebook
-- **Notebook file:** topics/notebooks/36-bayesian-networks.ipynb
+- **Notebook file:** topics/notebooks/artificial-intelligence/36-bayesian-networks.ipynb
 - **Est. cell count:** ~84 (⚖️ topic → 3 atomic basics plus E1/E5 hand derivations; remaining examples coded with granular build↔see loops)
 - **Key libraries:** numpy, pandas, matplotlib, networkx, pgmpy (or lightweight custom factor tables if pgmpy install fails), scipy, ipywidgets
 - **Runtime:** CPU

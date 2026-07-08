@@ -51,7 +51,7 @@ Search turns planning into "choose actions from a start state until an end state
 | A5 | Relaxation-derived heuristics for a blocked grid | grid where diagonal moves are allowed only in the relaxed problem | process: relaxed future-cost heatmap, then A* expansion redraws; result: admissible/consistent checks + path/explored metrics | ~12 |
 
 ## Part 4 — Colab Notebook
-- **Notebook file:** topics/notebooks/32-search-optimization.ipynb
+- **Notebook file:** topics/notebooks/artificial-intelligence/32-search-optimization.ipynb
 - **Est. cell count:** ~186 (💻 topic → all 20 examples (10 basics + 5 easy + 5 advanced) coded; A*/UCS examples use granular pop→expand→update costs→push loops with a redraw at each node expansion)
 - **Key libraries:** numpy, matplotlib, networkx, heapq, collections (`deque`), ipywidgets
 - **Runtime:** CPU

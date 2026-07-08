@@ -51,7 +51,7 @@ Optimization choices often decide whether the same neural network trains smoothl
 | A5 | Transfer learning: freeze head vs unfreeze last block | `sklearn digits` as pseudo-pretrained features or small image-feature extractor | bar chart of trainable parameters; train/val accuracy curves for frozen, partial, full fine-tune | ~8 |
 
 ## Part 4 — Colab Notebook
-- **Notebook file:** topics/notebooks/27-parameter-tuning-optimization.ipynb
+- **Notebook file:** topics/notebooks/deep-learning/27-parameter-tuning-optimization.ipynb
 - **Est. cell count:** ~80 (⚖️ topic → all 13 examples (3 basics + 5 easy + 5 advanced) in the notebook, with optimizer derivations and coded visualizations)
 - **Key libraries:** numpy, matplotlib, scikit-learn (`make_classification`, `make_moons`, `load_digits`), ipywidgets; optional torch only if available for the MLP/fine-tuning demo
 - **Runtime:** CPU

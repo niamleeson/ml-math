@@ -6,7 +6,10 @@ plan under `topics/plans/` applies this guide.
 
 - **Source material:** `../ai-ml-cheatsheets.md` (full reference) and the 38 per-topic files in `topics/`.
 - **Per-lesson plans:** `topics/plans/<NN>-<slug>.plan.md` (one per topic).
-- **Notebooks:** `topics/notebooks/<NN>-<slug>.ipynb` (only for 💻 and ⚖️ topics).
+- **Notebooks:** `topics/notebooks/<section>/<NN>-<slug>.ipynb` (only for 💻 and ⚖️ topics).
+- **Sections.** Lessons live in one of four section folders that match the AI Cheat Sheet's top
+  sections, and the notebook tree mirrors the same layout: `probability` (01–04),
+  `machine-learning` (05–17), `deep-learning` (18–28), `artificial-intelligence` (29–38).
 
 ---
 
@@ -90,7 +93,7 @@ The **basics (🟢)** are 10 atomic warm-ups that each exercise a *single* primi
 - 🧮 topics (no notebook): written as **pen-and-paper derivations** directly in the lesson `.md` (every step shown with reasoning). Numeric topics have **no basics tier** (5 easy + 5 advanced only).
 - 💻 and ⚖️ topics (have a notebook): **all 20** worked examples — coded examples *and* any pen-and-paper derivations — live **only in the notebook**. The lesson page does **not** repeat them; it just lists their titles (see Part 4).
 
-**Part 4 — Hands-on: Google Colab** (💻 and ⚖️ only) — the lesson page's hands-on section is only an *Open in Colab* button (→ runnable `topics/notebooks/<NN>-<slug>.ipynb`) plus a short **index** of the examples inside. To avoid duplication, the **entire hands-on walkthrough — prose, code, plots, and pen-and-paper derivations — lives only in the notebook**; the lesson page keeps just Overview + Key Idea. Omitted entirely for 🧮 topics.
+**Part 4 — Hands-on: Google Colab** (💻 and ⚖️ only) — the lesson page's hands-on section is only an *Open in Colab* button (→ runnable `topics/notebooks/<section>/<NN>-<slug>.ipynb`) plus a short **index** of the examples inside. To avoid duplication, the **entire hands-on walkthrough — prose, code, plots, and pen-and-paper derivations — lives only in the notebook**; the lesson page keeps just Overview + Key Idea. Omitted entirely for 🧮 topics.
 
 *No separate Practice-Questions section — the 10 basics + 5 easy + 5 advanced worked examples in Part 3 are the practice for every lesson type.*
 
@@ -188,10 +191,10 @@ for a fully worked reference.
 
 Built lessons are surfaced **inside** the existing ML-Math single-page app (`index.html`), not as standalone pages.
 
-- **Generation.** `tools/build-cheatsheet.js` (fresh, dependency-free; not shared with the app's own lesson engine) converts `topics/lessons/*.md` into two artifacts, and is re-run with `node tools/build-cheatsheet.js`:
+- **Generation.** `tools/build-cheatsheet.js` (fresh, dependency-free; not shared with the app's own lesson engine) converts `topics/lessons/<section>/*.md` into two artifacts, and is re-run with `node tools/build-cheatsheet.js`:
   - `lessons/cheatsheet.js` — one object per lesson pushed into `window.LESSONS` (module `"AI Cheat Sheet"`, `template:"cheatsheet"`). Holds the **page** HTML: Overview + Key Idea, then a hands-on section that is only an *Open in Colab* button + an index of the examples.
-  - `topics/notebooks/<NN>-<slug>.ipynb` — the runnable notebook (full lesson: concept + entire hands-on walkthrough with code & plots). Only for 💻 / ⚖️ topics.
+  - `topics/notebooks/<section>/<NN>-<slug>.ipynb` — the runnable notebook (full lesson: concept + entire hands-on walkthrough with code & plots). Only for 💻 / ⚖️ topics.
 - **Nav.** `"AI Cheat Sheet"` is the **first** module (`MODULE_ORDER[0]`) and renders as a top-level **collapsible group** like the others (`superGroupOf` returns `null`, so it is standalone and first — not under Course/Papers/Math).
 - **Rendering.** Lessons open in the app's **content pane** through the existing `open(id)` pipeline (routes on `#hash`, then runs MathJax + highlight.js). A dedicated `renderCheatsheet()` branch + scoped `.cs-lesson` CSS render the Markdown-derived HTML in-app.
 - **Theme.** Lesson content is **black-and-white** (`.cs-lesson` uses `--ink`/`--border`); only **code** (highlight.js dark block), **links**, and the **Colab button** keep colour.
-- **Colab links.** The button targets `colab.research.google.com/github/niamleeson/ml-math/blob/main/topics/notebooks/<NN>-<slug>.ipynb`, so the generated notebooks must be committed/pushed to `main` for the links to resolve.
+- **Colab links.** The button targets `colab.research.google.com/github/niamleeson/ml-math/blob/main/topics/notebooks/<section>/<NN>-<slug>.ipynb`, so the generated notebooks must be committed/pushed to `main` for the links to resolve.

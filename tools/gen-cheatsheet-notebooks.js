@@ -1,5 +1,6 @@
-/* gen-cheatsheet-notebooks.js — generate topics/notebooks/<slug>.ipynb for every
-   AI-Cheat-Sheet lesson that has runnable Python (the 28 💻/⚖️ lessons). Standalone:
+/* gen-cheatsheet-notebooks.js — generate topics/notebooks/<section>/<slug>.ipynb for every
+   AI-Cheat-Sheet lesson that has runnable Python (the 💻/⚖️ lessons). Lessons live under
+   topics/lessons/<section>/; the notebook tree mirrors that section layout. Standalone:
    does NOT touch the app (lessons/cheatsheet.js) or index.html. Same md->ipynb logic
    as build-cheatsheet.js. Run: node tools/gen-cheatsheet-notebooks.js */
 "use strict";
@@ -45,15 +46,32 @@ function mdToNotebook(md, title) {
 }
 
 if (!fs.existsSync(NB_DIR)) fs.mkdirSync(NB_DIR, { recursive: true });
+
+// Recursively discover topics/lessons/<section>/NN-*.md, ordered by NN across sections.
+function discoverLessonFiles(dir) {
+  const found = [];
+  (function walk(d) {
+    for (const e of fs.readdirSync(d, { withFileTypes: true })) {
+      const p = path.join(d, e.name);
+      if (e.isDirectory()) walk(p);
+      else if (/^\d\d-.*\.md$/.test(e.name)) found.push({ section: path.relative(SRC, d), name: e.name });
+    }
+  })(dir);
+  return found.sort((a, b) => a.name.localeCompare(b.name));
+}
+
 let made = 0;
-for (const f of fs.readdirSync(SRC).filter((f) => /^\d\d-.*\.md$/.test(f)).sort()) {
-  const md = fs.readFileSync(path.join(SRC, f), "utf8");
+for (const { section, name } of discoverLessonFiles(SRC)) {
+  const md = fs.readFileSync(path.join(SRC, section, name), "utf8");
   if (!md.includes("```python")) continue; // numeric lessons: no notebook
-  const title = (md.match(/^#\s+(.+)$/m) || [, f.replace(/\.md$/, "")])[1].trim();
+  const title = (md.match(/^#\s+(.+)$/m) || [, name.replace(/\.md$/, "")])[1].trim();
   const nb = mdToNotebook(md, title);
   const codeCells = nb.cells.filter((c) => c.cell_type === "code").length;
-  fs.writeFileSync(path.join(NB_DIR, f.replace(/\.md$/, ".ipynb")), JSON.stringify(nb, null, 1));
+  const outDir = path.join(NB_DIR, section);
+  if (!fs.existsSync(outDir)) fs.mkdirSync(outDir, { recursive: true });
+  const outName = name.replace(/\.md$/, ".ipynb");
+  fs.writeFileSync(path.join(outDir, outName), JSON.stringify(nb, null, 1));
   made++;
-  console.log(`  ${f.replace(/\.md$/, ".ipynb")}  —  ${nb.cells.length} cells (${codeCells} code)`);
+  console.log(`  ${section ? section + "/" : ""}${outName}  —  ${nb.cells.length} cells (${codeCells} code)`);
 }
-console.log(`generated ${made} notebooks in topics/notebooks/`);
+console.log(`generated ${made} notebooks in topics/notebooks/<section>/`);

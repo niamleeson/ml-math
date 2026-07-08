@@ -18,19 +18,32 @@ const OUT = path.join(ROOT, "lessons", "cheatsheet.js");
 const NB_DIR = path.join(ROOT, "topics", "notebooks");
 const REPO = "niamleeson/ml-math", BRANCH = "main";
 
-// Auto-discover all lessons from topics/lessons/*.md (ordered by NN). Metadata
-// (badge, type, source, nav label) is parsed from each lesson's meta line + H1.
-const LESSONS = fs.readdirSync(SRC)
-  .filter((f) => /^\d\d-.*\.md$/.test(f))
-  .sort()
-  .map((f) => {
-    const md = fs.readFileSync(path.join(SRC, f), "utf8");
-    const h1 = (md.match(/^#\s+(.+)$/m) || [, f.replace(/\.md$/, "")])[1].trim();
+// Auto-discover all lessons from topics/lessons/<section>/*.md (ordered by NN across all
+// sections). The immediate sub-folder is the lesson's section and is mirrored under
+// topics/notebooks/<section>/ so the two trees stay parallel. Metadata (badge, type,
+// source, nav label) is parsed from each lesson's meta line + H1.
+function discoverLessonFiles(dir) {
+  const found = [];
+  (function walk(d) {
+    for (const e of fs.readdirSync(d, { withFileTypes: true })) {
+      const p = path.join(d, e.name);
+      if (e.isDirectory()) walk(p);
+      else if (/^\d\d-.*\.md$/.test(e.name)) found.push({ section: path.relative(SRC, d), name: e.name });
+    }
+  })(dir);
+  return found.sort((a, b) => a.name.localeCompare(b.name));
+}
+
+const LESSONS = discoverLessonFiles(SRC)
+  .map(({ section, name }) => {
+    const md = fs.readFileSync(path.join(SRC, section, name), "utf8");
+    const h1 = (md.match(/^#\s+(.+)$/m) || [, name.replace(/\.md$/, "")])[1].trim();
     const metaLine = (md.match(/^>\s*\*\*Source:\*\*(.+)$/m) || [, ""])[1];
     const source = (metaLine.match(/^\s*(.+?)\s*·\s*\*\*(?:Category|Type)/) || [, "?"])[1].trim();
     const tm = metaLine.match(/\*\*Type:\*\*\s*(🧮|💻|⚖️)\s*(Numeric|Colab|Both)/);
     return {
-      file: f.replace(/\.md$/, ""),
+      file: name.replace(/\.md$/, ""),
+      section: section,
       nav: h1,
       badge: tm ? tm[1] : "🧮",
       type: tm ? tm[2] : "Numeric",
@@ -177,7 +190,7 @@ function mdToNotebook(md, title) {
 
 /* ---------- build the registration file ---------- */
 const data = LESSONS.map((m, i) => {
-  const md = fs.readFileSync(path.join(SRC, m.file + ".md"), "utf8");
+  const md = fs.readFileSync(path.join(SRC, m.section, m.file + ".md"), "utf8");
   const hasNb = m.type === "Colab" || m.type === "Both";
   let title, html;
   if (hasNb) {
@@ -192,9 +205,11 @@ const data = LESSONS.map((m, i) => {
     // 1) runnable notebook = the FULL lesson (concept + the entire hands-on
     //    walkthrough with code & plots) so it is a complete self-contained companion.
     if (!fs.existsSync(NB_DIR)) fs.mkdirSync(NB_DIR, { recursive: true });
-    fs.writeFileSync(path.join(NB_DIR, m.file + ".ipynb"), JSON.stringify(mdToNotebook(md, title), null, 1));
+    const nbSecDir = path.join(NB_DIR, m.section);
+    if (!fs.existsSync(nbSecDir)) fs.mkdirSync(nbSecDir, { recursive: true });
+    fs.writeFileSync(path.join(nbSecDir, m.file + ".ipynb"), JSON.stringify(mdToNotebook(md, title), null, 1));
     // 2) lesson page hands-on section = just a Colab button + an index of what's inside
-    const url = "https://colab.research.google.com/github/" + REPO + "/blob/" + BRANCH + "/topics/notebooks/" + m.file + ".ipynb";
+    const url = "https://colab.research.google.com/github/" + REPO + "/blob/" + BRANCH + "/topics/notebooks/" + (m.section ? m.section + "/" : "") + m.file + ".ipynb";
     const btn = '<p class="cs-colab"><a class="cs-colab-btn" href="' + url + '" target="_blank" rel="noopener">▶ Open the runnable notebook in Google Colab</a></p>';
     const exs = (hands.match(/^#{3,4}\s+[BEA]\d+\..*$/gm) || []).map((h) => "<li>" + esc(h.replace(/^#{3,4}\s+/, "").trim()) + "</li>").join("");
     const list = exs ? '<p>It builds these step by step, with commented code and plots:</p><ul class="cs-nb-list">' + exs + "</ul>" : "";

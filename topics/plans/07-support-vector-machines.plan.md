@@ -51,7 +51,7 @@ Support Vector Machines choose the separating hyperplane with the largest margin
 | A5 | [pen-and-paper] Lagrangian/KKT intuition for support vectors | Tiny separable dataset with candidate active constraints | Identify active constraints, nonzero multipliers, and why non-support vectors vanish | pen-and-paper ~7 |
 
 ## Part 4 — Colab Notebook
-- **Notebook file:** topics/notebooks/07-support-vector-machines.ipynb
+- **Notebook file:** topics/notebooks/machine-learning/07-support-vector-machines.ipynb
 - **Est. cell count:** ~82 (⚖️ topic → all 13 examples (3 basics + 5 easy + 5 advanced), mixing geometric derivations with coded margin/kernel experiments)
 - **Key libraries:** numpy, matplotlib, scikit-learn (`SVC`, `LinearSVC`, `make_blobs`, `make_moons`, `make_circles`), ipywidgets
 - **Runtime:** CPU

@@ -51,7 +51,7 @@ Convergence theorems explain why averages stabilize and why sums often look norm
 | A5 | Coded failure/edge: heavy-tailed data breaks the usual variance story | Notebook: Cauchy samples (undefined mean/variance) | process: unstable running means; result: histograms of sample means that do not concentrate like LLN/CLT finite-variance cases | ~7 |
 
 ## Part 4 — Colab Notebook
-- **Notebook file:** topics/notebooks/04-convergence-lln-clt.ipynb
+- **Notebook file:** topics/notebooks/probability/04-convergence-lln-clt.ipynb
 - **Est. cell count:** ~70 (⚖️ topic → all 13 examples (3 basics + 5 easy + 5 advanced), mixing pen-and-paper derivations with coded/simulation build↔see loops)
 - **Key libraries:** numpy, matplotlib, scipy.stats (`norm`, `binom`, `cauchy`), ipywidgets
 - **Runtime:** CPU

@@ -58,7 +58,7 @@ just word-by-word lookup."
 | A5 | Failure case — greedy/beam/attention error analysis | ambiguous or long source sentences | process: compare $P(y^*\mid x)$ vs $P(\hat y\mid x)$ and attention spread; result: root-cause table (beam faulty vs model faulty) | ~8 |
 
 ## Part 4 — Colab Notebook
-- **Notebook file:** topics/notebooks/25-language-models-translation-attention.ipynb
+- **Notebook file:** topics/notebooks/deep-learning/25-language-models-translation-attention.ipynb
 - **Est. cell count:** ~100 (💻 topic → all 13 examples (3 basics + 5 easy + 5 advanced) coded; sequence models and attention need granular decoding visualizations)
 - **Key libraries:** numpy, pandas, matplotlib, tensorflow/keras or torch, scikit-learn, sacrebleu or nltk BLEU, seaborn, ipywidgets
 - **Runtime:** GPU recommended for encoder-decoder/attention examples; toy CPU fallbacks should be included.

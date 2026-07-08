@@ -51,7 +51,7 @@ CSPs model problems as variables, domains, and constraints, then search for assi
 | A5 | ICM vs. Gibbs on a loopy factor graph | binary image-denoising/grid factor graph | process: assignment grid changing one variable at a time; result: local-minimum trap for ICM vs. Gibbs escaping occasionally | ~12 |
 
 ## Part 4 — Colab Notebook
-- **Notebook file:** topics/notebooks/35-constraint-satisfaction-problems.ipynb
+- **Notebook file:** topics/notebooks/artificial-intelligence/35-constraint-satisfaction-problems.ipynb
 - **Est. cell count:** ~130 (⚖️ topic → 3 atomic basics plus hand factor/arc-consistency derivations and coded backtracking, AC-3, beam search, ICM, and Gibbs visualizations)
 - **Key libraries:** numpy, matplotlib, networkx, pandas, ipywidgets, collections (`deque`, `defaultdict`)
 - **Runtime:** CPU

@@ -51,7 +51,7 @@ Reflex-based models turn inputs into feature vectors, score them with weights, a
 | A5 | Failure case: linear predictor on non-linear data vs k-NN/NN | `make_moons` | linear boundary failure, k-NN flexible boundary, small neural-network boundary; accuracy bars | ~8 |
 
 ## Part 4 — Colab Notebook
-- **Notebook file:** topics/notebooks/29-reflex-based-models.ipynb
+- **Notebook file:** topics/notebooks/artificial-intelligence/29-reflex-based-models.ipynb
 - **Est. cell count:** ~110 (⚖️ topic → 10 basics + hand score/loss derivations + coded decision-boundary/loss visualizations)
 - **Key libraries:** numpy, matplotlib, scikit-learn (`make_circles`, `make_moons`, `KNeighborsClassifier`, `LogisticRegression`, regression utilities), ipywidgets
 - **Runtime:** CPU

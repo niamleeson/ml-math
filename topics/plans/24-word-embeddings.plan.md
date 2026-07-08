@@ -58,7 +58,7 @@ relationships. Hook: "king − man + woman ≈ queen" as evidence that vector sp
 | A5 | Bias and dataset effects in embeddings | pretrained embeddings + profession/gender word lists | process: projection on gender direction; result: bias bar chart + nearest-neighbor comparison | ~7 |
 
 ## Part 4 — Colab Notebook
-- **Notebook file:** topics/notebooks/24-word-embeddings.ipynb
+- **Notebook file:** topics/notebooks/deep-learning/24-word-embeddings.ipynb
 - **Est. cell count:** ~84 (💻 topic → all 13 examples (3 basics + 5 easy + 5 advanced) coded with training, lookup, and visualization loops)
 - **Key libraries:** numpy, pandas, matplotlib, scikit-learn (`TSNE`), gensim, nltk or keras text utilities, seaborn
 - **Runtime:** CPU

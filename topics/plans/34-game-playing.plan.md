@@ -51,7 +51,7 @@ Game playing plans against other agents, so values depend on what the opponent w
 | A5 | Mixed strategies and zero-sum matrix games | matching-pennies / rock-paper-scissors payoff matrix | process: expected-value surface over mixed strategies; result: minimax mixed equilibrium marked | ~9 |
 
 ## Part 4 — Colab Notebook
-- **Notebook file:** topics/notebooks/34-game-playing.ipynb
+- **Notebook file:** topics/notebooks/artificial-intelligence/34-game-playing.ipynb
 - **Est. cell count:** ~122 (⚖️ topic → 3 atomic basics plus hand tree/payoff derivations and coded game-tree/board-game visualizations)
 - **Key libraries:** numpy, matplotlib, networkx, pandas, ipywidgets, functools (`lru_cache`)
 - **Runtime:** CPU

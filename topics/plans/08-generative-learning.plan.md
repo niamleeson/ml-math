@@ -51,7 +51,7 @@ Generative learning models the class-conditional data distribution $P(x\mid y)$ 
 | A5 | [coded] Correlated features break Naive Bayes independence | Synthetic binary features with controlled correlation | true vs NB likelihood heatmap; calibration/reliability plot | ~7 |
 
 ## Part 4 — Colab Notebook
-- **Notebook file:** topics/notebooks/08-generative-learning.ipynb
+- **Notebook file:** topics/notebooks/machine-learning/08-generative-learning.ipynb
 - **Est. cell count:** ~80 (⚖️ topic → all 13 examples (3 basics + 5 easy + 5 advanced), mixing hand MLE/Bayes derivations with coded density and text examples)
 - **Key libraries:** numpy, matplotlib, scipy.stats, scikit-learn (`GaussianNB`, `MultinomialNB`, `LogisticRegression`, `CountVectorizer`), ipywidgets
 - **Runtime:** CPU

@@ -58,7 +58,7 @@ forget, update, and reveal. Hook: "a sentence is not a bag of words — order an
 | A5 | Bidirectional vs one-way sequence tagging | toy NER-style labeled sentences | process: forward/backward hidden-state diagram; result: token labels with future-context error analysis | ~8 |
 
 ## Part 4 — Colab Notebook
-- **Notebook file:** topics/notebooks/23-rnn-fundamentals-lstm-gru.ipynb
+- **Notebook file:** topics/notebooks/deep-learning/23-rnn-fundamentals-lstm-gru.ipynb
 - **Est. cell count:** ~94 (⚖️ topic → all 13 examples (3 basics + 5 easy + 5 advanced) with hand derivations plus coded sequence/gate visualizations)
 - **Key libraries:** numpy, matplotlib, pandas, tensorflow/keras or torch, scikit-learn, seaborn, ipywidgets
 - **Runtime:** CPU

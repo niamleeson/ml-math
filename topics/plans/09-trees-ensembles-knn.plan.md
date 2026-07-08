@@ -51,7 +51,7 @@ Trees, ensembles, and k-nearest neighbors are flexible non-parametric models tha
 | A5 | k-NN scaling and irrelevant-feature edge case | Same 2-D signal plus many noise features | distance concentration plot; accuracy before/after scaling/feature selection | ~7 |
 
 ## Part 4 — Colab Notebook
-- **Notebook file:** topics/notebooks/09-trees-ensembles-knn.ipynb
+- **Notebook file:** topics/notebooks/machine-learning/09-trees-ensembles-knn.ipynb
 - **Est. cell count:** ~92 (💻 topic → all 13 examples (3 basics + 5 easy + 5 advanced) coded with granular build↔see loops)
 - **Key libraries:** numpy, pandas, matplotlib, scikit-learn (`DecisionTreeClassifier`, `RandomForestClassifier`, `AdaBoostClassifier`, `GradientBoostingRegressor`, `KNeighborsClassifier`, `make_moons`, `make_classification`, `make_gaussian_quantiles`), ipywidgets
 - **Runtime:** CPU

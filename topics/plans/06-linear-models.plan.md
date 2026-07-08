@@ -51,7 +51,7 @@ Linear models connect simple geometry (lines, planes, hyperplanes) to probabilit
 | A5 | [pen-and-paper] GLM mapping: Gaussian, Bernoulli, Poisson | Three mini prediction scenarios | Table deriving $\eta$, $a(\eta)$, $\mathbb{E}[y\mid x]$, inverse-link interpretation | pen-and-paper ~6 |
 
 ## Part 4 — Colab Notebook
-- **Notebook file:** topics/notebooks/06-linear-models.ipynb
+- **Notebook file:** topics/notebooks/machine-learning/06-linear-models.ipynb
 - **Est. cell count:** ~86 (⚖️ topic → all 13 examples (3 basics + 5 easy + 5 advanced), mixing hand derivations with coded OLS/logistic/LWR/softmax examples)
 - **Key libraries:** numpy, matplotlib, scikit-learn (`make_classification`, `make_moons`, `LogisticRegression`, `LinearRegression`), ipywidgets
 - **Runtime:** CPU

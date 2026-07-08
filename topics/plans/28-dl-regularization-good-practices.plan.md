@@ -51,7 +51,7 @@ Regularization controls overfitting by changing what solutions are easy for the 
 | A5 | Batch norm as a good practice and its edge cases | Deep ReLU network on standardized vs unstandardized synthetic features | activation distribution by layer; loss curves with/without BN; small-batch noisy BN failure | ~8 |
 
 ## Part 4 — Colab Notebook
-- **Notebook file:** topics/notebooks/28-dl-regularization-good-practices.ipynb
+- **Notebook file:** topics/notebooks/deep-learning/28-dl-regularization-good-practices.ipynb
 - **Est. cell count:** ~84 (⚖️ topic → all 13 examples (3 basics + 5 easy + 5 advanced) in the notebook, with regularization derivations and coded behavior examples)
 - **Key libraries:** numpy, matplotlib, scikit-learn (`make_moons`, `make_regression`, `load_digits`), ipywidgets; optional torch for neural-network dropout/batch-norm demos
 - **Runtime:** CPU

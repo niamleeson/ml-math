@@ -57,7 +57,7 @@ residual shortcuts, and parallel Inception branches.
 | A5 | Architecture comparison capstone | CIFAR-10 small subset | process: train PlainCNN, ResNet-block CNN, Inception-block CNN; result: accuracy/params/FLOPs tradeoff chart + feature maps | ~10 |
 
 ## Part 4 — Colab Notebook
-- **Notebook file:** topics/notebooks/22-cnn-architectures.ipynb
+- **Notebook file:** topics/notebooks/deep-learning/22-cnn-architectures.ipynb
 - **Est. cell count:** ~100 (💻 topic → all 13 examples (3 basics + 5 easy + 5 advanced) coded; GAN/ResNet/Inception blocks need granular build↔see loops)
 - **Key libraries:** numpy, matplotlib, scikit-learn, tensorflow/keras or torch, torchvision/tensorflow-datasets, seaborn
 - **Runtime:** GPU recommended (tiny subsets keep fallback possible, but GAN and CIFAR examples should flag GPU)

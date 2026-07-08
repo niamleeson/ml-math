@@ -60,7 +60,7 @@ succeed depending on preprocessing and training mechanics."
 | A5 | End-to-end pipeline capstone | small image dataset from `tf.keras.datasets` / upload option | process: load→split→augment→normalize→train→evaluate; result: augmentation grid, curves, confusion matrix, misclassified examples | ~10 |
 
 ## Part 4 — Colab Notebook
-- **Notebook file:** topics/notebooks/26-dl-data-processing-training.ipynb
+- **Notebook file:** topics/notebooks/deep-learning/26-dl-data-processing-training.ipynb
 - **Est. cell count:** ~88 (💻 topic → all 13 examples (3 basics + 5 easy + 5 advanced) coded; training diagnostics require repeated build↔see loops)
 - **Key libraries:** numpy, pandas, matplotlib, scikit-learn, tensorflow/keras or torch, torchvision/tensorflow-datasets, seaborn, ipywidgets
 - **Runtime:** CPU

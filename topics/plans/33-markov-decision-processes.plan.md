@@ -51,7 +51,7 @@ MDPs extend search to worlds where actions have uncertain outcomes and rewards a
 | A5 | Model-based Monte Carlo from sampled transitions | simulated slippery grid logs | process: estimated transition table filling with counts; result: learned model's value heatmap vs. true-model heatmap | ~10 |
 
 ## Part 4 — Colab Notebook
-- **Notebook file:** topics/notebooks/33-markov-decision-processes.ipynb
+- **Notebook file:** topics/notebooks/artificial-intelligence/33-markov-decision-processes.ipynb
 - **Est. cell count:** ~128 (⚖️ topic → 3 atomic basics plus tiny Bellman/Q-learning derivations and coded scalable gridworld experiments)
 - **Key libraries:** numpy, matplotlib, pandas, seaborn, ipywidgets, collections (`defaultdict`)
 - **Runtime:** CPU

@@ -51,7 +51,7 @@ Unsupervised learning discovers latent structure without labels: k-means assigns
 | A5 | End-to-end unsupervised pipeline with upload/url option | `url`/`upload` tabular feature dataset fallback to `wine` | process: load → clean/scale → PCA → choose $k$ → k-means → profile clusters; result: cluster-profile heatmap + PCA map + interpretation | ~8 |
 
 ## Part 4 — Colab Notebook
-- **Notebook file:** topics/notebooks/31-unsupervised-learning-ai.ipynb
+- **Notebook file:** topics/notebooks/artificial-intelligence/31-unsupervised-learning-ai.ipynb
 - **Est. cell count:** ~110 (💻 topic → all 20 examples (10 basics + 5 easy + 5 advanced) coded with granular build↔see loops)
 - **Key libraries:** numpy, pandas, matplotlib, scikit-learn (`make_blobs`, `make_moons`, `load_digits`, `load_wine`, `KMeans`, `PCA`, `StandardScaler`, `silhouette_score`), ipywidgets
 - **Runtime:** CPU

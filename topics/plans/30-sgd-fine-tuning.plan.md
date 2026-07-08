@@ -51,7 +51,7 @@ SGD is the basic engine that turns per-example loss gradients into learned weigh
 | A5 | Fine-tuning/transfer learning strategy | `digits` task with pretrained PCA/logistic features or small frozen feature extractor | accuracy curves for frozen head, partial unfreeze, full retrain; trainable-parameter bar chart | ~8 |
 
 ## Part 4 — Colab Notebook
-- **Notebook file:** topics/notebooks/30-sgd-fine-tuning.ipynb
+- **Notebook file:** topics/notebooks/artificial-intelligence/30-sgd-fine-tuning.ipynb
 - **Est. cell count:** ~114 (⚖️ topic → 10 basics + hand SGD/backprop derivations + coded optimization/fine-tuning comparisons)
 - **Key libraries:** numpy, matplotlib, scikit-learn (`make_classification`, polynomial features, `load_digits`), ipywidgets; optional torch for fine-tuning/backprop demo
 - **Runtime:** CPU
