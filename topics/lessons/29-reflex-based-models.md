@@ -9,6 +9,20 @@
 > numbers it computes and **draws a picture** so you can *see* what is happening. Run the
 > cells in order from top to bottom. Nothing here needs the internet or any downloaded data.
 
+### The Big Picture — What You'll Learn
+
+In plain terms, here is what the steps below will show you:
+
+- **Features and scores** break one dot product into visible weighted contributions.
+- **Linear classification** uses score signs, a zero-score boundary, and margins.
+- **Classification losses** show how zero-one, hinge, and logistic losses penalize margins differently.
+- **Linear regression** reuses the same score as a numeric prediction and measures residual losses.
+- **Training loss** averages example losses to compare candidate weights.
+- **Linear versus non-linear predictors** show that non-linear features, kNN votes, and neural activations add flexible boundaries.
+
+Everything below (starting at **§1 Overview**) develops these same ideas with full derivations,
+more examples, and an interactive experiment.
+
 **What we will build, step by step:**
 1. **Features and scores** — turn raw inputs into numbers, weight them, and add contributions.
 2. **Linear classification** — use the score sign, boundary, and margin for two classes.
@@ -228,18 +242,6 @@ plt.tight_layout()                                                              
 plt.show()                                                                        # Render the comparison.
 ```
 ▶ What you'll see: a straight-line feature split fails on rings, while the radial feature draws the right circular boundary.
-
-### Recap — what you just ran
-
-- **Features and scores** broke one dot product into visible weighted contributions.
-- **Linear classification** used score signs, a zero-score boundary, and margins.
-- **Classification losses** showed how zero-one, hinge, and logistic losses penalize margins differently.
-- **Linear regression** reused the same score as a numeric prediction and measured residual losses.
-- **Training loss** averaged example losses to compare candidate weights.
-- **Linear versus non-linear predictors** showed that non-linear features, kNN votes, and neural activations add flexible boundaries.
-
-Everything below (starting at **§1 Overview**) develops these same ideas with full derivations,
-more examples, and an interactive experiment.
 
 ---
 

@@ -9,6 +9,18 @@
 > numbers it computes and **draws a picture** so you can *see* what is happening. Run the
 > cells in order from top to bottom. Nothing here needs the internet or any downloaded data.
 
+### The Big Picture — What You'll Learn
+
+In plain terms, here is what the steps below will show you:
+
+- **Verification** makes one thresholded 1-to-1 decision, while **recognition** searches a whole gallery.
+- **Siamese embeddings** make **one-shot** enrollment possible by comparing a query to one stored vector.
+- **Triplet loss** reduces the anchor-positive distance and increases the anchor-negative distance past a margin.
+- **Neural style transfer** combines content loss with Gram-matrix style loss in one weighted objective.
+
+Everything below (starting at **§1 Overview**) develops these same ideas with fuller examples,
+threshold sweeps, triplet mining, and toy style-transfer optimization.
+
 **What we will build, step by step:**
 1. **Face verification versus face recognition** — one claimed identity vs. a whole gallery.
 2. **Siamese embeddings and one-shot learning** — add a new person with one example.
@@ -205,16 +217,6 @@ plt.tight_layout()                                                          # Ke
 plt.show()                                                                  # Render the style-transfer visualization.
 ```
 ▶ What you'll see: content is measured by spatial differences, style by Gram heatmaps, and the weighted bars show how $\alpha$ and $\beta$ form the final objective.
-
-### Recap — what you just ran
-
-- **Verification** made one thresholded 1-to-1 decision, while **recognition** searched a whole gallery.
-- **Siamese embeddings** made **one-shot** enrollment possible by comparing a query to one stored vector.
-- **Triplet loss** reduced the anchor-positive distance and increased the anchor-negative distance past a margin.
-- **Neural style transfer** combined content loss with Gram-matrix style loss in one weighted objective.
-
-Everything below (starting at **§1 Overview**) develops these same ideas with fuller examples,
-threshold sweeps, triplet mining, and toy style-transfer optimization.
 
 ---
 

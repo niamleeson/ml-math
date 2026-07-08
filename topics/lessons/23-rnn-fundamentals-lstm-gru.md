@@ -9,6 +9,18 @@
 > numbers it computes and **draws a picture** so you can *see* what is happening. Run the
 > cells in order from top to bottom. Nothing here needs the internet or any downloaded data.
 
+### The Big Picture — What You'll Learn
+
+In plain terms, here is what the steps below will show you:
+
+- A **vanilla RNN** reuses one hidden-state update, produces outputs, and sums sequence loss.
+- **BPTT** adds gradient contributions from every unrolled timestep that shares a parameter.
+- **Gates** act as sigmoid soft valves; **GRU** uses update/reset gates; **LSTM** uses forget/update/reset/output gates and additive cell memory.
+- Long recurrent products can **vanish or explode**, and **gradient clipping** caps exploding update sizes.
+
+Everything below (starting at **§1 Overview**) develops these same ideas with more worked examples,
+toy tasks, and sequence visualizations.
+
 **What we will build, step by step:**
 1. **Vanilla RNN recurrence, shared weights, outputs, and sequence loss**.
 2. **Backpropagation through time (BPTT)** — shared-parameter gradients add across unrolled steps.
@@ -334,16 +346,6 @@ plt.legend()                                                                # Ex
 plt.show()                                                                  # Render clipping visualization.
 ```
 ▶ What you'll see: clipped components are scaled down together so the norm equals the threshold while direction is preserved.
-
-### Recap — what you just ran
-
-- A **vanilla RNN** reused one hidden-state update, produced outputs, and summed sequence loss.
-- **BPTT** added gradient contributions from every unrolled timestep that shared a parameter.
-- **Gates** acted as sigmoid soft valves; **GRU** used update/reset gates; **LSTM** used forget/update/reset/output gates and additive cell memory.
-- Long recurrent products can **vanish or explode**, and **gradient clipping** caps exploding update sizes.
-
-Everything below (starting at **§1 Overview**) develops these same ideas with more worked examples,
-toy tasks, and sequence visualizations.
 
 ---
 

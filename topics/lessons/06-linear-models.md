@@ -9,6 +9,18 @@
 > numbers it computes and **draws a picture** so you can *see* what is happening. Run the
 > cells in order from top to bottom. Nothing here needs the internet or any downloaded data.
 
+### The Big Picture — What You'll Learn
+
+In plain terms, here is what the steps below will show you:
+
+- A **linear hypothesis** uses an intercept column and one dot product to make predictions.
+- **Least squares** solves the normal equations, while **LMS / gradient descent** reaches a similar line by downhill updates.
+- **Locally weighted regression** keeps linear fits but makes them query-specific, so the final curve can bend.
+- **Logistic regression** uses the sigmoid to turn scores into probabilities, and **softmax / GLMs** generalize that response-function idea.
+
+Everything below (starting at **§1 Overview**) develops these same ideas with full derivations,
+more examples, and an interactive experiment.
+
 **What we will build, step by step:**
 1. **Linear hypothesis** — turn an intercept and feature into one score, $h_\theta(x)=\theta^Tx$.
 2. **Least squares and the normal equations** — solve for the line with the smallest squared residuals.
@@ -250,16 +262,6 @@ plt.title("GLMs reuse a linear eta")                            # Title the GLM 
 plt.legend(); plt.tight_layout(); plt.show()                    # Show legends, tidy panels, and render.
 ```
 ▶ What you'll see: softmax bars form one probability distribution, while GLM curves show different meanings for the same linear score.
-
-### Recap — what you just ran
-
-- A **linear hypothesis** used an intercept column and one dot product to make predictions.
-- **Least squares** solved the normal equations, while **LMS / gradient descent** reached a similar line by downhill updates.
-- **Locally weighted regression** kept linear fits but made them query-specific, so the final curve could bend.
-- **Logistic regression** used the sigmoid to turn scores into probabilities, and **softmax / GLMs** generalized that response-function idea.
-
-Everything below (starting at **§1 Overview**) develops these same ideas with full derivations,
-more examples, and an interactive experiment.
 
 ---
 

@@ -9,6 +9,17 @@
 > numbers it computes and **draws a picture** so you can *see* what is happening. Run the
 > cells in order from top to bottom. Nothing here needs the internet or any downloaded data.
 
+### The Big Picture — What You'll Learn
+
+In plain terms, here is what the steps below will show you:
+
+- **ResNet** adds a shortcut so the block learns only a residual correction and preserves gradient flow.
+- **Inception** uses parallel branches, a cheap **$1\times1$ bottleneck**, and channel concatenation.
+- **GANs** train a generator using feedback from a discriminator that scores real vs. fake samples.
+
+Everything below (starting at **§1 Overview**) develops these same ideas with fuller architecture
+examples, toy classifiers, and adversarial-training diagnostics.
+
 **What we will build, step by step:**
 1. **ResNet residual learning with a shortcut** — learn a correction instead of relearning the input.
 2. **Inception parallel branches plus $1\times1$ convolution** — mix channels cheaply and concatenate multi-scale features.
@@ -174,15 +185,6 @@ plt.legend()                                                                # Ex
 plt.show()                                                                  # Render the GAN plot.
 ```
 ▶ What you'll see: the generator step shifts fake samples toward the real distribution, raises $D(\text{fake})$, and lowers generator loss.
-
-### Recap — what you just ran
-
-- **ResNet** added a shortcut so the block learned only a residual correction and preserved gradient flow.
-- **Inception** used parallel branches, a cheap **$1\times1$ bottleneck**, and channel concatenation.
-- **GANs** trained a generator using feedback from a discriminator that scores real vs. fake samples.
-
-Everything below (starting at **§1 Overview**) develops these same ideas with fuller architecture
-examples, toy classifiers, and adversarial-training diagnostics.
 
 ---
 

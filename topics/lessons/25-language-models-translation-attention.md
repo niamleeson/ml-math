@@ -9,6 +9,18 @@
 > numbers it computes and **draws a picture** so you can *see* what is happening. Run the
 > cells in order from top to bottom. Nothing here needs the internet or any downloaded data.
 
+### The Big Picture — What You'll Learn
+
+In plain terms, here is what the steps below will show you:
+
+- A **language model** multiplies next-token probabilities, and **perplexity** summarizes average surprise.
+- **Greedy decoding** makes local choices, while **beam search** keeps multiple partial translations and finds a better joint score.
+- **Attention** converts query-key scores into soft alignment weights and a context vector.
+- **BLEU** combines clipped n-gram precision with a brevity penalty for short outputs.
+
+Everything below (starting at **§1 Overview**) develops these same ideas with full derivations,
+more examples, and a larger hands-on notebook section.
+
 **What we will build, step by step:**
 1. **Language models and perplexity** — multiply next-token probabilities and measure surprise.
 2. **Machine translation and search** — compare greedy decoding with beam search.
@@ -215,16 +227,6 @@ plt.title("BLEU: high n-gram precision can still be shortened by BP")  # Explain
 plt.show()  # Render the BLEU component chart.
 ```
 ▶ What you'll see: the candidate matches the reference prefix well, but BLEU falls below 1 because the candidate stops too early.
-
-### Recap — what you just ran
-
-- A **language model** multiplied next-token probabilities, and **perplexity** summarized average surprise.
-- **Greedy decoding** made local choices, while **beam search** kept multiple partial translations and found a better joint score.
-- **Attention** converted query-key scores into soft alignment weights and a context vector.
-- **BLEU** combined clipped n-gram precision with a brevity penalty for short outputs.
-
-Everything below (starting at **§1 Overview**) develops these same ideas with full derivations,
-more examples, and a larger hands-on notebook section.
 
 ---
 

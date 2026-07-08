@@ -9,6 +9,21 @@
 > numbers it computes and **draws a picture** so you can *see* what is happening. Run the
 > cells in order from top to bottom. Nothing here needs the internet or any downloaded data.
 
+### The Big Picture — What You'll Learn
+
+In plain terms, here is what the steps below will show you:
+
+- **Search problem ingredients** define start, actions, costs, successors, and the goal test.
+- **Tree search versus graph search** shows repeated states and how explored/frontier memory avoids them.
+- **BFS and DFS** use queue versus stack frontier discipline for level-order versus deep-first search.
+- **Dynamic programming on a DAG** memoizes `FutureCost(s)` and recovers a cheapest path.
+- **UCS** pops states by minimum past cost and returns the non-negative-cost shortest path.
+- **A*** uses a consistent heuristic in the priority `g+h` and still returns an optimal path.
+- **Relaxation-derived heuristics** produce admissible, consistent lower bounds and combine them with `max`.
+
+Everything below (starting at **§1 Overview**) develops these same ideas with full derivations,
+more examples, and an interactive experiment.
+
 **What we will build, step by step:**
 1. **Search problem ingredients** — define states, actions, costs, successors, and the goal test.
 2. **Tree search versus graph search** — see why remembering states avoids repeated work.
@@ -409,19 +424,6 @@ plt.legend()                                                                    
 plt.show()                                                                                  # Render the heuristic heatmap.
 ```
 ▶ What you'll see: every relaxed heuristic value is at most the true future cost, and the max heuristic remains consistent.
-
-### Recap — what you just ran
-
-- **Search problem ingredients** defined start, actions, costs, successors, and the goal test.
-- **Tree search versus graph search** showed repeated states and how explored/frontier memory avoids them.
-- **BFS and DFS** used queue versus stack frontier discipline for level-order versus deep-first search.
-- **Dynamic programming on a DAG** memoized `FutureCost(s)` and recovered a cheapest path.
-- **UCS** popped states by minimum past cost and returned the non-negative-cost shortest path.
-- **A*** used a consistent heuristic in the priority `g+h` and still returned an optimal path.
-- **Relaxation-derived heuristics** produced admissible, consistent lower bounds and combined them with `max`.
-
-Everything below (starting at **§1 Overview**) develops these same ideas with full derivations,
-more examples, and an interactive experiment.
 
 ---
 

@@ -9,6 +9,18 @@
 > numbers it computes and **draws a picture** so you can *see* what is happening. Run the
 > cells in order from top to bottom. Nothing here needs the internet or any downloaded data.
 
+### The Big Picture — What You'll Learn
+
+In plain terms, here is what the steps below will show you:
+
+- A **one-hot word** selects a dense column from an embedding matrix.
+- **word2vec** uses local prediction: skip-gram softmax, negative-sampling binary scores, and CBOW context averaging.
+- **GloVe** uses global co-occurrence counts and fits dot products to log counts, then averages target/context vectors.
+- **Cosine similarity**, **analogy arithmetic**, and **2-D projections** make embedding geometry inspectable.
+
+Everything below (starting at **§1 Overview**) develops these same ideas with fuller training loops,
+nearest-neighbor tables, analogy examples, and visualization diagnostics.
+
 **What we will build, step by step:**
 1. **Dense lookup from a one-hot word** — use an embedding matrix as a lookup table.
 2. **word2vec from local prediction** — skip-gram softmax, negative sampling, and CBOW averaging.
@@ -231,16 +243,6 @@ plt.axis("equal")                                                           # Pr
 plt.show()                                                                  # Render embedding geometry.
 ```
 ▶ What you'll see: `cat` is much closer to `dog` than to `computer`, the analogy query ranks `queen` first, and PCA shows the relation arrows.
-
-### Recap — what you just ran
-
-- A **one-hot word** selected a dense column from an embedding matrix.
-- **word2vec** used local prediction: skip-gram softmax, negative-sampling binary scores, and CBOW context averaging.
-- **GloVe** used global co-occurrence counts and fit dot products to log counts, then averaged target/context vectors.
-- **Cosine similarity**, **analogy arithmetic**, and **2-D projections** made embedding geometry inspectable.
-
-Everything below (starting at **§1 Overview**) develops these same ideas with fuller training loops,
-nearest-neighbor tables, analogy examples, and visualization diagnostics.
 
 ---
 

@@ -9,6 +9,19 @@
 > numbers it computes and **draws a picture** so you can *see* what is happening. Run the
 > cells in order from top to bottom. Nothing here needs the internet or any downloaded data.
 
+### The Big Picture — What You'll Learn
+
+In plain terms, here is what the steps below will show you:
+
+- **Bounding-box representations** convert cleanly between corners and center-size values.
+- **IoU** measures localization quality as intersection area divided by union area.
+- **Anchor boxes** give one cell multiple shape priors and select the best prior by IoU.
+- **Non-max suppression** removes high-overlap same-class duplicates while keeping different classes separate.
+- A **YOLO-style pipeline** decodes a grid/anchor tensor into final scored boxes with thresholding and NMS.
+
+Everything below (starting at **§1 Overview**) develops these same ideas with full derivations,
+more examples, and detector-style mini-pipelines.
+
 **What we will build, step by step:**
 1. **Bounding-box representation** — convert between corner boxes and center-size boxes.
 2. **Intersection over Union** — compute overlap quality from intersection and union areas.
@@ -280,17 +293,6 @@ ax_yolo_demo.legend(loc="lower right")                              # Explain ce
 plt.show()                                                           # Render the YOLO-style output.
 ```
 ▶ What you'll see: two raw anchor centers in one grid cell, confidence scores, and one final duplicate-suppressed dog detection.
-
-### Recap — what you just ran
-
-- **Bounding-box representations** converted cleanly between corners and center-size values.
-- **IoU** measured localization quality as intersection area divided by union area.
-- **Anchor boxes** gave one cell multiple shape priors and selected the best prior by IoU.
-- **Non-max suppression** removed high-overlap same-class duplicates while keeping different classes separate.
-- A **YOLO-style pipeline** decoded a grid/anchor tensor into final scored boxes with thresholding and NMS.
-
-Everything below (starting at **§1 Overview**) develops these same ideas with full derivations,
-more examples, and detector-style mini-pipelines.
 
 ---
 

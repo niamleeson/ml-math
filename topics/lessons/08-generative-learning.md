@@ -9,6 +9,17 @@
 > numbers it computes and **draws a picture** so you can *see* what is happening. Run the
 > cells in order from top to bottom. Nothing here needs the internet or any downloaded data.
 
+### The Big Picture — What You'll Learn
+
+In plain terms, here is what the steps below will show you:
+
+- A **generative classifier** estimates $P(x\mid y)$ and $P(y)$, then uses Bayes' rule to get $P(y\mid x)$.
+- **GDA** estimates Gaussian class means plus one shared covariance; the shared covariance makes the boundary linear.
+- **Naive Bayes** multiplies feature likelihoods, uses **Laplace smoothing** to avoid zeros, and scores text in log space.
+
+Everything below (starting at **§1 Overview**) develops these same ideas with full derivations,
+more examples, and an interactive experiment.
+
 **What we will build, step by step:**
 1. **Generative versus discriminative** — build $P(x\mid y)P(y)$, then normalize with Bayes' rule.
 2. **Gaussian Discriminant Analysis (GDA)** — estimate priors, means, one shared covariance, likelihoods, and a linear boundary.
@@ -192,15 +203,6 @@ plt.tight_layout()                                                             #
 plt.show()                                                                     # Render both Naive Bayes plots.
 ```
 ▶ What you'll see: unsmoothed scores collapse to zero, while Laplace-smoothed log scores produce a usable posterior.
-
-### Recap — what you just ran
-
-- A **generative classifier** estimated $P(x\mid y)$ and $P(y)$, then used Bayes' rule to get $P(y\mid x)$.
-- **GDA** estimated Gaussian class means plus one shared covariance; the shared covariance made the boundary linear.
-- **Naive Bayes** multiplied feature likelihoods, used **Laplace smoothing** to avoid zeros, and scored text in log space.
-
-Everything below (starting at **§1 Overview**) develops these same ideas with full derivations,
-more examples, and an interactive experiment.
 
 ---
 

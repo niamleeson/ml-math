@@ -9,6 +9,17 @@
 > numbers it computes and **draws a picture** so you can *see* what is happening. Run the
 > cells in order from top to bottom. Nothing here needs the internet or any downloaded data.
 
+### The Big Picture — What You'll Learn
+
+In plain terms, here is what the steps below will show you:
+
+- **Weight penalties** make large weights costly; **dropout** samples sub-networks while preserving average activation scale.
+- **Early stopping** selects the validation-best epoch; **batch norm** stabilizes one mini-batch of activations.
+- **Data augmentation** adds safe variation, and the **sanity checks** verify that a model can overfit a tiny batch and that a gradient is implemented correctly.
+
+Everything below (starting at **§1 Overview**) develops these same ideas with full derivations,
+more examples, and practical regularization experiments.
+
 **What we will build, step by step:**
 1. **Weight penalties: L1, L2, and elastic net** — charge large weights and compare shrinkage.
 2. **Dropout** — randomly remove activations while preserving expected scale.
@@ -267,15 +278,6 @@ plt.tight_layout()  # Keep panels readable.
 plt.show()  # Render sanity-check diagnostics.
 ```
 ▶ What you'll see: the tiny-batch loss drops almost to zero, and the numerical derivative matches the analytical derivative with a tiny relative error.
-
-### Recap — what you just ran
-
-- **Weight penalties** made large weights costly; **dropout** sampled sub-networks while preserving average activation scale.
-- **Early stopping** selected the validation-best epoch; **batch norm** stabilized one mini-batch of activations.
-- **Data augmentation** added safe variation, and the **sanity checks** verified that a model can overfit a tiny batch and that a gradient is implemented correctly.
-
-Everything below (starting at **§1 Overview**) develops these same ideas with full derivations,
-more examples, and practical regularization experiments.
 
 ---
 

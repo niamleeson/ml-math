@@ -9,6 +9,19 @@
 > numbers it computes and **draws a picture** so you can *see* what is happening. Run the
 > cells in order from top to bottom. Nothing here needs the internet or any downloaded data.
 
+### The Big Picture — What You'll Learn
+
+In plain terms, here is what the steps below will show you:
+
+- The **linear decision rule** classifies by the sign of $w^Tx-b$.
+- The **functional margin** checks correctness in score units, while the **geometric margin** converts that score into distance.
+- The **hard-margin objective** minimizes $\frac12\|w\|^2$ to maximize width.
+- **Soft margins** use hinge loss and $C$ to handle violations.
+- The **RBF kernel** turns distance into local similarity, and **support vectors** are the sparse nonzero-$\alpha$ points defining the boundary.
+
+Everything below (starting at **§1 Overview**) develops these same ideas with full derivations,
+more examples, and an interactive experiment.
+
 **What we will build, step by step:**
 1. **Linear decision rule and sign convention** — classify by the sign of $w^Tx-b$.
 2. **Functional margin** — measure correctness with $y(w^Tx-b)$.
@@ -306,17 +319,6 @@ plt.legend()                                                                 # S
 plt.show()                                                                   # Render the plot.
 ```
 ▶ What you'll see: only the circled margin points have nonzero $\alpha$, and they alone rebuild the separator.
-
-### Recap — what you just ran
-
-- The **linear decision rule** classified by the sign of $w^Tx-b$.
-- The **functional margin** checked correctness in score units, while the **geometric margin** converted that score into distance.
-- The **hard-margin objective** minimized $\frac12\|w\|^2$ to maximize width.
-- **Soft margins** used hinge loss and $C$ to handle violations.
-- The **RBF kernel** turned distance into local similarity, and **support vectors** were the sparse nonzero-$\alpha$ points defining the boundary.
-
-Everything below (starting at **§1 Overview**) develops these same ideas with full derivations,
-more examples, and an interactive experiment.
 
 ---
 

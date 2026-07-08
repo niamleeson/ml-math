@@ -9,6 +9,18 @@
 > numbers it computes and **draws a picture** so you can *see* what is happening. Run the
 > cells in order from top to bottom. Nothing here needs the internet or any downloaded data.
 
+### The Big Picture — What You'll Learn
+
+In plain terms, here is what the steps below will show you:
+
+- **Decision trees** score a threshold by reducing impurity, using Gini, entropy, and information gain.
+- **kNN** predicts from Euclidean distances, sorted neighbors, and a local majority vote.
+- **Bagging and random forests** average noisy trees; decorrelating trees makes the variance drop farther.
+- **Boosting** adds weak residual-correction stumps one round at a time.
+
+Everything below (starting at **§1 Overview**) develops these same ideas with fuller examples,
+model comparisons, and an interactive experiment.
+
 **What we will build, step by step:**
 1. **Decision-tree splitting** — how Gini, entropy, and information gain choose a threshold.
 2. **k-nearest neighbors** — how distances, sorted neighbors, and majority vote make a prediction.
@@ -221,16 +233,6 @@ plt.legend()                                                        # Identify t
 plt.show()                                                          # Render the boosting progress plot.
 ```
 ▶ What you'll see: each round chooses a stump for the remaining residuals, and the MSE decreases as the step function moves toward the targets.
-
-### Recap — what you just ran
-
-- **Decision trees** scored a threshold by reducing impurity, using Gini, entropy, and information gain.
-- **kNN** predicted from Euclidean distances, sorted neighbors, and a local majority vote.
-- **Bagging and random forests** averaged noisy trees; decorrelating trees made the variance drop farther.
-- **Boosting** added weak residual-correction stumps one round at a time.
-
-Everything below (starting at **§1 Overview**) develops these same ideas with fuller examples,
-model comparisons, and an interactive experiment.
 
 ---
 

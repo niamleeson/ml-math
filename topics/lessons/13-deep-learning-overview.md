@@ -9,6 +9,18 @@
 > numbers it computes and **draws a picture** so you can *see* what is happening. Run the
 > cells in order from top to bottom. Nothing here needs the internet or any downloaded data.
 
+### The Big Picture — What You'll Learn
+
+In plain terms, here is what the steps below will show you:
+
+- **Neurons, activations, MLP forward passes, and cross-entropy** build predictions from layered differentiable pieces.
+- **Backpropagation and gradient descent** compute local slopes, check them, and use them to reduce loss.
+- **CNNs, batch norm, and RNN/LSTM memory** show common deep-learning layer patterns beyond dense MLPs.
+- **Value iteration and Q-learning** show reinforcement learning updates for state values and action values.
+
+Everything below (starting at **§1 Overview**) develops these same ideas with fuller examples,
+from-scratch training loops, CNN/RNN/RL demos, and an interactive MLP experiment.
+
 **What we will build, step by step:**
 1. **Neuron scores and activations** — affine evidence $w^Tx+b$ followed by sigmoid, tanh, ReLU, or leaky ReLU.
 2. **MLP forward pass** — hidden layer scores, hidden activations, output score, and predicted probability.
@@ -416,16 +428,6 @@ for state_plot_demo in range(Q_q_demo.shape[0]):                                
 plt.show()                                                                      # Render action-value visualization.
 ```
 ▶ What you'll see: the action that reaches the goal gets high value, and that value backs up to the start action after repeated experience.
-
-### Recap — what you just ran
-
-- **Neurons, activations, MLP forward passes, and cross-entropy** built predictions from layered differentiable pieces.
-- **Backpropagation and gradient descent** computed local slopes, checked them, and used them to reduce loss.
-- **CNNs, batch norm, and RNN/LSTM memory** showed common deep-learning layer patterns beyond dense MLPs.
-- **Value iteration and Q-learning** showed reinforcement learning updates for state values and action values.
-
-Everything below (starting at **§1 Overview**) develops these same ideas with fuller examples,
-from-scratch training loops, CNN/RNN/RL demos, and an interactive MLP experiment.
 
 ---
 

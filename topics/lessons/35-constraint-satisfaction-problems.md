@@ -9,6 +9,20 @@
 > numbers it computes and **draws a picture** so you can *see* what is happening. Run the
 > cells in order from top to bottom. Nothing here needs the internet or any downloaded data.
 
+### The Big Picture — What You'll Learn
+
+In plain terms, here is what the steps below will show you:
+
+- You'll represent a tiny CSP as **variables**, **domains**, and local **factors** whose product gives an assignment weight.
+- You'll use **backtracking** and **dependent-factor pruning** to reject impossible partial assignments early.
+- You'll use **forward checking** and **AC-3** to shrink domains before deeper search.
+- You'll compute **MCV** and **LCV** ordering scores.
+- You'll compare approximate **beam search** widths.
+- You'll see **ICM** greedily maximize local factors and **Gibbs** sample from local factor weights.
+
+Everything below (starting at **§1 Overview**) develops these same ideas with full derivations,
+more examples, and larger CSP/factor-graph experiments.
+
 **What we will build, step by step:**
 1. **Variables, domains, factors, and weights** — a tiny map-coloring factor graph.
 2. **Backtracking search** — trying values recursively until a consistent assignment appears.
@@ -395,18 +409,6 @@ plt.tight_layout()  # Prevent overlap.
 plt.show()  # Display both local-update visuals.
 ```
 ▶ What you'll see: ICM moves to locally best values, while Gibbs assigns probabilities rather than always taking the max.
-
-### Recap — what you just ran
-
-- You represented a tiny CSP as **variables**, **domains**, and local **factors** whose product gives an assignment weight.
-- You used **backtracking** and **dependent-factor pruning** to reject impossible partial assignments early.
-- You used **forward checking** and **AC-3** to shrink domains before deeper search.
-- You computed **MCV** and **LCV** ordering scores.
-- You compared approximate **beam search** widths.
-- You saw **ICM** greedily maximize local factors and **Gibbs** sample from local factor weights.
-
-Everything below (starting at **§1 Overview**) develops these same ideas with full derivations,
-more examples, and larger CSP/factor-graph experiments.
 
 ---
 

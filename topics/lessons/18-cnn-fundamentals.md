@@ -9,6 +9,21 @@
 > numbers it computes and **draws a picture** so you can *see* what is happening. Run the
 > cells in order from top to bottom. Nothing here needs the internet or any downloaded data.
 
+### The Big Picture — What You'll Learn
+
+In plain terms, here is what the steps below will show you:
+
+- **Convolution** makes a feature map by sliding one local detector across an image.
+- **Filters, stride, and padding** control what pattern is detected and which window starts are legal.
+- The **output-size formula** predicts feature-map sizes and flags incompatible settings.
+- **Pooling** downsamples activations with max or average summaries.
+- **Flattening + FC** converts feature tensors into dense output scores.
+- **Parameter counting** shows why shared convolution filters are efficient and why FC layers can dominate.
+- **Receptive fields** grow as stacked layers combine wider input evidence.
+
+Everything below (starting at **§1 Overview**) develops these same ideas with full derivations,
+more examples, and CNN-style experiments.
+
 **What we will build, step by step:**
 1. **The convolution operation** — slide a tiny filter over an image and make a feature map.
 2. **Filters, stride, and padding** — see what the detector looks for and how it moves.
@@ -275,19 +290,6 @@ plt.tight_layout()                                                    # Keep pan
 plt.show()                                                            # Render the receptive-field visualization.
 ```
 ▶ What you'll see: the receptive field grows from 3 to 5 to 6 pixels wide, then the mask shows the final input region.
-
-### Recap — what you just ran
-
-- **Convolution** made a feature map by sliding one local detector across an image.
-- **Filters, stride, and padding** controlled what pattern was detected and which window starts were legal.
-- The **output-size formula** predicted feature-map sizes and flagged incompatible settings.
-- **Pooling** downsampled activations with max or average summaries.
-- **Flattening + FC** converted feature tensors into dense output scores.
-- **Parameter counting** showed why shared convolution filters are efficient and why FC layers can dominate.
-- **Receptive fields** grew as stacked layers combined wider input evidence.
-
-Everything below (starting at **§1 Overview**) develops these same ideas with full derivations,
-more examples, and CNN-style experiments.
 
 ---
 

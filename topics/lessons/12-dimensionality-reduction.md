@@ -9,6 +9,18 @@
 > numbers it computes and **draws a picture** so you can *see* what is happening. Run the
 > cells in order from top to bottom. Nothing here needs the internet or any downloaded data.
 
+### The Big Picture — What You'll Learn
+
+In plain terms, here is what the steps below will show you:
+
+- **PCA preprocessing** centers the data, optionally standardizes scales, and builds a covariance matrix.
+- **PCA eigenvectors** give orthogonal directions ordered by variance, with eigenvalues as variance captured.
+- **PCA projection** compresses points into PC coordinates and reconstructs them with measurable error.
+- **ICA** whitens mixed signals and then searches for a non-Gaussian rotation that separates independent sources.
+
+Everything below (starting at **§1 Overview**) develops these same ideas with fuller derivations,
+worked examples, and an interactive reconstruction experiment.
+
 **What we will build, step by step:**
 1. **PCA centering, scaling, and covariance** — prepare the data cloud and measure feature spread.
 2. **PCA eigenvectors as principal directions** — find the axes that capture the most variance.
@@ -209,16 +221,6 @@ plt.tight_layout()  # Keep stacked panels readable.
 plt.show()  # Render the ICA source-separation visualization.
 ```
 ▶ What you'll see: the observed sensors are blended, while the recovered components line up strongly with the original sources up to sign and order.
-
-### Recap — what you just ran
-
-- **PCA preprocessing** centered the data, optionally standardized scales, and built a covariance matrix.
-- **PCA eigenvectors** gave orthogonal directions ordered by variance, with eigenvalues as variance captured.
-- **PCA projection** compressed points into PC coordinates and reconstructed them with measurable error.
-- **ICA** whitened mixed signals and then searched for a non-Gaussian rotation that separated independent sources.
-
-Everything below (starting at **§1 Overview**) develops these same ideas with fuller derivations,
-worked examples, and an interactive reconstruction experiment.
 
 ---
 

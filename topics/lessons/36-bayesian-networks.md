@@ -9,6 +9,21 @@
 > numbers it computes and **draws a picture** so you can *see* what is happening. Run the
 > cells in order from top to bottom. Nothing here needs the internet or any downloaded data.
 
+### The Big Picture — What You'll Learn
+
+In plain terms, here is what the steps below will show you:
+
+- You'll build a tiny Bayesian network DAG with **parents** and locally normalized **CPTs**.
+- You'll multiply local CPT entries to form the **factorized joint distribution**.
+- You'll check **conditional independence** patterns, including collider **explaining away**.
+- You'll compute exact posteriors by **enumeration** and by **variable elimination**.
+- You'll approximate a posterior with **Gibbs sampling**.
+- You'll smooth an HMM with **forward-backward** messages.
+- You'll learn CPT rows with **MLE** and **Laplace smoothing**.
+
+Everything below (starting at **§1 Overview**) develops these same ideas with full derivations,
+more examples, and larger inference experiments.
+
 **What we will build, step by step:**
 1. **Directed acyclic graph and parents** — a tiny Rain/Sprinkler/WetGrass Bayesian network.
 2. **Factorized joint distribution** — multiplying local CPT entries into joint probabilities.
@@ -350,19 +365,6 @@ plt.tight_layout()  # Fit rotated labels.
 plt.show()  # Display learned CPT comparison.
 ```
 ▶ What you'll see: MLE assigns zero to an unseen fever case, while Laplace smoothing gives it a small nonzero probability.
-
-### Recap — what you just ran
-
-- You built a tiny Bayesian network DAG with **parents** and locally normalized **CPTs**.
-- You multiplied local CPT entries to form the **factorized joint distribution**.
-- You checked **conditional independence** patterns, including collider **explaining away**.
-- You computed exact posteriors by **enumeration** and by **variable elimination**.
-- You approximated a posterior with **Gibbs sampling**.
-- You smoothed an HMM with **forward-backward** messages.
-- You learned CPT rows with **MLE** and **Laplace smoothing**.
-
-Everything below (starting at **§1 Overview**) develops these same ideas with full derivations,
-more examples, and larger inference experiments.
 
 ---
 

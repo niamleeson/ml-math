@@ -9,6 +9,19 @@
 > numbers it computes and **draws a picture** so you can *see* what is happening. Run the
 > cells in order from top to bottom. Nothing here needs the internet or any downloaded data.
 
+### The Big Picture — What You'll Learn
+
+In plain terms, here is what the steps below will show you:
+
+- **Batch vs. stochastic updates** compare one-example, mini-batch, and full-batch gradient estimates.
+- **Learning-rate behavior** shows why step size can make training crawl, converge, or bounce.
+- **Logistic prediction and gradients** connect sigmoid probabilities to the cross-entropy gradient.
+- **Hypothesis class and fine-tuning** demonstrate frozen-base versus full-parameter updates.
+- **Pseudocode** becomes a complete mini-batch training loop with shuffled batches and logged losses.
+
+Everything below (starting at **§1 Overview**) develops these same ideas with full derivations,
+more examples, and an interactive experiment.
+
 **What we will build, step by step:**
 1. **Batch vs. stochastic updates** — compare one-example, mini-batch, and full-batch gradients.
 2. **Learning-rate behavior** — watch small, useful, and too-large step sizes move on a loss curve.
@@ -222,17 +235,6 @@ plt.title("Mini-batch SGD loop: shuffle, average gradient, update")             
 plt.show()                                                                        # Render the loss curve.
 ```
 ▶ What you'll see: the printed loss decreases over epochs as the mini-batch SGD pseudocode updates the weights.
-
-### Recap — what you just ran
-
-- **Batch vs. stochastic updates** compared one-example, mini-batch, and full-batch gradient estimates.
-- **Learning-rate behavior** showed why step size can make training crawl, converge, or bounce.
-- **Logistic prediction and gradients** connected sigmoid probabilities to the cross-entropy gradient.
-- **Hypothesis class and fine-tuning** demonstrated frozen-base versus full-parameter updates.
-- **Pseudocode** became a complete mini-batch training loop with shuffled batches and logged losses.
-
-Everything below (starting at **§1 Overview**) develops these same ideas with full derivations,
-more examples, and an interactive experiment.
 
 ---
 

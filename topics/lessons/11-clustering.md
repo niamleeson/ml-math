@@ -9,6 +9,18 @@
 > numbers it computes and **draws a picture** so you can *see* what is happening. Run the
 > cells in order from top to bottom. Nothing here needs the internet or any downloaded data.
 
+### The Big Picture — What You'll Learn
+
+In plain terms, here is what the steps below will show you:
+
+- **k-means** alternates hard nearest-centroid assignments and centroid means while reducing distortion.
+- **EM** uses soft responsibilities so ambiguous points can partly belong to multiple clusters.
+- **Hierarchical clustering** merges nearby points into a dendrogram, with linkage deciding cluster-to-cluster distance.
+- **Silhouette** gives a label-free score for compact, separated clusters.
+
+Everything below (starting at **§1 Overview**) develops these same ideas with fuller examples,
+model-selection diagnostics, and an interactive experiment.
+
 **What we will build, step by step:**
 1. **k-means objective and assign → update loop** — hard assignments, centroid updates, and distortion.
 2. **EM as soft assignment** — responsibilities replace all-or-nothing cluster labels.
@@ -203,16 +215,6 @@ plt.tight_layout()  # Prevent subplot overlap.
 plt.show()  # Render the silhouette visualization.
 ```
 ▶ What you'll see: all points have high silhouette bars because each cluster is tight and far from the other cluster.
-
-### Recap — what you just ran
-
-- **k-means** alternated hard nearest-centroid assignments and centroid means while reducing distortion.
-- **EM** used soft responsibilities so ambiguous points could partly belong to multiple clusters.
-- **Hierarchical clustering** merged nearby points into a dendrogram, with linkage deciding cluster-to-cluster distance.
-- **Silhouette** gave a label-free score for compact, separated clusters.
-
-Everything below (starting at **§1 Overview**) develops these same ideas with fuller examples,
-model-selection diagnostics, and an interactive experiment.
 
 ---
 

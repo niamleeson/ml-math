@@ -9,6 +9,18 @@
 > numbers it computes and **draws a picture** so you can *see* what is happening. Run the
 > cells in order from top to bottom. Nothing here needs the internet or any downloaded data.
 
+### The Big Picture — What You'll Learn
+
+In plain terms, here is what the steps below will show you:
+
+- **SGD** moves opposite the gradient, and **momentum** smooths repeated gradient directions.
+- **RMSprop** scales coordinates by recent squared gradients, while **Adam** combines scaling, momentum, and bias correction.
+- **Learning-rate schedules** reduce late jitter, and **Xavier initialization** keeps activation variance healthier.
+- **Transfer-learning rules** connect data size to freezing, partial tuning, or full fine-tuning.
+
+Everything below (starting at **§1 Overview**) develops these same ideas with full derivations,
+more examples, and optimizer experiments.
+
 **What we will build, step by step:**
 1. **Stochastic gradient descent** — move opposite the gradient on a simple bowl.
 2. **Momentum** — average gradients to damp zig-zags.
@@ -330,16 +342,6 @@ plt.tight_layout()  # Keep labels readable.
 plt.show()  # Render transfer-learning rule visuals.
 ```
 ▶ What you'll see: as data size grows, the recommended strategy trains more of the pretrained model, usually with a smaller learning rate for deeper layers.
-
-### Recap — what you just ran
-
-- **SGD** moved opposite the gradient, and **momentum** smoothed repeated gradient directions.
-- **RMSprop** scaled coordinates by recent squared gradients, while **Adam** combined scaling, momentum, and bias correction.
-- **Learning-rate schedules** reduced late jitter, and **Xavier initialization** kept activation variance healthier.
-- **Transfer-learning rules** connected data size to freezing, partial tuning, or full fine-tuning.
-
-Everything below (starting at **§1 Overview**) develops these same ideas with full derivations,
-more examples, and optimizer experiments.
 
 ---
 

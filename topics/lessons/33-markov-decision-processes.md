@@ -9,6 +9,19 @@
 > numbers it computes and **draws a picture** so you can *see* what is happening. Run the
 > cells in order from top to bottom. Nothing here needs the internet or any downloaded data.
 
+### The Big Picture — What You'll Learn
+
+In plain terms, here is what the steps below will show you:
+
+- You'll build a complete tiny **MDP** with states, actions, transition probabilities, rewards, terminal states, and discounting.
+- You'll evaluate a fixed **policy**, check the **Bellman expectation equation**, and find greedy **optimal** actions.
+- You'll compare **policy evaluation**, **value iteration**, and **policy iteration** as planning methods.
+- You'll learn from samples using **model-based Monte Carlo**, **model-free Monte Carlo**, **SARSA**, and **Q-learning**.
+- You'll see how **epsilon-greedy** exploration controls the balance between trying actions and trusting current values.
+
+Everything below (starting at **§1 Overview**) develops these same ideas with full derivations,
+more examples, and larger gridworld experiments.
+
 **What we will build, step by step:**
 1. **MDP ingredients** — states, actions, transitions, rewards, terminal states, and discounting.
 2. **Transition probabilities** — checking that each action's outcomes form a distribution.
@@ -517,17 +530,6 @@ plt.legend()  # Show simulated and expected labels.
 plt.show()  # Display the epsilon-greedy chart.
 ```
 ▶ What you'll see: as $\epsilon$ rises, greedy choices become less frequent because more decisions explore.
-
-### Recap — what you just ran
-
-- You built a complete tiny **MDP** with states, actions, transition probabilities, rewards, terminal states, and discounting.
-- You evaluated a fixed **policy**, checked the **Bellman expectation equation**, and found greedy **optimal** actions.
-- You compared **policy evaluation**, **value iteration**, and **policy iteration** as planning methods.
-- You learned from samples using **model-based Monte Carlo**, **model-free Monte Carlo**, **SARSA**, and **Q-learning**.
-- You saw how **epsilon-greedy** exploration controls the balance between trying actions and trusting current values.
-
-Everything below (starting at **§1 Overview**) develops these same ideas with full derivations,
-more examples, and larger gridworld experiments.
 
 ---
 

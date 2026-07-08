@@ -9,6 +9,20 @@
 > numbers it computes and **draws a picture** so you can *see* what is happening. Run the
 > cells in order from top to bottom. Nothing here needs the internet or any downloaded data.
 
+### The Big Picture — What You'll Learn
+
+In plain terms, here is what the steps below will show you:
+
+- You'll build a tiny **zero-sum game tree** with turns, actions, successors, terminal utilities, and opposite payoffs.
+- You'll use **minimax** to back up values through max and min turns.
+- You'll use **alpha-beta pruning** to keep the same answer while visiting fewer branches.
+- You'll use **expectimax** when the next actor follows probabilities instead of adversarial choices.
+- You'll compare **depth-limited evaluation** with deeper search.
+- You'll check **Nash equilibrium** in simultaneous games and see a simple mixed zero-sum strategy.
+
+Everything below (starting at **§1 Overview**) develops these same ideas with full derivations,
+more examples, and larger game-playing experiments.
+
 **What we will build, step by step:**
 1. **Game ingredients and zero-sum payoffs** — states, actions, successors, turns, terminals, and utilities.
 2. **Minimax value recursion** — max moves for us, min moves for the opponent.
@@ -275,18 +289,6 @@ plt.tight_layout()  # Prevent subplot labels from overlapping.
 plt.show()  # Display both simultaneous-game visuals.
 ```
 ▶ What you'll see: a starred pure Nash cell on the left and the matching-pennies mixed equilibrium at $p=0.5$ on the right.
-
-### Recap — what you just ran
-
-- You built a tiny **zero-sum game tree** with turns, actions, successors, terminal utilities, and opposite payoffs.
-- You used **minimax** to back up values through max and min turns.
-- You used **alpha-beta pruning** to keep the same answer while visiting fewer branches.
-- You used **expectimax** when the next actor follows probabilities instead of adversarial choices.
-- You compared **depth-limited evaluation** with deeper search.
-- You checked **Nash equilibrium** in simultaneous games and saw a simple mixed zero-sum strategy.
-
-Everything below (starting at **§1 Overview**) develops these same ideas with full derivations,
-more examples, and larger game-playing experiments.
 
 ---
 

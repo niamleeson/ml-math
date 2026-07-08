@@ -9,6 +9,17 @@
 > numbers it computes and **draws a picture** so you can *see* what is happening. Run the
 > cells in order from top to bottom. Nothing here needs the internet or any downloaded data.
 
+### The Big Picture — What You'll Learn
+
+In plain terms, here is what the steps below will show you:
+
+- **Markov & Chebyshev** give *guaranteed* tail bounds — loose from the mean alone, then tighter once you add the variance.
+- The **running sample mean** settles onto the true mean (**WLLN**), and the "far from the mean" probability shrinks toward 0 (**convergence in probability**).
+- Averages of skewed data turn **bell-shaped** (**CLT**), and a normal curve traces the **binomial** (**De Moivre–Laplace**).
+
+Everything below (starting at **§1 Overview**) develops these same ideas with full derivations,
+more examples, and an interactive experiment.
+
 **What we will build, step by step:**
 1. **Markov's inequality** — a guaranteed (but loose) tail bound using only the mean.
 2. **Chebyshev's inequality** — a tail bound that also uses the variance.
@@ -194,17 +205,6 @@ plt.title("De Moivre–Laplace: the normal curve traces the binomial bars")
 plt.legend(); plt.show()
 ```
 ▶ What you'll see: the red normal curve lands right on top of the binomial bars.
-
-### Recap — what you just ran
-
-- **Markov & Chebyshev** gave *guaranteed* tail bounds (loose, then tighter using the variance).
-- The **running sample mean** settled onto the true mean (**WLLN**), and the "far from the mean"
-  probability shrank toward 0 (**convergence in probability**).
-- Averages of skewed data turned **bell-shaped** (**CLT**), and a normal curve traced the
-  **binomial** (**De Moivre–Laplace**).
-
-Everything below (starting at **§1 Overview**) develops these same ideas with full derivations,
-more examples, and an interactive experiment.
 
 ---
 

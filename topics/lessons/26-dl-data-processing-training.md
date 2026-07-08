@@ -9,6 +9,17 @@
 > numbers it computes and **draws a picture** so you can *see* what is happening. Run the
 > cells in order from top to bottom. Nothing here needs the internet or any downloaded data.
 
+### The Big Picture — What You'll Learn
+
+In plain terms, here is what the steps below will show you:
+
+- **Normalization** makes feature scales and gradients more balanced, and **batch norm** stabilizes one mini-batch of activations.
+- **Augmentation** creates extra safe views of one example while keeping its label unchanged.
+- **Mini-batch gradient descent** connects forward propagation, binary cross-entropy, backpropagated gradients, and parameter updates.
+
+Everything below (starting at **§1 Overview**) develops these same ideas with full derivations,
+more examples, and a larger hands-on notebook section.
+
 **What we will build, step by step:**
 1. **Normalize inputs before asking gradients to behave** — standardize features and inspect batch norm.
 2. **Augment data without changing labels** — create safe transformed views of one tiny image.
@@ -176,15 +187,6 @@ plt.tight_layout()  # Keep panels readable.
 plt.show()  # Render training diagnostics.
 ```
 ▶ What you'll see: the first mini-batch prints probabilities, loss, and gradients; then the loss curve falls and the learned boundary separates the toy classes.
-
-### Recap — what you just ran
-
-- **Normalization** made feature scales and gradients more balanced, and **batch norm** stabilized one mini-batch of activations.
-- **Augmentation** created extra safe views of one example while keeping its label unchanged.
-- **Mini-batch gradient descent** connected forward propagation, binary cross-entropy, backpropagated gradients, and parameter updates.
-
-Everything below (starting at **§1 Overview**) develops these same ideas with full derivations,
-more examples, and a larger hands-on notebook section.
 
 ---
 

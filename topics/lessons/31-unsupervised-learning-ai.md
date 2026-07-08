@@ -9,6 +9,16 @@
 > numbers it computes and **draws a picture** so you can *see* what is happening. Run the
 > cells in order from top to bottom. Nothing here needs the internet or any downloaded data.
 
+### The Big Picture — What You'll Learn
+
+In plain terms, here is what the steps below will show you:
+
+- **k-means clustering** alternates nearest-centroid assignments with centroid-mean updates and tracks distortion.
+- **PCA dimensionality reduction** centers data, computes covariance eigenvectors, explains variance, and forms 1D projections.
+
+Everything below (starting at **§1 Overview**) develops these same ideas with full derivations,
+more examples, and an interactive experiment.
+
 **What we will build, step by step:**
 1. **k-means clustering** — alternate nearest-centroid assignments and centroid updates while distortion falls.
 2. **PCA dimensionality reduction** — center data, find maximum-variance directions, and project to one dimension.
@@ -127,14 +137,6 @@ plt.tight_layout()                                                              
 plt.show()                                                                               # Render the PCA visuals.
 ```
 ▶ What you'll see: most variance lies along PC1, so the 1D projection keeps almost all of the structure.
-
-### Recap — what you just ran
-
-- **k-means clustering** alternated nearest-centroid assignments with centroid-mean updates and tracked distortion.
-- **PCA dimensionality reduction** centered data, computed covariance eigenvectors, explained variance, and 1D projections.
-
-Everything below (starting at **§1 Overview**) develops these same ideas with full derivations,
-more examples, and an interactive experiment.
 
 ---
 

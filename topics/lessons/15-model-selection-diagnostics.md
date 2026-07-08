@@ -9,6 +9,19 @@
 > numbers it computes and **draws a picture** so you can *see* what is happening. Run the
 > cells in order from top to bottom. Nothing here needs the internet or any downloaded data.
 
+### The Big Picture — What You'll Learn
+
+In plain terms, here is what the steps below will show you:
+
+- A **train/validation/test split** keeps fitting, tuning, and final reporting in separate buckets.
+- **$k$-fold cross-validation** rotates the validation fold and averages the errors for model choice.
+- **Bias-variance diagnostics** show why simple models underfit and very flexible models vary too much.
+- **Regularization** shrinks coefficients so a flexible model becomes smoother.
+- **Learning and validation curves** separate “need more data” from “need a different hyperparameter.”
+
+Everything below (starting at **§1 Overview**) develops these same ideas with full derivations,
+more examples, and diagnostic workflows.
+
 **What we will build, step by step:**
 1. **Train/validation/test split** — keep fitting, tuning, and final auditing separate.
 2. **$k$-fold cross-validation** — rotate which fold validates and average the errors.
@@ -245,17 +258,6 @@ plt.tight_layout()                                                     # Keep su
 plt.show()                                                            # Render both diagnostic curves.
 ```
 ▶ What you'll see: one curve shows how error changes with more data, and the other marks the best complexity by validation error.
-
-### Recap — what you just ran
-
-- A **train/validation/test split** kept fitting, tuning, and final reporting in separate buckets.
-- **$k$-fold cross-validation** rotated the validation fold and averaged the errors for model choice.
-- **Bias-variance diagnostics** showed why simple models underfit and very flexible models vary too much.
-- **Regularization** shrank coefficients so a flexible model became smoother.
-- **Learning and validation curves** separated “need more data” from “need a different hyperparameter.”
-
-Everything below (starting at **§1 Overview**) develops these same ideas with full derivations,
-more examples, and diagnostic workflows.
 
 ---
 

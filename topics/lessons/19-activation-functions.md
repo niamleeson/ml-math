@@ -9,6 +9,19 @@
 > numbers it computes and **draws a picture** so you can *see* what is happening. Run the
 > cells in order from top to bottom. Nothing here needs the internet or any downloaded data.
 
+### The Big Picture — What You'll Learn
+
+In plain terms, here is what the steps below will show you:
+
+- **Sigmoid** and **tanh** are smooth S-curves whose derivatives vanish in the tails.
+- **ReLU** keeps positive gradients strong but can kill negative-side gradients completely.
+- **Leaky ReLU** and **ELU** keep modified negative branches so learning signal can still pass.
+- **Softmax** converts logits to stable probabilities and has a coupled Jacobian.
+- **Vanishing gradients** happen because backprop multiplies many small local derivatives.
+
+Everything below (starting at **§1 Overview**) develops these same ideas with full derivations,
+more examples, and activation-function experiments.
+
 **What we will build, step by step:**
 1. **Sigmoid** — a probability-shaped S-curve and its saturating derivative.
 2. **Hyperbolic tangent** — a zero-centered S-curve with similar tail saturation.
@@ -282,17 +295,6 @@ plt.legend()                                                         # Show curv
 plt.show()                                                           # Render the vanishing-gradient plot.
 ```
 ▶ What you'll see: products of small slopes dive toward zero on a log scale, while the active ReLU product stays at 1.
-
-### Recap — what you just ran
-
-- **Sigmoid** and **tanh** are smooth S-curves whose derivatives vanish in the tails.
-- **ReLU** keeps positive gradients strong but can kill negative-side gradients completely.
-- **Leaky ReLU** and **ELU** keep modified negative branches so learning signal can still pass.
-- **Softmax** converts logits to stable probabilities and has a coupled Jacobian.
-- **Vanishing gradients** happen because backprop multiplies many small local derivatives.
-
-Everything below (starting at **§1 Overview**) develops these same ideas with full derivations,
-more examples, and activation-function experiments.
 
 ---
 
