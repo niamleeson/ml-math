@@ -87,6 +87,9 @@
   var css = [
     '#content .allml-doc .lesson-sub { font-style: normal; }',
     '#content .allml-toolbar { display:flex; gap:10px; align-items:center; margin:0 0 34px; flex-wrap:wrap; }',
+    // Notebook button styled to match the AI Cheat Sheet's orange Colab button (.cs-colab-btn).
+    '#content .allml-doc .colab-btn { display:inline-flex; align-items:center; gap:6px; text-decoration:none; font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif; font-weight:600; font-size:14px; color:#fff; background:#e8710a; border:none; border-radius:8px; padding:10px 16px; }',
+    '#content .allml-doc .colab-btn:hover { background:#c85c00; color:#fff; border-color:transparent; }',
     '#content .colab-btn.off { opacity:.5; cursor:not-allowed; }',
     '#content .card.allml .sec-hint { color:var(--ink-dim); font-size:15px; margin:0 0 4px; }',
     '#content .card.allml ol.work { margin:12px 0 16px; padding-left:24px; font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif; font-size:15px; }',
