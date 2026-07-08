@@ -23,6 +23,8 @@ Two sub-lessons:
 - **M13.1 ANN methods: HNSW vs IVF-PQ vs ScaNN** — how the major index families reduce work.
 - **M13.2 Tuning recall/latency/memory + hybrid retrieval** — knob sweep, tradeoff curve, and operating point.
 
+<p class="cur-colab"><a class="cur-colab-btn" href="https://colab.research.google.com/github/niamleeson/ml-math/blob/main/afp/notebooks/M13-ann-vector-search.ipynb" target="_blank" rel="noopener">▶ Open the runnable ANN notebook (toy IVF, PQ &amp; HNSW, recall-vs-latency tuning) in Google Colab</a></p>
+
 ---
 
 ## M13.1 · ANN methods: HNSW vs IVF-PQ vs ScaNN

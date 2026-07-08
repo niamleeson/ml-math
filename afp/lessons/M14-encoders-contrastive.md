@@ -20,6 +20,8 @@ Two sub-lessons:
 - **M14.1 Dual vs cross-encoder & the contrastive objective** — retrieve vs rerank and InfoNCE.
 - **M14.2 Hard-negative mining & encoder fine-tuning** — triplets, mining, filtering, and validation.
 
+<p class="cur-colab"><a class="cur-colab-btn" href="https://colab.research.google.com/github/niamleeson/ml-math/blob/main/afp/notebooks/M14-encoders-contrastive.ipynb" target="_blank" rel="noopener">▶ Open the runnable encoders notebook (dual vs cross, InfoNCE + temperature, hard-negative mining) in Google Colab</a></p>
+
 ---
 
 ## M14.1 · Dual vs cross-encoder & the contrastive objective

@@ -20,6 +20,8 @@ Two sub-lessons:
 - **M11.1 What embeddings encode & similarity** — reading neighborhoods without overclaiming.
 - **M11.2 Learning & evaluating embeddings** — training signals, alignment, uniformity, and task checks.
 
+<p class="cur-colab"><a class="cur-colab-btn" href="https://colab.research.google.com/github/niamleeson/ml-math/blob/main/afp/notebooks/M11-embeddings-representation.ipynb" target="_blank" rel="noopener">▶ Open the runnable embeddings notebook (dot vs cosine, learn via neg-sampling, the checks) in Google Colab</a></p>
+
 ---
 
 ## M11.1 · What embeddings encode & similarity

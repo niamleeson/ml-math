@@ -20,6 +20,8 @@ Two sub-lessons:
 - **M12.1 The two-tower model & training** — architecture, dot scores, softmax loss, and negatives.
 - **M12.2 Serving two-tower retrieval** — precompute, ANN, recall, and funnel tuning.
 
+<p class="cur-colab"><a class="cur-colab-btn" href="https://colab.research.google.com/github/niamleeson/ml-math/blob/main/afp/notebooks/M12-two-tower-retrieval.ipynb" target="_blank" rel="noopener">▶ Open the runnable two-tower notebook (in-batch softmax, hard negatives, ANN serving funnel) in Google Colab</a></p>
+
 ---
 
 ## M12.1 · The two-tower model & training
