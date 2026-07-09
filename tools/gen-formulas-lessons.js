@@ -286,7 +286,9 @@ function drillsHtml(fid) {
 }
 
 /* ---------- build one Part page: intro + per-formula (latex + code + drills) ---------- */
-function buildPartHtml(chunk) {
+// Also collects a compact reference entry per formula into REF (for the all-in-one page).
+const REF = [];
+function buildPartHtml(chunk, partTitle) {
   // drop the "# Part …" H1 line (used as the lesson title elsewhere)
   const body = chunk.replace(/^#\s+.*(\r?\n)?/, "");
   // split into the intro (before the first "## X.Y") and each formula subsection
@@ -297,6 +299,10 @@ function buildPartHtml(chunk) {
     if (idx === 0 && !mh) { html += themeCode(convert(seg).html); return; } // intro prose
     if (!mh) { html += themeCode(convert(seg).html); return; }
     const fid = mh[1];
+    const name = mh[2].trim();
+    // first fenced code line = the plain-text form of this formula (for the reference page)
+    const cm = seg.match(/```[a-z]*\n([^\n]*)/);
+    REF.push({ part: partTitle, fid: fid, name: name, latex: LATEX[fid] || "", code: cm ? cm[1].trim() : "" });
     let sub = themeCode(convert(seg).html);
     // inject the LaTeX display right after this formula's <h2> heading
     if (LATEX[fid]) {
@@ -308,6 +314,22 @@ function buildPartHtml(chunk) {
   });
   return html;
 }
+
+/* ---------- the all-in-one reference page: every formula, grouped by section ---------- */
+function referenceHtml() {
+  let html = "<p>Every formula in this section on one page, grouped by topic — no examples, " +
+    "just the name and the formula. Use it as a quick lookup or a printable cheat sheet.</p>";
+  let curPart = "";
+  REF.forEach((r) => {
+    if (r.part !== curPart) { html += "<h2>" + esc(r.part) + "</h2>"; curPart = r.part; }
+    html += '<div class="ref-item"><div class="ref-name">' + esc(r.fid) + " · " + esc(r.name) + "</div>";
+    if (r.latex) html += '<div class="fmla-latex">$$' + r.latex + "$$</div>";
+    if (r.code) html += '<pre class="fcode">' + tokenize(r.code) + "</pre>";
+    html += "</div>";
+  });
+  return html;
+}
+
 
 /* ---------- split the source into sections and build lessons ---------- */
 const raw = fs.readFileSync(SRC, "utf8");
@@ -321,11 +343,15 @@ chunks.forEach((chunk) => {
     lessons.push({ key: "00", title: "Overview & how to read", html: themeCode(convert(chunk).html) });
   } else if (/^Part\s+(\d+)/i.test(h1)) {
     const n = h1.match(/^Part\s+(\d+)/i)[1].padStart(2, "0");
-    lessons.push({ key: n, title: h1, html: buildPartHtml(chunk) });
+    lessons.push({ key: n, title: h1, html: buildPartHtml(chunk, h1) });
   } else if (/through-line/i.test(h1)) {
     lessons.push({ key: "97", title: "The through-line", html: "<h3>" + esc(h1) + "</h3>" + themeCode(convert(chunk).html) });
   }
 });
+
+// All-in-one reference page (built after every Part has populated REF). Key "00b" sorts it
+// right after the Overview and before Part 1.
+lessons.push({ key: "00b", title: "All formulas — quick reference", html: referenceHtml() });
 
 // Practice-drills links page (points at the generated drills + self-checking notebook).
 const colab = "https://colab.research.google.com/github/" + REPO + "/blob/main/afp/notebooks/vector-math-drills.ipynb";
