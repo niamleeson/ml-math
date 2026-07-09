@@ -1542,6 +1542,18 @@ def render_nb(all_data):
     return nb
 
 
+def render_app_json(all_data):
+    """Compact per-formula data for the app: {fid: {name, basic|easy|advanced: [{q, steps, answer}]}}."""
+    out = {}
+    for part, fid, name, bylevel in all_data:
+        entry = {"name": name}
+        for lvl in LEVELS:
+            entry[lvl] = [{"q": p["q"], "steps": p["steps"], "answer": str(p["answer"])}
+                          for p in bylevel[lvl]]
+        out[fid] = entry
+    return out
+
+
 if __name__ == "__main__":
     data = gen_all()
     n_formulas = len(data)
@@ -1559,9 +1571,13 @@ if __name__ == "__main__":
     here = os.path.dirname(__file__)
     md_path = os.path.join(here, "..", "vector-math-drills.md")
     nb_path = os.path.join(here, "..", "afp", "notebooks", "vector-math-drills.ipynb")
+    json_path = os.path.join(here, "..", "lessons", "vector-drills-data.json")
     with open(md_path, "w") as f:
         f.write(render_md(data))
     with open(nb_path, "w") as f:
         json.dump(render_nb(data), f, indent=1)
+    with open(json_path, "w") as f:
+        json.dump(render_app_json(data), f, ensure_ascii=False)
     print(f"wrote {md_path}")
     print(f"wrote {nb_path}")
+    print(f"wrote {json_path}")
