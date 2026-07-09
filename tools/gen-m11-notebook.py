@@ -5,7 +5,8 @@ A runnable, beginner-friendly Colab notebook for module M11: embeddings &
 representation learning. Part A covers what an embedding encodes, dot vs cosine
 similarity, why L2-normalize, and ID vs text embeddings, ending with the
 "checks before trusting neighbors" (norms, dot-vs-cosine neighbors, hubness).
-Part B learns an embedding with negative sampling (matrix factorization / BPR),
+Part B learns an embedding with negative sampling (matrix factorization / BPR —
+the same objective as word2vec / skip-gram),
 covers alignment & uniformity, and walks the evaluation ladder as concrete
 CHECKS: recall@k, slice checks (cold-start gap), and probing.
 
@@ -38,7 +39,8 @@ notebook builds that intuition, then shows the two things you must be able to do
 - **Part A · What embeddings encode & similarity:** vectors as points, **dot product vs
   cosine**, why you **L2-normalize**, **ID vs text** embeddings, and the **checks before
   trusting neighbors** (norms, dot-vs-cosine, hubness).
-- **Part B · Learning & evaluating:** **learn** an embedding with **negative sampling**,
+- **Part B · Learning & evaluating:** **learn** an embedding with **negative sampling**
+  (the same objective behind **word2vec / skip-gram**),
   measure **alignment & uniformity**, then run the evaluation **checks** — **recall@k**,
   **slice checks** (the cold-start gap), and **probing**.
 
@@ -202,13 +204,20 @@ print("CHECK hubness: biggest hub is the NN of", counts.max(), "others (watch fo
 md("---\n# Part B · Learning & evaluating embeddings")
 
 md(r"""
-## Step 7 · Learn an embedding with negative sampling
+## Step 7 · Word2vec / skip-gram — learn an embedding with negative sampling
 
 Now we *train* vectors instead of hand-placing them. Setup: **advertiser briefs** and
 **creators**, each in a **vertical** (topic), and creators have a **tenure** (established vs
 new). Positives = brief↔creator pairs that "matched" (established creators get more matches —
 richer history). We learn brief and creator vectors so a **positive scores higher than a
 random negative** (BPR / matrix factorization — the same negative-sampling idea as M10).
+
+> **This is exactly the word2vec / skip-gram engine.** Word2vec skip-gram learns *word*
+> vectors by taking a word + a **nearby** word as a **positive** pair and a few **random**
+> words as **negatives**, then nudging vectors so positives outscore negatives. Swap
+> "word ↔ nearby word" for "brief ↔ matched creator" and it's the **same objective** — only
+> the source of the positive pairs changes. So the loop below *is* skip-gram-style training,
+> applied to briefs/creators instead of text.
 """)
 code(r"""
 rng = np.random.default_rng(0)
