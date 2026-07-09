@@ -2,7 +2,9 @@
 
 Plain-text formulas (no hard-to-read symbols), each with a tiny worked example you can
 trace by hand. These are the vector operations behind embeddings, similarity search,
-clustering, and most of ML.
+clustering, and most of ML — plus the neighboring layers: matrix / linear algebra,
+vector calculus (the training math), distances and kernels, and probability-vector
+formulas.
 
 Throughout we reuse two example vectors so the numbers are easy to follow:
 
@@ -429,6 +431,261 @@ Outputs are positive and add up to 1.
 sentence_vector = mean( word_vector(w) for each word w )
 ```
 The simplest text encoder — average, then normalize, then compare by cosine.
+
+---
+
+# Part 14 — Matrix and linear algebra
+
+Shared examples for this part:
+```
+M = [ 1  2 ]        N = [ 0  1 ]        v = [1, 1]
+    [ 3  4 ]            [ 1  0 ]
+```
+
+## 14.1 Matrix times vector (transform a vector)
+```
+(M v)[i] = dot( row i of M , v )
+```
+Example: `M v = [1*1 + 2*1, 3*1 + 4*1] = [3, 7]`. A matrix reshapes/rotates/scales a vector.
+
+## 14.2 Matrix times matrix
+```
+(M N)[i][j] = dot( row i of M , column j of N )
+```
+Example:
+```
+M N = [ 1*0+2*1  1*1+2*0 ] = [ 2  1 ]
+      [ 3*0+4*1  3*1+4*0 ]   [ 4  3 ]
+```
+
+## 14.3 Transpose (flip rows and columns)
+```
+transpose(M)[i][j] = M[j][i]
+```
+Example: `transpose(M) = [[1,3],[2,4]]`.
+
+## 14.4 Identity matrix (does nothing)
+```
+I = [ 1  0 ]      I v = v
+    [ 0  1 ]
+```
+
+## 14.5 Determinant of a 2x2 (area scaling factor)
+```
+det([[a,b],[c,d]]) = a*d - b*c
+```
+Example: `det(M) = 1*4 - 2*3 = -2`. Its size = how much the matrix scales area/volume;
+sign = whether it flips orientation. det = 0 means the matrix squashes space flat
+(not invertible).
+
+## 14.6 Inverse of a 2x2 (undo the transform)
+```
+inverse([[a,b],[c,d]]) = (1/det) * [[d, -b], [-c, a]]
+```
+Example: `inverse(M) = (1/-2)*[[4,-2],[-3,1]] = [[-2, 1], [1.5, -0.5]]`. Only exists when
+det is not 0. Undoes the matrix: `inverse(M) * M = I`.
+
+## 14.7 Dot product written as matrix multiply
+```
+dot(a, b) = transpose(a) * b        (a row vector times a column vector)
+```
+This is why you often see `a^T b` for the dot product.
+
+## 14.8 Trace (sum of the diagonal)
+```
+trace(M) = M[1][1] + M[2][2] + ...
+```
+Example: `trace(M) = 1 + 4 = 5`. Also equals the sum of the eigenvalues.
+
+## 14.9 Rank (number of independent directions)
+Rank = how many rows (or columns) are linearly independent. Full rank = the matrix does
+not collapse any dimension. Low rank = information is squeezed into fewer directions
+(the idea behind matrix factorization and compression).
+
+## 14.10 Eigenvectors and eigenvalues (directions a matrix only stretches)
+```
+M v = lambda * v
+```
+An eigenvector v keeps its direction under M; it is only scaled by the number lambda.
+Example, for D = [[2,0],[0,3]]: `D [1,0] = 2 [1,0]` (eigenvalue 2), `D [0,1] = 3 [0,1]`
+(eigenvalue 3). These are the "natural axes" of the transform.
+
+## 14.11 Singular Value Decomposition (SVD)
+```
+M = U * S * transpose(V)
+```
+Factors any matrix into a rotation (U), a stretch by the singular values on the diagonal
+of S, and another rotation (V). Keeping only the largest singular values gives the best
+low-rank approximation — the engine behind PCA, compression, and recommender factorization.
+
+## 14.12 PCA (principal component analysis)
+```
+1. center the data:   X_centered = X - mean
+2. covariance:        C = transpose(X_centered) * X_centered / n
+3. eigenvectors of C  = the principal directions (most variance first)
+```
+Projecting onto the top few eigenvectors reduces dimensions while keeping the most spread.
+
+## 14.13 Orthogonal matrix (a pure rotation/reflection)
+```
+transpose(Q) * Q = I        (its columns are unit-length and mutually perpendicular)
+```
+Preserves lengths and angles: `norm(Q v) = norm(v)`.
+
+## 14.14 Gram-Schmidt (build perpendicular axes)
+Take vectors one at a time; from each, subtract its projection onto the ones already
+kept (formula 8.2), then normalize. Produces an orthonormal basis.
+
+## 14.15 Frobenius norm (the "length" of a whole matrix)
+```
+frobenius(M) = sqrt( sum of every entry squared )
+```
+Example: `sqrt(1+4+9+16) = sqrt(30) = 5.48`. Just the L2 norm treating the matrix as one
+long vector.
+
+## 14.16 Gram matrix (all pairwise dot products)
+```
+G[i][j] = dot( vi , vj )
+```
+Collects every pair's similarity into one matrix; the basis of kernel methods.
+
+---
+
+# Part 15 — Vector calculus (the training math)
+
+## 15.1 Gradient (vector of slopes)
+```
+gradient(f) = [ df/dx1 , df/dx2 , ... ]
+```
+The direction of steepest increase of f. Training moves the opposite way (downhill).
+
+## 15.2 Gradient of a dot product (the workhorse of ML)
+```
+f(w) = dot(w, x)      ->      gradient with respect to w = x
+```
+Example, x = [3,4]: gradient = `[3, 4]`. This is why linear-model gradients are just the
+inputs.
+
+## 15.3 Gradient of the squared norm
+```
+f(v) = norm(v)^2 = dot(v, v)      ->      gradient = 2 * v
+```
+Example, v = [3,4]: `[6, 8]`. The pull that L2 regularization applies toward zero.
+
+## 15.4 Gradient of the norm itself
+```
+f(v) = norm(v)      ->      gradient = v / norm(v) = v_hat
+```
+Example, v = [3,4]: `[0.6, 0.8]`. The gradient of length is the unit direction.
+
+## 15.5 Directional derivative (slope along a direction u)
+```
+slope along u = dot( gradient(f) , u )
+```
+How fast f changes if you step in direction u. Largest when u points along the gradient.
+
+## 15.6 Jacobian (gradient for vector-valued functions)
+```
+Jacobian[i][j] = d(output_i) / d(input_j)
+```
+A matrix of all partial derivatives; the multi-output generalization of the gradient.
+
+## 15.7 Chain rule (how backpropagation composes gradients)
+```
+d/dx f(g(x)) = f'(g(x)) * g'(x)         (vector form: multiply the Jacobians)
+```
+
+## 15.8 Gradient descent update (one training step)
+```
+w_new = w - learning_rate * gradient
+```
+Step a little downhill. This is the loop that trained the embeddings in the M11 notebook.
+
+---
+
+# Part 16 — More distances and kernels
+
+## 16.1 Mahalanobis distance (distance that accounts for correlations)
+```
+distance(a, b) = sqrt( transpose(a - b) * inverse(Covariance) * (a - b) )
+```
+Rescales each direction by how much the data varies there, so "far" means "surprising,"
+not just "far in raw units."
+
+## 16.2 Jaccard similarity (for sets / binary features)
+```
+Jaccard(A, B) = size(A intersect B) / size(A union B)
+```
+Example, A={1,2,3}, B={2,3,4}: `2 / 4 = 0.5`. Jaccard distance = 1 - Jaccard.
+
+## 16.3 Hamming distance (positions that differ)
+```
+Hamming(a, b) = count of positions where a and b disagree
+```
+Example, [1,0,1,1] vs [1,1,0,1]: differ at positions 2 and 3 -> `2`. Used for binary
+codes and strings.
+
+## 16.4 Edit (Levenshtein) distance
+The minimum number of insert/delete/substitute edits to turn one string into another.
+Example: "cat" -> "cut" is `1` (substitute a->u).
+
+## 16.5 Linear kernel (just the dot product)
+```
+K(a, b) = dot(a, b)
+```
+
+## 16.6 Polynomial kernel
+```
+K(a, b) = ( dot(a, b) + c )^d
+```
+Lets a linear model act on polynomial feature combinations without building them.
+
+## 16.7 RBF / Gaussian kernel (similarity that falls off with distance)
+```
+K(a, b) = exp( - norm(a - b)^2 / (2 * sigma^2) )
+```
+Example, squared distance 2, sigma = 1: `exp(-1) = 0.37`. Equals 1 when identical, decays
+toward 0 as points get far apart.
+
+---
+
+# Part 17 — Probability-vector formulas
+
+A probability vector has non-negative entries that add up to 1, e.g. p = [0.5, 0.5].
+
+## 17.1 Softmax (turn any scores into a probability vector)
+```
+softmax(v)[i] = exp(vi) / ( exp(v1) + exp(v2) + ... )
+```
+Example, v = [2, 0]: `exp(2)/(exp(2)+exp(0)) = 7.39/8.39 = 0.88`, other = 0.12.
+
+## 17.2 Entropy (how spread out / uncertain a distribution is)
+```
+H(p) = - ( p1*log(p1) + p2*log(p2) + ... )
+```
+Example, p = [0.5, 0.5]: `-2*(0.5*log(0.5)) = log(2) = 0.693`. Maximum uncertainty for two
+outcomes. A sure thing p = [1, 0] has entropy 0.
+
+## 17.3 Cross-entropy (the usual classification loss)
+```
+H(p, q) = - ( p1*log(q1) + p2*log(q2) + ... )
+```
+p = true labels, q = predicted probabilities. Smaller when q matches p. This is what
+"log loss" computes.
+
+## 17.4 KL divergence (how far apart two distributions are)
+```
+KL(p || q) = p1*log(p1/q1) + p2*log(p2/q2) + ...
+```
+Example, p = q = [0.5, 0.5]: `0` (identical). Always >= 0; not symmetric, so it is not a
+true distance. Note: `KL(p||q) = cross_entropy(p,q) - entropy(p)`.
+
+## 17.5 Dot product as an expected value
+```
+dot(p, values) = p1*value1 + p2*value2 + ... = the mean outcome under p
+```
+Example, p = [0.5, 0.5], values = [10, 20]: `0.5*10 + 0.5*20 = 15`. The dot product of a
+probability vector with a value vector is just the expected value.
 
 ---
 
