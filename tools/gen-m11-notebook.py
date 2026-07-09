@@ -135,6 +135,62 @@ print("normalize when you DON'T want norm to act like a popularity prior.")
 """)
 
 md(r"""
+## Step 4b · Practical test — *should* you normalize? (a decision you can measure)
+
+"Normalize when norm shouldn't drive ranking" is the rule — but **how do you check?** The key
+fact: a vector's **length (norm) is usually an accidental byproduct** — of **popularity,
+frequency, or text length** — *not* of meaning. Frequent words and popular items pick up
+**bigger norms** just from being seen more. So two concrete tests:
+
+1. **Norm-vs-nuisance correlation.** Correlate each vector's **norm** with a quantity you
+   *don't* want steering results (popularity / word frequency / document length). **High |r| →
+   the norm is a popularity prior → normalize.**
+2. **Ranking-flip test.** Compare **top-k by dot** vs **top-k by cosine**. If the lists **change
+   a lot**, the norm is driving retrieval — normalize unless you *deliberately* want popularity
+   in the score.
+
+Below we build items whose norm leaked popularity, then run **both** tests.
+""")
+code(r"""
+rng = np.random.default_rng(3)
+d, n = 16, 300
+pop  = rng.integers(1, 500, n)                                   # popularity/frequency: a NUISANCE
+dirs = rng.normal(0, 1, (n, d)); dirs /= np.linalg.norm(dirs, axis=1, keepdims=True)  # pure MEANING (unit)
+norms = 1.0 + pop/50.0 + rng.normal(0, 0.4, n)                  # popular -> longer vectors (real effect)
+E = dirs * norms[:, None]                                        # embeddings whose LENGTH encodes popularity
+
+# ---- TEST 1: does norm correlate with the nuisance (popularity)? ----
+r = np.corrcoef(pop, norms)[0, 1]
+print(f"TEST 1  corr(norm, popularity) = {r:+.2f}")
+print("  |r| is large -> norm is basically a popularity meter -> NORMALIZE.\n")
+
+# ---- TEST 2: do dot and cosine retrieve different items? ----
+Q = rng.normal(0, 1, (200, d)); Q /= np.linalg.norm(Q, axis=1, keepdims=True)
+dot_top = np.argsort(-(Q @ E.T),    axis=1)[:, :10]             # dot ranking (norm counts)
+cos_top = np.argsort(-(Q @ dirs.T), axis=1)[:, :10]            # cosine ranking (angle only)
+overlap = [len(set(a) & set(b)) / 10 for a, b in zip(dot_top, cos_top)]
+print(f"TEST 2  avg top-10 overlap(dot, cosine) = {np.mean(overlap):.2f}")
+print("  far below 1.0 -> normalizing changes WHO you retrieve -> the norm is steering results.")
+""")
+code(r"""
+fig, ax = plt.subplots(1, 2, figsize=(11, 4.3))
+
+# left: WHY normalize -- norm rises with popularity
+ax[0].scatter(pop, norms, s=14, alpha=.5, color=BLUE)
+ax[0].set_xlabel("item popularity (a nuisance)"); ax[0].set_ylabel("embedding norm  ||v||")
+ax[0].set_title(f"TEST 1 -- norm leaks popularity  (r = {r:+.2f})")
+
+# right: CONSEQUENCE -- how much retrieval changes when you normalize
+ax[1].hist(overlap, bins=np.linspace(0, 1, 11), color=PURPLE, edgecolor="white")
+ax[1].axvline(np.mean(overlap), color=RED, lw=2, ls="--", label=f"mean = {np.mean(overlap):.2f}")
+ax[1].set_xlabel("per-query top-10 overlap (dot vs cosine)"); ax[1].set_ylabel("# queries")
+ax[1].set_title("TEST 2 -- low overlap => norm steers retrieval"); ax[1].legend()
+plt.show()
+print("RULE OF THUMB: high corr(norm, nuisance) OR low dot-vs-cosine overlap  ->  L2-normalize.")
+print("KEEP raw norms only when magnitude is MEANINGFUL (trained confidence/calibration you want).")
+""")
+
+md(r"""
 ## Step 5 · ID embeddings vs text embeddings
 
 Two ways to get an entity's vector:
