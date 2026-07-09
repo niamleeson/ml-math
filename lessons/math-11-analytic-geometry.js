@@ -4860,7 +4860,7 @@
       ]
     },
     "motivation": "<p>A rotation changes direction while preserving lengths and angles. A scaling changes lengths along coordinate axes. Both can be represented by matrices because they send the origin to the origin and are determined by what they do to the basis vectors.</p><p>Translation is different because it shifts every point by the same vector and moves the origin itself. In ordinary coordinates, that means translation is affine rather than linear. It still has a simple formula, $x'=x+t$, and the next lesson shows how adding one extra coordinate lets translations join rotations and scalings inside matrix multiplication.</p>",
-    "definition": "<p>A 2-D rotation, axis scaling, and translation are given by</p><p>$$R_\\theta=\\begin{bmatrix}\\cos\\theta&-\\sin\\theta\\sin\\theta&\\cos\\theta\\end{bmatrix},\\qquad S=\\begin{bmatrix}s_x&0\\0&s_y\\end{bmatrix},\\qquad x'=x+t.$$</p><p><b>Assumptions that matter:</b> Rotations and scalings are linear maps about the origin; translation is affine in ordinary coordinates because it moves the origin.</p>",
+    "definition": "<p>A 2-D rotation, axis scaling, and translation are given by</p><p>$$R_\\theta=\\begin{bmatrix}\\cos\\theta&-\\sin\\theta\\\\\\sin\\theta&\\cos\\theta\\end{bmatrix},\\qquad S=\\begin{bmatrix}s_x&0\\0&s_y\\end{bmatrix},\\qquad x'=x+t.$$</p><p><b>Assumptions that matter:</b> Rotations and scalings are linear maps about the origin; translation is affine in ordinary coordinates because it moves the origin.</p>",
     "worked": {
       "problem": "Rotate point $(2,1)$ by $90$ degrees counterclockwise, then translate by $(3,-2)$.",
       "skills": [
@@ -5128,7 +5128,7 @@
       },
       {
         "do": "Place the basis images as matrix columns.",
-        "result": "$R_\\theta=\\begin{bmatrix}\\cos\\theta&-\\sin\\theta\\sin\\theta&\\cos\\theta\\end{bmatrix}$",
+        "result": "$R_\\theta=\\begin{bmatrix}\\cos\\theta&-\\sin\\theta\\\\\\sin\\theta&\\cos\\theta\\end{bmatrix}$",
         "why": "A matrix is determined by where it sends basis vectors."
       },
       {

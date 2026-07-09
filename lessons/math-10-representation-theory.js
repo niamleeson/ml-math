@@ -3477,7 +3477,7 @@
       ]
     },
     "motivation": "<p>Continuous groups, such as rotations by any angle, need representations that vary continuously or smoothly. A tiny change in angle should produce a tiny change in the matrix and in the transformed vector. Without that regularity, the representation would not reflect the geometry of the underlying group.</p><p>The homomorphism law remains the same as in finite representation theory. Applying a rotation by $\\phi$ and then by $\\theta$ should match the matrix for rotation by $\\theta+\\phi$. The new ingredient is that the entries are functions of a continuous parameter, so differential ideas such as generators and small-angle approximations become available.</p>",
-    "definition": "<p>A representation of a continuous group assigns matrices to continuously varying group elements in a way that preserves the group law and varies continuously with the parameter.</p><p>For $SO(2)$, the standard representation is $$\\rho(\\theta)=\\begin{pmatrix}\\cos\\theta&-\\sin\\theta\\sin\\theta&\\cos\\theta\\end{pmatrix}.$$</p><p><b>Assumptions that matter:</b> $\\theta$ and $\\phi$ are real angles, matrix entries are continuous functions of the angle, and rotation composition adds angles.</p>",
+    "definition": "<p>A representation of a continuous group assigns matrices to continuously varying group elements in a way that preserves the group law and varies continuously with the parameter.</p><p>For $SO(2)$, the standard representation is $$\\rho(\\theta)=\\begin{pmatrix}\\cos\\theta&-\\sin\\theta\\\\\\sin\\theta&\\cos\\theta\\end{pmatrix}.$$</p><p><b>Assumptions that matter:</b> $\\theta$ and $\\phi$ are real angles, matrix entries are continuous functions of the angle, and rotation composition adds angles.</p>",
     "worked": {
       "problem": "For the $SO(2)$ rotation representation, compute $\\rho(\\pi/2)(1,2)$ and verify length is preserved.",
       "skills": [
@@ -3739,7 +3739,7 @@
     "derivation": [
       {
         "do": "Define the standard rotation representation.",
-        "result": "$\\rho(\\theta)=\\begin{pmatrix}\\cos\\theta&-\\sin\\theta\\sin\\theta&\\cos\\theta\\end{pmatrix}$",
+        "result": "$\\rho(\\theta)=\\begin{pmatrix}\\cos\\theta&-\\sin\\theta\\\\\\sin\\theta&\\cos\\theta\\end{pmatrix}$",
         "why": "this rotates vectors by angle $\\theta$"
       },
       {

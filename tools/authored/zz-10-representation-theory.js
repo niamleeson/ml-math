@@ -332,7 +332,7 @@ module.exports = {
     motivation: "<p>Continuous groups, such as rotations by any angle, need representations that vary continuously or smoothly. A tiny change in angle should produce a tiny change in the matrix and in the transformed vector. Without that regularity, the representation would not reflect the geometry of the underlying group.</p>" +
                 "<p>The homomorphism law remains the same as in finite representation theory. Applying a rotation by $\\phi$ and then by $\\theta$ should match the matrix for rotation by $\\theta+\\phi$. The new ingredient is that the entries are functions of a continuous parameter, so differential ideas such as generators and small-angle approximations become available.</p>",
     definition: "<p>A representation of a continuous group assigns matrices to continuously varying group elements in a way that preserves the group law and varies continuously with the parameter.</p>" +
-                "<p>For $SO(2)$, the standard representation is $$\\rho(\\theta)=\\begin{pmatrix}\\cos\\theta&-\\sin\\theta\\\sin\\theta&\\cos\\theta\\end{pmatrix}.$$</p>" +
+                "<p>For $SO(2)$, the standard representation is $$\\rho(\\theta)=\\begin{pmatrix}\\cos\\theta&-\\sin\\theta\\\\\\sin\\theta&\\cos\\theta\\end{pmatrix}.$$</p>" +
                 "<p><b>Assumptions that matter:</b> $\\theta$ and $\\phi$ are real angles, matrix entries are continuous functions of the angle, and rotation composition adds angles.</p>",
     symbols: [
       { sym: "$SO(2)$", desc: "the circle group of plane rotations" },
@@ -341,7 +341,7 @@ module.exports = {
       { sym: "continuity", desc: "matrix entries vary continuously with the group parameter" }
     ],
     derivation: [
-      { do: "Define the standard rotation representation.", result: "$\\rho(\\theta)=\\begin{pmatrix}\\cos\\theta&-\\sin\\theta\\\sin\\theta&\\cos\\theta\\end{pmatrix}$", why: "this rotates vectors by angle $\\theta$" },
+      { do: "Define the standard rotation representation.", result: "$\\rho(\\theta)=\\begin{pmatrix}\\cos\\theta&-\\sin\\theta\\\\\\sin\\theta&\\cos\\theta\\end{pmatrix}$", why: "this rotates vectors by angle $\\theta$" },
       { do: "Multiply two rotation matrices.", result: "$\\rho(\\theta)\\rho(\\phi)$", why: "matrix multiplication gives entries with products of sines and cosines" },
       { do: "Use angle-addition formulas.", result: "$\\cos(\\theta+\\phi)=\\cos\\theta\\cos\\phi-\\sin\\theta\\sin\\phi$ and $\\sin(\\theta+\\phi)=\\sin\\theta\\cos\\phi+\\cos\\theta\\sin\\phi$", why: "these simplify the product entries" },
       { do: "Compare the product to a single rotation.", result: "$\\rho(\\theta)\\rho(\\phi)=\\rho(\\theta+\\phi)$", why: "the homomorphism law holds" },

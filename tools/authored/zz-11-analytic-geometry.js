@@ -453,7 +453,7 @@ module.exports = {
     motivation: "<p>A rotation changes direction while preserving lengths and angles. A scaling changes lengths along coordinate axes. Both can be represented by matrices because they send the origin to the origin and are determined by what they do to the basis vectors.</p>" +
                 "<p>Translation is different because it shifts every point by the same vector and moves the origin itself. In ordinary coordinates, that means translation is affine rather than linear. It still has a simple formula, $x'=x+t$, and the next lesson shows how adding one extra coordinate lets translations join rotations and scalings inside matrix multiplication.</p>",
     definition: "<p>A 2-D rotation, axis scaling, and translation are given by</p>" +
-                "<p>$$R_\\theta=\\begin{bmatrix}\\cos\\theta&-\\sin\\theta\\\sin\\theta&\\cos\\theta\\end{bmatrix},\\qquad S=\\begin{bmatrix}s_x&0\\0&s_y\\end{bmatrix},\\qquad x'=x+t.$$</p>" +
+                "<p>$$R_\\theta=\\begin{bmatrix}\\cos\\theta&-\\sin\\theta\\\\\\sin\\theta&\\cos\\theta\\end{bmatrix},\\qquad S=\\begin{bmatrix}s_x&0\\0&s_y\\end{bmatrix},\\qquad x'=x+t.$$</p>" +
                 "<p><b>Assumptions that matter:</b> Rotations and scalings are linear maps about the origin; translation is affine in ordinary coordinates because it moves the origin.</p>",
     symbols: [
       { sym: "$R_\\theta$", desc: "a rotation matrix" },
@@ -464,7 +464,7 @@ module.exports = {
     derivation: [
       { do: "Rotate the unit $x$-axis vector.", result: "$(1,0)\\mapsto(\\cos\\theta,\\sin\\theta)$", why: "This is the point on the unit circle at angle $\\theta$." },
       { do: "Rotate the unit $y$-axis vector.", result: "$(0,1)\\mapsto(-\\sin\\theta,\\cos\\theta)$", why: "It remains perpendicular and keeps orientation." },
-      { do: "Place the basis images as matrix columns.", result: "$R_\\theta=\\begin{bmatrix}\\cos\\theta&-\\sin\\theta\\\sin\\theta&\\cos\\theta\\end{bmatrix}$", why: "A matrix is determined by where it sends basis vectors." },
+      { do: "Place the basis images as matrix columns.", result: "$R_\\theta=\\begin{bmatrix}\\cos\\theta&-\\sin\\theta\\\\\\sin\\theta&\\cos\\theta\\end{bmatrix}$", why: "A matrix is determined by where it sends basis vectors." },
       { do: "Scale each basis direction.", result: "$(1,0)\\mapsto(s_x,0)$ and $(0,1)\\mapsto(0,s_y)$", why: "Axis scaling stretches the coordinate axes separately." },
       { do: "Place the scaled basis images as columns.", result: "$S=\\begin{bmatrix}s_x&0\\0&s_y\\end{bmatrix}$", why: "This gives the scaling matrix." },
       { do: "Add a translation vector.", result: "$x'=x+t$", why: "Translation shifts every point and is not linear in ordinary coordinates because the origin moves." }

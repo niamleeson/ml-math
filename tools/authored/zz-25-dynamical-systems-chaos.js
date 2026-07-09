@@ -304,7 +304,7 @@ module.exports = {
       "<p>Nonlinear systems can bend, saturate, or couple variables in complicated ways. Near an equilibrium, however, the constant term in the Taylor expansion vanishes, and the first-order terms often dominate. Those first-order terms form the Jacobian matrix.</p>" +
       "<p>Linearization is therefore a local approximation, not a global replacement. It tells what very small displacements do near the equilibrium when the Jacobian has no eigenvalue with zero real part. If a zero-real-part eigenvalue appears, the linear part may be too weak to decide the behavior, and higher-order terms matter.</p>",
     definition:
-      "<p><b>Linearization</b> approximates a nonlinear system near an equilibrium by its Jacobian system: $$\\dot{\\mathbf u}=J(x^*,y^*)\\mathbf u,\\qquad J=\\begin{pmatrix}f_x&f_y\\g_x&g_y\\end{pmatrix}.$$</p>" +
+      "<p><b>Linearization</b> approximates a nonlinear system near an equilibrium by its Jacobian system: $$\\dot{\\mathbf u}=J(x^*,y^*)\\mathbf u,\\qquad J=\\begin{pmatrix}f_x&f_y\\\\g_x&g_y\\end{pmatrix}.$$</p>" +
       "<p><b>Assumptions that matter:</b> the point is an equilibrium, the displacement is small, and the Jacobian has no eigenvalue with zero real part when using linearization to classify behavior.</p>",
     symbols: [
       { sym: "$J$", desc: "the Jacobian" },
@@ -318,7 +318,7 @@ module.exports = {
       { do: "Taylor expand $f$", result: "$f(x^*+u,y^*+v)=f(x^*,y^*)+f_xu+f_yv+O(\\|(u,v)\\|^2)$", why: "first partials give the linear part" },
       { do: "Taylor expand $g$ the same way", result: "a matching linear approximation for the second component", why: "both velocity components need local linear terms" },
       { do: "Use $f(x^*,y^*)=g(x^*,y^*)=0$", result: "constant terms vanish", why: "the point is an equilibrium" },
-      { do: "Collect coefficients in the Jacobian", result: "$\\dot{\\mathbf u}=J(x^*,y^*)\\mathbf u$ with $J=\\begin{pmatrix}f_x&f_y\\g_x&g_y\\end{pmatrix}$", why: "the Jacobian collects the linear coefficients" },
+      { do: "Collect coefficients in the Jacobian", result: "$\\dot{\\mathbf u}=J(x^*,y^*)\\mathbf u$ with $J=\\begin{pmatrix}f_x&f_y\\\\g_x&g_y\\end{pmatrix}$", why: "the Jacobian collects the linear coefficients" },
       { do: "Classify by eigenvalues of $J$", result: "local linear behavior when no eigenvalue has zero real part", why: "the linear part dominates the smaller nonlinear remainder" }
     ],
     applications: [

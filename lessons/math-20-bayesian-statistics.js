@@ -5336,7 +5336,7 @@
       ]
     },
     "motivation": "<p>A Gaussian process is a prior over functions. Before data are observed, the kernel describes which input points should have similar function values and how variable the function can be. Observed points then condition the function prior, just as observed measurements condition a Normal prior in the Normal-Normal model.</p><p>Regression produces a predictive mean and uncertainty at new inputs. The mean is pulled toward observed values that are strongly correlated with the test point, while the variance falls when nearby or highly correlated observations explain the test value. The kernel is therefore the modeling choice that controls smoothness, similarity, and extrapolation.</p>",
-    "definition": "<p>Gaussian process regression conditions a joint Normal prior over training and test function values to get a predictive mean and variance at new inputs.</p><p>$$\\begin{bmatrix}y\\ f_*\\end{bmatrix}\\sim\\mathcal N\\left(0,\\begin{bmatrix}K+\\sigma_n^2I&k_*\\k_*^T&k_{**}\\end{bmatrix}\\right).$$</p><p><b>Assumptions that matter:</b> Any finite collection of function values is jointly Normal under the GP prior, with covariance determined by the kernel and observation noise variance $\\sigma_n^2$.</p>",
+    "definition": "<p>Gaussian process regression conditions a joint Normal prior over training and test function values to get a predictive mean and variance at new inputs.</p><p>$$\\begin{bmatrix}y\\\\ f_*\\end{bmatrix}\\sim\\mathcal N\\left(0,\\begin{bmatrix}K+\\sigma_n^2I&k_*\\\\k_*^T&k_{**}\\end{bmatrix}\\right).$$</p><p><b>Assumptions that matter:</b> Any finite collection of function values is jointly Normal under the GP prior, with covariance determined by the kernel and observation noise variance $\\sigma_n^2$.</p>",
     "worked": {
       "problem": "A zero-mean noiseless GP has one training point $x_1=0$ with $y_1=2$. For a new point $x_*$, suppose $k(x_1,x_1)=1$, $k(x_*,x_1)=0.5$, and $k(x_*,x_*)=1$. Find the predictive mean and variance.",
       "skills": [
@@ -5598,7 +5598,7 @@
     "derivation": [
       {
         "do": "Write the joint Normal distribution for training values and one test value.",
-        "result": "$$\\begin{bmatrix}y\\ f_*\\end{bmatrix}\\sim\\mathcal N\\left(0,\\begin{bmatrix}K+\\sigma_n^2I&k_*\\k_*^T&k_{**}\\end{bmatrix}\\right).$$",
+        "result": "$$\\begin{bmatrix}y\\\\ f_*\\end{bmatrix}\\sim\\mathcal N\\left(0,\\begin{bmatrix}K+\\sigma_n^2I&k_*\\\\k_*^T&k_{**}\\end{bmatrix}\\right).$$",
         "why": "a GP prior makes any finite set of function values jointly Normal"
       },
       {

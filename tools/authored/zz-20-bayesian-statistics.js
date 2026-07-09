@@ -485,7 +485,7 @@ module.exports = {
     motivation: "<p>A Gaussian process is a prior over functions. Before data are observed, the kernel describes which input points should have similar function values and how variable the function can be. Observed points then condition the function prior, just as observed measurements condition a Normal prior in the Normal-Normal model.</p>" +
                 "<p>Regression produces a predictive mean and uncertainty at new inputs. The mean is pulled toward observed values that are strongly correlated with the test point, while the variance falls when nearby or highly correlated observations explain the test value. The kernel is therefore the modeling choice that controls smoothness, similarity, and extrapolation.</p>",
     definition: "<p>Gaussian process regression conditions a joint Normal prior over training and test function values to get a predictive mean and variance at new inputs.</p>" +
-                "<p>$$\\begin{bmatrix}y\\ f_*\\end{bmatrix}\\sim\\mathcal N\\left(0,\\begin{bmatrix}K+\\sigma_n^2I&k_*\\k_*^T&k_{**}\\end{bmatrix}\\right).$$</p>" +
+                "<p>$$\\begin{bmatrix}y\\\\ f_*\\end{bmatrix}\\sim\\mathcal N\\left(0,\\begin{bmatrix}K+\\sigma_n^2I&k_*\\\\k_*^T&k_{**}\\end{bmatrix}\\right).$$</p>" +
                 "<p><b>Assumptions that matter:</b> Any finite collection of function values is jointly Normal under the GP prior, with covariance determined by the kernel and observation noise variance $\\sigma_n^2$.</p>",
     symbols: [
       { sym: "$K$", desc: "training covariance matrix" },
@@ -495,7 +495,7 @@ module.exports = {
       { sym: "kernel", desc: "covariance function" }
     ],
     derivation: [
-      { do: "Write the joint Normal distribution for training values and one test value.", result: "$$\\begin{bmatrix}y\\ f_*\\end{bmatrix}\\sim\\mathcal N\\left(0,\\begin{bmatrix}K+\\sigma_n^2I&k_*\\k_*^T&k_{**}\\end{bmatrix}\\right).$$", why: "a GP prior makes any finite set of function values jointly Normal" },
+      { do: "Write the joint Normal distribution for training values and one test value.", result: "$$\\begin{bmatrix}y\\\\ f_*\\end{bmatrix}\\sim\\mathcal N\\left(0,\\begin{bmatrix}K+\\sigma_n^2I&k_*\\\\k_*^T&k_{**}\\end{bmatrix}\\right).$$", why: "a GP prior makes any finite set of function values jointly Normal" },
       { do: "Apply the multivariate Normal conditioning formula.", result: "conditional Normal prediction", why: "conditioning a joint Normal gives a Normal conditional distribution" },
       { do: "Write the conditional mean.", result: "$k_*^T(K+\\sigma_n^2I)^{-1}y$", why: "test-training covariance weights the observed values" },
       { do: "Write the conditional variance.", result: "$k_{**}-k_*^T(K+\\sigma_n^2I)^{-1}k_*$", why: "prior variance is reduced by variance explained through training data" },
