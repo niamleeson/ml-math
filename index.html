@@ -220,7 +220,7 @@
   #content .cs-lesson a.cs-colab-btn { display: inline-block; text-decoration: none; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; font-weight: 600; font-size: 14px; color: #fff; background: #e8710a; border-radius: 8px; padding: 10px 16px; }
   #content .cs-lesson a.cs-colab-btn:hover { background: #c85c00; }
   /* Curriculum (AFP-AI Learning Guide) — self-contained monochrome lesson styles. */
-  #content .cur-meta { color: var(--ink-dim); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; font-size: 14px; line-height: 1.5; margin: 6px 0 32px; }
+  #content .cur-meta { color: var(--ink-dim); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; font-size: 14px; line-height: 1.5; margin: 6px 0 10px; }
   #content .cur-lesson { font-size: 18px; }
   #content .cur-lesson h2 { font-size: 24px; font-weight: 700; margin: 38px 0 10px; padding-bottom: 6px; border-bottom: 1px solid var(--border); color: var(--ink); }
   #content .cur-lesson h3 { font-size: 20px; margin: 28px 0 8px; color: var(--ink); }
@@ -240,6 +240,12 @@
   #content .cur-lesson .cur-colab { margin: 10px 0 26px; }
   #content .cur-lesson a.cur-colab-btn { display: inline-block; text-decoration: none; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; font-weight: 600; font-size: 14px; color: #fff; background: #e8710a; border-radius: 8px; padding: 10px 16px; }
   #content .cur-lesson a.cur-colab-btn:hover { background: #c85c00; }
+  #content .cur-source-note {
+    margin: 8px 0 24px; padding: 10px 14px; border: 1px solid var(--border);
+    border-left: 3px solid var(--ink); border-radius: 8px; background: var(--panel);
+    color: var(--ink-dim); font-size: 14px; line-height: 1.5;
+  }
+  #content .cur-source-note strong { color: var(--ink); }
   .lesson-links { margin: -6px 0 16px; font-size: 13px; }
   .app-uses { margin: 12px 0 0; padding-top: 10px; border-top: 1px solid var(--border); font-size: 13.5px; }
   .app-uses b { color: var(--ink); }
@@ -717,6 +723,7 @@
     "Papers · Meta-learning, Bayesian & Robustness",
     "Papers · Datasets, Benchmarks & Surveys",
     // === Mathematics for ML — math track (appended after existing sections) ===
+    "Formulas",
     "Single-variable calculus",
     "Multivariable / vector calculus",
     "Differential equations (ODEs)",
@@ -1304,6 +1311,7 @@
 <script src="lessons/walkthroughs-10-modern-b.js"></script>
 
 <!-- Mathematics for ML — generated math track (tools/gen-math.js) -->
+<script src="lessons/math-00-formulas.js"></script>
 <script src="lessons/math-01-single-variable-calculus.js"></script>
 <script src="lessons/math-02-multivariable-vector-calculus.js"></script>
 <script src="lessons/math-03-differential-equations-odes.js"></script>
@@ -1927,6 +1935,20 @@ const App = (function () {
   // Same monochrome treatment as the cheatsheet; content HTML lives in lessons/curriculum.js.
   function renderCurriculum(l) {
     const p = l.prevId && byId[l.prevId], n = l.nextId && byId[l.nextId];
+    const sourceNote = `<div class="cur-source-note"><strong>Source note.</strong> Module titles, self-checks, project tags, resources, and papers come from the AFP-AI Learning Guide. Product scenarios, thresholds, metrics, and latency/memory numbers are illustrative teaching examples, not claims about current LinkedIn or AFP production systems unless a cited source explicitly says so.</div>`;
+    return `<div class="crumbs">${l.module}</div>` +
+      `<h2 class="lesson-title">${l.title}</h2>` +
+      (l.meta ? `<p class="cur-meta">${l.meta}</p>` : "") +
+      sourceNote +
+      `<div class="cur-lesson">${l.html}</div>` +
+      `<div class="nav-row">` +
+        `<button ${p ? `onclick="App.open('${l.prevId}')"` : "disabled"}><span>← Previous</span>${p ? p.title : ""}</button>` +
+        `<button class="next" ${n ? `onclick="App.open('${l.nextId}')"` : "disabled"}><span>Next →</span>${n ? n.title : ""}</button>` +
+      `</div>`;
+  }
+
+  function renderFormulas(l) {
+    const p = l.prevId && byId[l.prevId], n = l.nextId && byId[l.nextId];
     return `<div class="crumbs">${l.module}</div>` +
       `<h2 class="lesson-title">${l.title}</h2>` +
       (l.meta ? `<p class="cur-meta">${l.meta}</p>` : "") +
@@ -1961,6 +1983,7 @@ const App = (function () {
     let html;
     if (l.template === "cheatsheet") { html = renderCheatsheet(l, id, prev, next); }
     else if (l.template === "curriculum") { html = renderCurriculum(l, id, prev, next); }
+    else if (l.template === "formulas") { html = renderFormulas(l, id, prev, next); }
     else if (l.type === "capstone") { html = renderCapstone(l, id, prev, next); }
     else if (l.paper) { html = renderPaper(l, id, prev, next); }
     else if (l.template === "pytorch") { html = renderPyTorch(l, id, prev, next); }
