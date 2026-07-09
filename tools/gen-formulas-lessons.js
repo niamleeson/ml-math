@@ -322,6 +322,12 @@ function collectStrings(o, acc) {
   if (Array.isArray(o)) { o.forEach((x) => collectStrings(x, acc)); return; }
   if (typeof o === "object") { for (const k in o) collectStrings(o[k], acc); }
 }
+// A lone backslash directly before a digit or +/- is never a valid LaTeX command; in these
+// lessons it is a matrix/array row separator "\\" whose second backslash was lost. Restore it.
+// (Backslash pairs like "\\-1" are left untouched.)
+function normalizeTex(s) {
+  return s.replace(/(^|[^\\])\\(?=[0-9+\-])/g, "$1\\\\");
+}
 function mathTrackRefHtml() {
   const dir = path.join(ROOT, "lessons");
   const files = fs.readdirSync(dir).filter((f) => /^math-\d\d-.*\.js$/.test(f) && f !== path.basename(OUT)).sort();
@@ -339,14 +345,25 @@ function mathTrackRefHtml() {
     // collect (title -> [equations]) preserving lesson order
     const rows = [];
     lessons.forEach((l) => {
+      // Some lessons store the same formula in several fields with inconsistent escaping
+      // (e.g. definition has a collapsed single-backslash row break while worked has the
+      // correct "\\"). Dedup by content ignoring backslashes and keep the best-escaped
+      // variant (most backslashes), preserving first-seen order. This fixes both the
+      // duplicated "double" formulas and the malformed matrix row breaks.
       const acc = []; collectStrings(l, acc);
       const blob = acc.join("\n");
-      const seen = new Set(), eqs = [];
-      let m; const re = /\$\$([\s\S]*?)\$\$/g;
+      const best = new Map();   // normalized key -> { eq, bs, order }
+      let m, order = 0; const re = /\$\$([\s\S]*?)\$\$/g;
       while ((m = re.exec(blob)) !== null) {
-        const eq = m[1].trim();
-        if (eq && !seen.has(eq)) { seen.add(eq); eqs.push(eq); }
+        const eq = normalizeTex(m[1].trim());
+        if (!eq) continue;
+        const key = eq.replace(/\\/g, "").replace(/\s+/g, " ").trim();
+        const bs = (eq.match(/\\/g) || []).length;
+        const prev = best.get(key);
+        if (!prev) best.set(key, { eq: eq, bs: bs, order: order++ });
+        else if (bs > prev.bs) best.set(key, { eq: eq, bs: bs, order: prev.order });
       }
+      const eqs = [...best.values()].sort((a, b) => a.order - b.order).map((x) => x.eq);
       if (eqs.length) rows.push({ title: l.title || "", eqs: eqs });
     });
     if (!rows.length) return;
