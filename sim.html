@@ -4,6 +4,7 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>ML Engineering Lab — ML Math Tutor</title>
+<link rel="stylesheet" href="fonts/atkinson-hyperlegible-next.css" />
 
 <script>
   (function () {
@@ -17,6 +18,8 @@
 
 <style>
   :root {
+    --font-sans: "Atkinson Hyperlegible Next", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+
     --bg:#0f1419; --panel:#161c24; --panel-2:#1d2530; --ink:#e6edf3; --ink-dim:#9aa7b4;
     --accent:#4ea1ff; --accent-2:#7ee787; --warn:#ffb454; --border:#2a3340; --good:#2ea043;
     --purple:#c89bff; --shadow:0 6px 24px rgba(0,0,0,.35);
@@ -29,7 +32,7 @@
   html { color-scheme: dark; } html[data-theme="light"] { color-scheme: light; }
   * { box-sizing: border-box; }
   html, body { margin:0; padding:0; }
-  body { background:var(--bg); color:var(--ink); font:16px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif; }
+  body { background:var(--bg); color:var(--ink); font:16px/1.6 var(--font-sans); }
 
   header {
     position:sticky; top:0; z-index:10; display:flex; align-items:center; gap:14px; flex-wrap:wrap;
