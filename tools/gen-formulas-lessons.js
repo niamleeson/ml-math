@@ -324,7 +324,7 @@ function collectStrings(o, acc) {
 }
 function mathTrackRefHtml() {
   const dir = path.join(ROOT, "lessons");
-  const files = fs.readdirSync(dir).filter((f) => /^math-\d\d-.*\.js$/.test(f)).sort();
+  const files = fs.readdirSync(dir).filter((f) => /^math-\d\d-.*\.js$/.test(f) && f !== path.basename(OUT)).sort();
   let html = "<p>Every <strong>display formula</strong> from every lesson in the Math track, " +
     "grouped by topic and then by the lesson it appears in. This is a lookup index — open the " +
     "lesson itself for the full explanation.</p>";
