@@ -315,6 +315,53 @@ function buildPartHtml(chunk, partTitle) {
   return html;
 }
 
+/* ---------- math-track reference: every display equation from every math lesson ---------- */
+function collectStrings(o, acc) {
+  if (o == null) return;
+  if (typeof o === "string") { acc.push(o); return; }
+  if (Array.isArray(o)) { o.forEach((x) => collectStrings(x, acc)); return; }
+  if (typeof o === "object") { for (const k in o) collectStrings(o[k], acc); }
+}
+function mathTrackRefHtml() {
+  const dir = path.join(ROOT, "lessons");
+  const files = fs.readdirSync(dir).filter((f) => /^math-\d\d-.*\.js$/.test(f)).sort();
+  let html = "<p>Every <strong>display formula</strong> from every lesson in the Math track, " +
+    "grouped by topic and then by the lesson it appears in. This is a lookup index — open the " +
+    "lesson itself for the full explanation.</p>";
+  let nTopics = 0, nFormulas = 0;
+  files.forEach((f) => {
+    const sandbox = { window: { LESSONS: [] } };
+    try { require("vm").runInNewContext(fs.readFileSync(path.join(dir, f), "utf8"), sandbox); }
+    catch (e) { console.warn("skip " + f + ": " + e.message); return; }
+    const lessons = sandbox.window.LESSONS;
+    if (!lessons || !lessons.length) return;
+    const topic = lessons[0].module || f;
+    // collect (title -> [equations]) preserving lesson order
+    const rows = [];
+    lessons.forEach((l) => {
+      const acc = []; collectStrings(l, acc);
+      const blob = acc.join("\n");
+      const seen = new Set(), eqs = [];
+      let m; const re = /\$\$([\s\S]*?)\$\$/g;
+      while ((m = re.exec(blob)) !== null) {
+        const eq = m[1].trim();
+        if (eq && !seen.has(eq)) { seen.add(eq); eqs.push(eq); }
+      }
+      if (eqs.length) rows.push({ title: l.title || "", eqs: eqs });
+    });
+    if (!rows.length) return;
+    nTopics++;
+    html += "<h2>" + esc(topic) + "</h2>";
+    rows.forEach((r) => {
+      html += '<div class="ref-item"><div class="ref-name">' + esc(r.title) + "</div>";
+      r.eqs.forEach((eq) => { nFormulas++; html += '<div class="fmla-latex">$$' + eq + "$$</div>"; });
+      html += "</div>";
+    });
+  });
+  console.log("  math-track reference: " + nFormulas + " display formulas across " + nTopics + " topics");
+  return html;
+}
+
 /* ---------- the all-in-one reference page: every formula, grouped by section ---------- */
 function referenceHtml() {
   let html = "<p>Every formula in this section on one page, grouped by topic — no examples, " +
@@ -329,6 +376,7 @@ function referenceHtml() {
   });
   return html;
 }
+
 
 
 /* ---------- split the source into sections and build lessons ---------- */
@@ -352,6 +400,9 @@ chunks.forEach((chunk) => {
 // All-in-one reference page (built after every Part has populated REF). Key "00b" sorts it
 // right after the Overview and before Part 1.
 lessons.push({ key: "00b", title: "All formulas — quick reference", html: referenceHtml() });
+
+// Every display formula from every lesson in the whole Math track (all 27 topics).
+lessons.push({ key: "00c", title: "All math-lesson formulas (every topic)", html: mathTrackRefHtml() });
 
 // Practice-drills links page (points at the generated drills + self-checking notebook).
 const colab = "https://colab.research.google.com/github/" + REPO + "/blob/main/afp/notebooks/vector-math-drills.ipynb";
