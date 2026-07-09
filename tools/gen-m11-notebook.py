@@ -428,89 +428,117 @@ plt.title("creators colored by vertical (clusters = learned structure)"); plt.sh
 # ------------------------------------------------------------------- eval toolkit
 md(r"""
 ---
-## Step 12 · The evaluation toolkit — every method, explained
+## Step 12 · The evaluation toolkit — every method, **sorted by importance**
 
-You ran the checks above. Here's *when to trust each one and where it fits* — because no single
-method is enough. Read each as: **what it is → what it's good for → the trap → where it fits →
-rule of thumb.** They stack into a ladder from "soft intuition" to "hard, sliceable numbers."
+You ran the checks above. Here's each one ranked by **how much it should weigh in deciding
+whether the space is good and safe to ship** (most → least). Read each as: *why it ranks here →
+what it is → what it's good for → the trap → where it fits → rule of thumb.* Note the deliberate
+inversion at the end: importance runs top-down, but the **order you run them** runs bottom-up
+(cheap gates first, the expensive verdict last).
 
-### 0. t-SNE / UMAP (a picture)
-- **What it is:** squashes your high-dim vectors down to **2D** so you can *see* whether similar
-  things cluster (like the Step 11 scatter).
-- **Good for:** building intuition, spotting gross failures (e.g. total collapse).
-- **The trap:** it's **lossy and cosmetic** — cluster sizes and between-cluster distances are
-  artifacts of the algorithm's settings (perplexity), not reality. It's not a number you can
-  threshold, track, or slice, and a pretty plot can still hide terrible cold-start recall.
-- **Where it fits:** **rung 0** — a debugging/sanity aid, never a grade.
-- **Rule of thumb:** use it to *look and hypothesize*, then *prove* it with metrics.
+### 1. Downstream lift — *the verdict*
+- **Why #1:** the only method that proves the embedding is *useful*, not just *neat*. Everything
+  else is a proxy for this.
+- **What it is:** feed the embedding into the **real product model** (the ranker) and measure
+  whether the **business metric** moves — CTR, conversion, invite-acceptance (e.g. 6.0% → 6.6%).
+- **Good for:** the **ground truth of value** — a space can ace recall@k and still not help the
+  ranker (which may already have that signal elsewhere).
+- **The trap:** **slow, expensive, confounded** — needs an online A/B test, time for significance,
+  and everything else moves at once, so attribution is hard.
+- **Where it fits:** the **ship/no-ship decision**; every rung below exists because this is too
+  costly to run every iteration.
+- **Rule of thumb:** offline metrics let you *iterate fast*; downstream lift lets you *decide to ship*.
 
-### 1. Alignment & uniformity (structural health)
-- **What it is:** two numbers — **alignment** = are positive pairs close? **uniformity** = are
-  vectors spread out (not collapsed)?
-- **Good for:** catching **collapse** — the failure where everything is near everything, so
-  neighbor lists are all the same.
-- **The trap:** each alone lies. **Great alignment with bad uniformity = a collapsed, useless
-  space** (positives are close, but so is everything). You must read them **together**.
-- **Where it fits:** a **structural health check** *before* trusting retrieval numbers.
-- **Rule of thumb:** demand **both** — positives close *and* the rest spread.
+### 2. Slice checks — *the most important discipline*
+- **Why #2:** the average always lies, and the failures that hurt real users hide inside slices.
+- **What it is:** break every metric down by **subgroup** — new vs established, rare verticals,
+  languages, small advertisers, policy-sensitive categories.
+- **Good for:** exposing what a single average **buries** — "recall@20 = 0.80" can hide a
+  **cold-start catastrophe** (notebook: established **0.53** vs new **0.23**).
+- **The trap:** you must **pre-define the slices that matter**, or you'll miss the one that breaks;
+  and the *fix* is domain-specific ("bigger vectors" rarely helps — better features / cold-start
+  blend / hard negatives for the weak slice do).
+- **Where it fits:** a **discipline applied on top of** recall / downstream / neighbors, not a
+  standalone metric.
+- **Rule of thumb:** **never ship on the overall number** — assume the average lies until slices prove otherwise.
 
-### 2. Retrieval recall@k (the first real metric)
-- **What it is:** put a query in the space, take its top-k neighbors, ask **"is the true match
-  in there?"** Average over queries.
-- **Good for:** directly measuring the job you'll serve — *does searching this space return the
-  right item?* It's a real, trackable number.
-- **The trap:** **meaningless without naming the candidate universe** — recall@k against a few
-  sampled negatives is wildly optimistic vs against the full catalog. And a good *overall*
-  number can hide bad slices.
-- **Where it fits:** **rung 1** — the first metric you actually optimize.
+### 3. Retrieval recall@k — *the workhorse*
+- **Why #3:** your daily driver for offline iteration and the best *fast* proxy for downstream value.
+- **What it is:** put a query in the space, take its **top-k** neighbors, ask **"is the true match
+  in there?"** Average over queries (notebook: recall@20 = **0.50** vs 0.014 random).
+- **Good for:** measuring the **actual job you'll serve** — a real, trackable, A/B-able number.
+- **The trap:** **meaningless without naming the candidate universe** — a few sampled negatives is
+  wildly optimistic vs the full catalog (same model: 0.88 sampled vs 0.52 full); a good *overall*
+  number also masks bad slices.
+- **Where it fits:** the **first metric you actually optimize** day to day.
 - **Rule of thumb:** always report **recall@k + the universe you ranked against**.
 
-### 3. Downstream lift (the metric that pays)
-- **What it is:** feed the embedding into the **real product model** (ranker) and measure whether
-  the business metric moves — CTR, conversion, invite-acceptance.
-- **Good for:** the **only** check that proves the embedding is *useful*, not just *neat*. A
-  space can have great recall@k and still not help the ranker.
-- **The trap:** slow and expensive (needs an A/B test or a trained downstream model), and
-  confounded by everything else in the system.
-- **Where it fits:** **rung 2** — the ground truth of value.
-- **Rule of thumb:** offline metrics are *proxies*; downstream lift is the *verdict*.
+### 4. Alignment & uniformity — *the gate*
+- **Why #4:** a prerequisite — if the space is collapsed, everything above is meaningless. Catches
+  a catastrophic failure for almost no cost.
+- **What it is:** two numbers — **alignment** = are positive pairs close? **uniformity** = are
+  vectors spread out (not collapsed)?
+- **Good for:** catching **collapse** — where everything is near everything, so neighbor lists are
+  all the same.
+- **The trap:** each alone lies — **great alignment + bad uniformity = a collapsed, useless space**
+  (positives close, but so is everything). Read them **together**.
+- **Where it fits:** a **pre-flight structural gate**, before you trust any retrieval number; once
+  it passes it stops being informative.
+- **Rule of thumb:** demand **both** — positives close *and* the rest spread.
 
-### 4. Probing (what does it encode?)
+### 5. Qualitative neighbors — *the reality check*
+- **Why #5:** catches "plausible but wrong" that metrics miss, and generates hypotheses you then verify.
+- **What it is:** for real queries, **read the top-k neighbors** — for head, torso, tail, and
+  cold-start examples.
+- **Good for:** catching failures metrics miss — neighbors *topically* similar but **wrong for the
+  product task** (right topic, wrong audience/region).
+- **The trap:** **anecdotal and cherry-pickable** — a few good examples prove nothing; look across
+  the distribution, not just the ones that look good.
+- **Where it fits:** a **reality check** on what the numbers claim, and a source of hypotheses to
+  verify quantitatively.
+- **Rule of thumb:** if you can't stomach the **top-5 neighbors for a tail query**, the metric is lying.
+
+### 6. Probing — *the diagnostic & bias audit*
+- **Why #6 for quality (but #1 for safety):** it measures *presence* of info, not usefulness — yet
+  it's a ship-blocker if it recovers protected attributes.
 - **What it is:** freeze the vectors, train a **tiny classifier** to predict a known label
-  (vertical, language) from them. High accuracy = that info is encoded.
-- **Good for:** confirming the space captures the structure you *expect*, and **auditing bias**
-  — if a probe recovers a *protected* attribute you never intended, that's a red flag.
-- **The trap:** measures **presence of information, not usefulness for the task** — a probe can
-  ace "predict language" while retrieval still fails. High probe accuracy ≠ good retrieval.
-- **Where it fits:** **rung 3** — a diagnostic/audit, alongside (not instead of) recall.
-- **Rule of thumb:** probe to understand *what's in there* and *what shouldn't be*.
+  (vertical, language) from them (notebook: **0.49** vs 0.17 random).
+- **Good for:** confirming the space captures expected structure, and **auditing bias** — a probe
+  recovering a *protected* attribute you never intended is a red flag.
+- **The trap:** measures **presence of information, not usefulness** — a probe can ace "predict
+  language" while retrieval still fails.
+- **Where it fits:** a **diagnostic/audit** alongside (not instead of) recall; for fairness it jumps
+  to the top.
+- **Rule of thumb:** probe to learn *what's in there* and *what shouldn't be*.
 
-### 5. Qualitative neighbors (eyeball the top-k)
-- **What it is:** for real queries, actually **read the top neighbors** — for head, torso, tail,
-  and cold-start examples.
-- **Good for:** catching failures metrics miss — e.g. neighbors that are *topically* similar but
-  *wrong for the product task* (right topic, wrong audience/region).
-- **The trap:** **anecdotal and cherry-pickable** — a few good examples prove nothing; you must
-  look across the distribution, not just the ones that look good.
-- **Where it fits:** **rung 4** — a reality check on what the numbers claim.
-- **Rule of thumb:** if you can't stomach the top-5 neighbors for a *tail* query, the metric is
-  lying to you.
+### 7. Norms / dot-vs-cosine / hubness — *the 10-second sanity pass*
+- **Why #7:** cheap symptom detectors — they flag problems rather than measure quality.
+- **What it is:** three quick diagnostics (Step 6) — histogram **norms**, compare **dot vs cosine**
+  neighbors, and count **hubness** (how often each vector is someone's nearest neighbor).
+- **Good for:** exposing **norm-driven retrieval** (high-norm hubs = ranking by popularity), whether
+  the top-k **changes** when you normalize, and **hubness** (one vector that's everyone's neighbor).
+- **The trap:** they tell you *there's a problem*, not *how much it hurts the product*.
+- **Where it fits:** a **fast pre-flight** before you spend effort on recall@k.
+- **Rule of thumb:** if dot and cosine neighbors disagree, decide *on purpose* whether norm should matter.
 
-### 6. Slice checks (where cold-start hides) — the most important one
-- **What it is:** break every metric down by **subgroup** — new vs established, rare verticals,
-  languages, small advertisers.
-- **Good for:** exposing the failures a **single average buries** — especially the **cold-start
-  gap** (notebook: established 0.53 vs new 0.23).
-- **The trap:** its own — you must pre-define the slices that matter, or you'll miss the one that
-  breaks in production.
-- **Where it fits:** **rung 5** — applied *on top of* recall / downstream / neighbors.
-- **Rule of thumb:** **never ship on the overall number** — the fix for a bad slice isn't
-  "bigger vectors," it's better features / a cold-start blend / hard negatives for that slice.
+### 8. t-SNE / UMAP — *soft intuition only*
+- **Why #8:** a picture, not a number — the softest, most misleading rung.
+- **What it is:** squashes high-dim vectors down to **2D** so you can *see* whether similar things
+  cluster (like the Step 11 scatter).
+- **Good for:** building intuition, spotting **gross** failures (e.g. total collapse).
+- **The trap:** **lossy and cosmetic** — cluster sizes and distances are artifacts of the
+  `perplexity` setting, not reality; not a number you can threshold, track, or slice, and a pretty
+  plot can hide terrible cold-start recall.
+- **Where it fits:** a **debugging/sanity aid**, never a grade.
+- **Rule of thumb:** use it to *look and hypothesize*, then *prove* it with metrics.
 
-**The ladder in one line:** t-SNE to *look* → alignment/uniformity to check *health* →
-recall@k for the *first number* → downstream lift for *real value* → probing to see *what's
-encoded* → qualitative neighbors for a *reality check* → **slice checks** because the average
-always lies.
+**The ranking in one line:** **downstream lift** (the verdict) > **slice checks** (catches what the
+average hides) > **recall@k** (the fast workhorse) > **alignment/uniformity** (the collapse gate) >
+**qualitative neighbors** (reality check) > **probing** (diagnostic; #1 for bias) >
+**norms/dot-vs-cosine/hubness** (sanity) > **t-SNE** (a picture).
+
+**Importance vs sequence:** you *weight* the expensive verdict most (downstream lift, slices) but
+*run* the cheap gates first (alignment, norms, t-SNE) — importance is top-down, sequence is bottom-up.
 """)
 
 # ------------------------------------------------------------------- recap
@@ -528,14 +556,15 @@ norm often acts like popularity) or **cosine** (direction only, after **L2-norma
 negatives** (matrix factorization / BPR). A healthy space has **alignment** (positives close)
 **and uniformity** (everything spread) — collapse kills retrieval.
 
-**The checks — never skip these:**
-1. **Norms & hubness** — are a few high-norm vectors dominating / is one item everyone's neighbor?
-2. **dot vs cosine neighbors** — do results change when you normalize? (then norm drives retrieval)
-3. **Alignment & uniformity** — positives close *without* the space collapsing.
-4. **recall@k** — of held-out positives, how many land in the top k?
-5. **Slice checks** — new vs established, rare verticals, languages: **this is where cold-start hides.**
+**The checks — ranked by importance (weight them top-down, run them bottom-up):**
+1. **Downstream lift** — does the embedding actually improve the product model? *(the verdict)*
+2. **Slice checks** — new vs established, rare verticals, languages: **this is where cold-start hides.**
+3. **recall@k** — of held-out positives, how many land in the top k? *(state the candidate universe)*
+4. **Alignment & uniformity** — positives close *without* the space collapsing. *(the gate)*
+5. **Qualitative neighbors** — do the top neighbors actually make sense for the *product task*?
 6. **Probing** — can a light classifier recover expected labels (and not leak protected ones)?
-7. **Qualitative neighbors** — do the top neighbors actually make sense for the *product task*?
+7. **Norms / dot-vs-cosine / hubness** — is retrieval secretly driven by popularity/norm?
+8. **t-SNE / UMAP** — a picture for intuition only, never a grade.
 
 **Where this connects:** M11's vectors and negative sampling build on M10 (implicit labels,
 logQ) and feed **M12 two-tower retrieval** — the system that searches these embeddings at
