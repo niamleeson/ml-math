@@ -425,6 +425,94 @@ plt.xlabel("component 1"); plt.ylabel("component 2")
 plt.title("creators colored by vertical (clusters = learned structure)"); plt.show()
 """)
 
+# ------------------------------------------------------------------- eval toolkit
+md(r"""
+---
+## Step 12 · The evaluation toolkit — every method, explained
+
+You ran the checks above. Here's *when to trust each one and where it fits* — because no single
+method is enough. Read each as: **what it is → what it's good for → the trap → where it fits →
+rule of thumb.** They stack into a ladder from "soft intuition" to "hard, sliceable numbers."
+
+### 0. t-SNE / UMAP (a picture)
+- **What it is:** squashes your high-dim vectors down to **2D** so you can *see* whether similar
+  things cluster (like the Step 11 scatter).
+- **Good for:** building intuition, spotting gross failures (e.g. total collapse).
+- **The trap:** it's **lossy and cosmetic** — cluster sizes and between-cluster distances are
+  artifacts of the algorithm's settings (perplexity), not reality. It's not a number you can
+  threshold, track, or slice, and a pretty plot can still hide terrible cold-start recall.
+- **Where it fits:** **rung 0** — a debugging/sanity aid, never a grade.
+- **Rule of thumb:** use it to *look and hypothesize*, then *prove* it with metrics.
+
+### 1. Alignment & uniformity (structural health)
+- **What it is:** two numbers — **alignment** = are positive pairs close? **uniformity** = are
+  vectors spread out (not collapsed)?
+- **Good for:** catching **collapse** — the failure where everything is near everything, so
+  neighbor lists are all the same.
+- **The trap:** each alone lies. **Great alignment with bad uniformity = a collapsed, useless
+  space** (positives are close, but so is everything). You must read them **together**.
+- **Where it fits:** a **structural health check** *before* trusting retrieval numbers.
+- **Rule of thumb:** demand **both** — positives close *and* the rest spread.
+
+### 2. Retrieval recall@k (the first real metric)
+- **What it is:** put a query in the space, take its top-k neighbors, ask **"is the true match
+  in there?"** Average over queries.
+- **Good for:** directly measuring the job you'll serve — *does searching this space return the
+  right item?* It's a real, trackable number.
+- **The trap:** **meaningless without naming the candidate universe** — recall@k against a few
+  sampled negatives is wildly optimistic vs against the full catalog. And a good *overall*
+  number can hide bad slices.
+- **Where it fits:** **rung 1** — the first metric you actually optimize.
+- **Rule of thumb:** always report **recall@k + the universe you ranked against**.
+
+### 3. Downstream lift (the metric that pays)
+- **What it is:** feed the embedding into the **real product model** (ranker) and measure whether
+  the business metric moves — CTR, conversion, invite-acceptance.
+- **Good for:** the **only** check that proves the embedding is *useful*, not just *neat*. A
+  space can have great recall@k and still not help the ranker.
+- **The trap:** slow and expensive (needs an A/B test or a trained downstream model), and
+  confounded by everything else in the system.
+- **Where it fits:** **rung 2** — the ground truth of value.
+- **Rule of thumb:** offline metrics are *proxies*; downstream lift is the *verdict*.
+
+### 4. Probing (what does it encode?)
+- **What it is:** freeze the vectors, train a **tiny classifier** to predict a known label
+  (vertical, language) from them. High accuracy = that info is encoded.
+- **Good for:** confirming the space captures the structure you *expect*, and **auditing bias**
+  — if a probe recovers a *protected* attribute you never intended, that's a red flag.
+- **The trap:** measures **presence of information, not usefulness for the task** — a probe can
+  ace "predict language" while retrieval still fails. High probe accuracy ≠ good retrieval.
+- **Where it fits:** **rung 3** — a diagnostic/audit, alongside (not instead of) recall.
+- **Rule of thumb:** probe to understand *what's in there* and *what shouldn't be*.
+
+### 5. Qualitative neighbors (eyeball the top-k)
+- **What it is:** for real queries, actually **read the top neighbors** — for head, torso, tail,
+  and cold-start examples.
+- **Good for:** catching failures metrics miss — e.g. neighbors that are *topically* similar but
+  *wrong for the product task* (right topic, wrong audience/region).
+- **The trap:** **anecdotal and cherry-pickable** — a few good examples prove nothing; you must
+  look across the distribution, not just the ones that look good.
+- **Where it fits:** **rung 4** — a reality check on what the numbers claim.
+- **Rule of thumb:** if you can't stomach the top-5 neighbors for a *tail* query, the metric is
+  lying to you.
+
+### 6. Slice checks (where cold-start hides) — the most important one
+- **What it is:** break every metric down by **subgroup** — new vs established, rare verticals,
+  languages, small advertisers.
+- **Good for:** exposing the failures a **single average buries** — especially the **cold-start
+  gap** (notebook: established 0.53 vs new 0.23).
+- **The trap:** its own — you must pre-define the slices that matter, or you'll miss the one that
+  breaks in production.
+- **Where it fits:** **rung 5** — applied *on top of* recall / downstream / neighbors.
+- **Rule of thumb:** **never ship on the overall number** — the fix for a bad slice isn't
+  "bigger vectors," it's better features / a cold-start blend / hard negatives for that slice.
+
+**The ladder in one line:** t-SNE to *look* → alignment/uniformity to check *health* →
+recall@k for the *first number* → downstream lift for *real value* → probing to see *what's
+encoded* → qualitative neighbors for a *reality check* → **slice checks** because the average
+always lies.
+""")
+
 # ------------------------------------------------------------------- recap
 md(r"""
 ---
