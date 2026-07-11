@@ -273,9 +273,9 @@ two vectors and compare them. It makes **one** sequence, runs the **self-attenti
 over it, and reads **one number** off a small head. Four moves:
 
 ```
-(1) GLUE query + doc into ONE token sequence:
-      [CLS]  data  scientist  hiring  data  scientist
-      (CLS = a summary slot; a real model also inserts a [SEP] boundary token)
+(1) GLUE query + doc into ONE token sequence, with a [SEP] boundary marker:
+      [CLS]  data  scientist  [SEP]  hiring  data  scientist
+      (CLS = a summary slot;  SEP = the query/doc boundary, a learned token)
 
 (2) SELF-ATTENTION over the whole sequence (the SAME mechanism as Step 2):
     EVERY token attends to EVERY token, so ALL tokens update -- including the
@@ -298,6 +298,7 @@ xvocab = {
  "data":[0.2,0.9,0.1,0.0], "scientist":[0.3,0.8,0.2,0.1],
  "hiring":[0.1,0.2,0.9,0.1], "remote":[0.0,0.1,0.2,0.9],
  "sales":[0.7,0.1,0.1,0.2], "role":[0.2,0.6,0.3,0.1],
+ "[SEP]":[0.1,0.1,0.1,0.1],                                     # boundary marker (a learned token)
 }
 xvocab = {k: np.array(v) for k, v in xvocab.items()}
 def xsoftmax(z): z = z - z.max(); e = np.exp(z); return e/e.sum()
@@ -305,9 +306,9 @@ w_head = np.array([0.2, 1.0, -0.3, -0.2]); b_head = -0.1        # the learned sc
 
 def cross_score(query, doc, show=False):
     qtok, dtok = query.split(), doc.split()
-    seq_words = ["[CLS]"] + qtok + dtok                        # (1) ONE glued sequence ([SEP] omitted)
+    seq_words = ["[CLS]"] + qtok + ["[SEP]"] + dtok            # (1) ONE glued sequence with [SEP]
     cls0 = np.mean([xvocab[t] for t in qtok], axis=0)          # [CLS] starts as the query summary
-    V = np.array([cls0] + [xvocab[t] for t in qtok] + [xvocab[t] for t in dtok])
+    V = np.array([cls0] + [xvocab[t] for t in seq_words[1:]])  # a vector for every token after [CLS]
     new = np.zeros_like(V)                                     # (2) FULL self-attention: EVERY token
     for i in range(len(V)):                                    #     attends to EVERY token -> all update
         a = xsoftmax(V[i] @ V.T)
@@ -341,13 +342,14 @@ To see *exactly* where the score comes from, here it is with tiny **2-D** tokens
 """)
 code(r"""
 tok2 = {"remote":np.array([1.,0.]), "data":np.array([0.,1.]),
-        "onsite":np.array([-1.,0.]), "analyst":np.array([0.,1.])}
+        "onsite":np.array([-1.,0.]), "analyst":np.array([0.,1.]),
+        "[SEP]":np.array([0.,0.])}                            # neutral boundary marker
 w2 = np.array([1.,0.]); b2 = 0.0                              # head reads dim0 = remote signal
 
 def cross_by_hand(query_words, doc_words):
-    seq  = ["[CLS]"] + query_words + doc_words
+    seq  = ["[CLS]"] + query_words + ["[SEP]"] + doc_words    # glued sequence with [SEP] boundary
     cls0 = np.mean([tok2[t] for t in query_words], axis=0)    # [CLS] starts as mean of query tokens
-    V = np.array([cls0] + [tok2[t] for t in query_words] + [tok2[t] for t in doc_words])
+    V = np.array([cls0] + [tok2[t] for t in seq[1:]])         # a vector for every token after [CLS]
     new = np.zeros_like(V)                                    # FULL self-attention: all tokens update
     for i in range(len(V)):
         logits = V[i] @ V.T                                   # similarity of token i to every token
