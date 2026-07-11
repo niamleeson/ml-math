@@ -14,6 +14,8 @@ Training a model is three decisions: **what counts as "wrong"** (the loss), **ho
 
 Three sub-lessons: **M3.1 Loss functions**, **M3.2 The optimizer**, **M3.3 Regularization**.
 
+<p class="cur-colab"><a class="cur-colab-btn" href="https://colab.research.google.com/github/niamleeson/ml-math/blob/main/afp/notebooks/M03-loss-optimization.ipynb" target="_blank" rel="noopener">▶ Open the runnable toy-example notebook (log loss + MSE/MAE/Huber with the outlier break case) in Google Colab</a></p>
+
 ---
 
 ## M3.1 · Loss functions

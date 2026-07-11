@@ -24,6 +24,8 @@ Three sub-lessons:
 - **M5.2 Ranking quality** — ROC-AUC, PR-AUC, MRR, MAP, and NDCG.
 - **M5.3 Designing an evaluation** — calibration, slices, support, guardrails, and offline↔online gaps.
 
+<p class="cur-colab"><a class="cur-colab-btn" href="https://colab.research.google.com/github/niamleeson/ml-math/blob/main/afp/notebooks/M05-offline-metrics.ipynb" target="_blank" rel="noopener">▶ Open the runnable toy-example notebook (confusion matrix, precision/recall/F1, threshold sweep, and the imbalance trap) in Google Colab</a></p>
+
 ---
 
 ## M5.1 · Classification metrics

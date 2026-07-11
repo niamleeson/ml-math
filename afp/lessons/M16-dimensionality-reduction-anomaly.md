@@ -19,6 +19,8 @@ Two sub-lessons:
 - **M16.1 Dimensionality reduction** — PCA mechanics, explained variance, loadings, and UMAP caveats.
 - **M16.2 Anomaly detection** — reconstruction error, Isolation Forest, LOF, Mahalanobis, PyOD, and scarce-label thresholding.
 
+<p class="cur-colab"><a class="cur-colab-btn" href="https://colab.research.google.com/github/niamleeson/ml-math/blob/main/afp/notebooks/M16-dimensionality-reduction-anomaly.ipynb" target="_blank" rel="noopener">▶ Open the runnable toy-example notebook (PCA explained variance + loadings on correlated engagement features) in Google Colab</a></p>
+
 ---
 
 ## M16.1 · Dimensionality reduction

@@ -20,6 +20,8 @@ Two sub-lessons:
 - **M27.1 LPs & QPs: formulation, convexity, and allocation variables** — turning an ads story into variables, objective, constraints, and a solver-ready LP/QP.
 - **M27.2 Duality, shadow prices & KKT: what constraints are worth** — reading constraints as marketplace prices and certifying an optimum.
 
+<p class="cur-colab"><a class="cur-colab-btn" href="https://colab.research.google.com/github/niamleeson/ml-math/blob/main/afp/notebooks/M27-linear-convex-optimization.ipynb" target="_blank" rel="noopener">▶ Open the runnable toy-example notebook (gradient descent on a convex bowl + the diverging step-size break case) in Google Colab</a></p>
+
 ---
 
 ## M27.1 · LPs & QPs: formulation, convexity, and allocation variables
