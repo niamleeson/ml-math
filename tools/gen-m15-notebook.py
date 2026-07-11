@@ -21,7 +21,7 @@ def code(s): cells.append({"cell_type": "code", "metadata": {}, "execution_count
 
 # ------------------------------------------------------------------- intro
 md(r"""
-# M15 · Clustering & Cohort/Persona Discovery — Hands-on, Step by Tiny Step
+# M15 · Clustering & Cohort/Persona Discovery — 🧸 Toy Example, Step by Tiny Step
 
 **Companion to lesson M15. Written for someone new to ML.**
 
