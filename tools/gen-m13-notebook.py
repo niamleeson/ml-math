@@ -186,6 +186,51 @@ print("\n-> nprobe=2 already hits ~0.94 recall scanning only ~3% of items. That'
 md("---\n# Part C · PQ — squash a vector into a few bytes (intuition)")
 
 md(r"""
+## Step 6.5 · 🧸 Toy Example — encode ONE vector by hand (before the real thing)
+
+Before we PQ the whole dataset, let's do **one** vector with tiny numbers you can trace by hand.
+PQ = **split** the vector into `m` chunks → each chunk has its own **codebook** of `k` codewords
+(each codeword is a k-means *average*) → **encode** = replace each chunk with the *index* of its
+nearest codeword. Here `m=2`, `k=4`. The codebooks are hand-set (normally learned) so every number
+is checkable.
+""")
+code(r"""
+# the ONE vector we compress (8 numbers)
+toy_x = np.array([1, 2, 1, 3,  8, 7, 9, 7])
+toy_subA, toy_subB = toy_x[:4], toy_x[4:]          # SPLIT -> A=[1 2 1 3], B=[8 7 9 7]
+print("chunk A:", toy_subA.tolist(), " chunk B:", toy_subB.tolist())
+
+# each subspace has its own codebook of 4 codewords (rows). Normally k-means averages; fixed here.
+toy_CA = np.array([[0,0,0,0],[1,2,1,2],[5,5,5,5],[2,1,2,1]])   # A0, A1, A2, A3
+toy_CB = np.array([[0,0,0,0],[3,3,3,3],[8,7,8,7],[7,8,7,8]])   # B0, B1, B2, B3
+
+# ENCODE chunk A: squared distance to each codeword, then keep the NEAREST index
+toy_dA = ((toy_CA - toy_subA)**2).sum(axis=1)      # -> [15, 1, 45, 7]   (A1 is nearest)
+toy_dB = ((toy_CB - toy_subB)**2).sum(axis=1)      # -> [243, 93, 1, 7]  (B2 is nearest)
+print("distances A -> A0..A3:", toy_dA.tolist())
+print("distances B -> B0..B3:", toy_dB.tolist())
+toy_iA, toy_iB = int(toy_dA.argmin()), int(toy_dB.argmin())    # -> 1, 2
+print("PQ code = (", toy_iA, ",", toy_iB, ")   # 2 tiny ints instead of 8 floats")
+assert (toy_iA, toy_iB) == (1, 2)
+
+# DECODE (lossy): look the indices back up in the codebooks
+toy_recon = np.concatenate([toy_CA[toy_iA], toy_CB[toy_iB]])   # -> [1 2 1 2 8 7 8 7]
+toy_err = float(np.linalg.norm(toy_x - toy_recon))            # -> 1.414 (quantization error)
+print("reconstruction:", toy_recon.tolist(), " original:", toy_x.tolist(), " error:", round(toy_err, 3))
+assert toy_recon.tolist() == [1, 2, 1, 2, 8, 7, 8, 7]
+
+fig, ax = plt.subplots(1, 2, figsize=(9, 3.2))
+ax[0].bar(range(4), toy_dA); ax[0].set_title("chunk A: distance to A0..A3 (min = A1)")
+ax[1].bar(range(4), toy_dB); ax[1].set_title("chunk B: distance to B0..B3 (min = B2)")
+for a in ax: a.set_xlabel("codeword index"); a.set_ylabel("squared distance")
+plt.tight_layout(); plt.show()
+""")
+md("▶ What you'll see: distances `[15, 1, 45, 7]` and `[243, 93, 1, 7]` → nearest codewords **A1** and "
+   "**B2** → code **(1, 2)**, which decodes to `[1,2,1,2,8,7,8,7]` (close to the original, off by the "
+   "quantization error 1.41). Below, Step 7 does exactly this at scale with `m=8`, `k=256`.")
+
+
+md(r"""
 ## Step 7 · Chop each vector into pieces
 
 **Analogy.** Instead of exact colors, store the nearest of **256 crayons** (1 byte). PQ first
