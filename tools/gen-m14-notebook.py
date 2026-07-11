@@ -141,6 +141,47 @@ plt.ylabel("cosine to query"); plt.ylim(0,1); plt.title("pooled sentence vectors
 """)
 
 md(r"""
+### The transformer step, unpacked — **self-attention**
+
+Step (2) above just said "each token becomes a contextual vector" — here is *how*, because the
+cross-encoder in Step 4 reuses the exact same mechanism. That step is **self-attention**.
+Definition first, then numbers:
+
+> **Self-attention** gives each token a **new vector** that is a **weighted average of all the
+> tokens in the sentence**, where each weight says *how much this token should pay attention to
+> that one*. For one token: **(a)** measure its similarity (dot product) to every token;
+> **(b)** softmax those into weights that sum to 1 (those weights are the "attention");
+> **(c)** new vector = Σ weight · token. **"self"** = the tokens attend to **each other** (same
+> sentence); **"full"** = **every** token does this, so they **all** update.
+
+We watch one token attend, then all of them. (Real transformers first multiply each token by
+learned **Query/Key/Value** matrices; here those are the identity, so the weight is just the
+plain dot product — same idea.)
+""")
+code(r"""
+def selfattn_softmax(z): z = np.array(z, float); z = z - z.max(); e = np.exp(z); return e / e.sum()
+
+# 2-D tokens so every number is visible (dim0 = "remote-ness", dim1 = "data-ness")
+Stoks = {"remote": np.array([1.,0.]), "data": np.array([0.,1.]), "onsite": np.array([-1.,0.])}
+names = list(Stoks); M = np.array([Stoks[n] for n in names])
+print("tokens:", {n: Stoks[n].tolist() for n in names}, "\n")
+
+print("ONE token, 'remote', attends to ALL tokens:")
+sims = [M[0] @ M[j] for j in range(len(names))]             # (a) similarity to every token
+print("  (a) dot(remote, each) =", np.round(sims, 2), "for tokens", names)
+w = selfattn_softmax(sims)                                  # (b) softmax -> attention weights
+print("  (b) softmax -> weights =", w.round(3), " (sum = 1)")
+new_remote = (w[:, None] * M).sum(0)                        # (c) weighted blend of all tokens
+print("  (c) new 'remote' = sum(weight * token) =", new_remote.round(3), " (was [1, 0])")
+
+print("\nFULL self-attention = repeat for EVERY token, so they ALL update:")
+for i, n in enumerate(names):
+    wi = selfattn_softmax([M[i] @ M[j] for j in range(len(names))])
+    print(f"   {n:7} weights {wi.round(2)} -> new {(wi[:, None] * M).sum(0).round(3)}")
+print("\nA transformer stacks many such layers; THEN pool + normalize (above) -> sentence vector.")
+""")
+
+md(r"""
 ### E5 and IRPS — real sentence encoders
 
 The toy above is exactly how real ones work, with two additions:
@@ -228,26 +269,29 @@ md(r"""
 ## Step 4 · Inside a cross-encoder — how the "score" is actually produced
 
 The word "score" hides the whole trick, so let's open it up. A cross-encoder does **not** make
-two vectors and compare them. It makes **one** sequence and reads **one number** off a small
-head. Four moves:
+two vectors and compare them. It makes **one** sequence, runs the **self-attention from Step 2**
+over it, and reads **one number** off a small head. Four moves:
 
 ```
 (1) GLUE query + doc into ONE token sequence:
-      [CLS]  data  scientist  [SEP]  hiring  data  scientist
-      (CLS = a summary slot;  SEP = the query/doc boundary)
+      [CLS]  data  scientist  hiring  data  scientist
+      (CLS = a summary slot; a real model also inserts a [SEP] boundary token)
 
-(2) TRANSFORMER over the whole sequence: every token attends to every other —
-    including the QUERY tokens looking at the DOC tokens (the "interaction").
+(2) SELF-ATTENTION over the whole sequence (the SAME mechanism as Step 2):
+    EVERY token attends to EVERY token, so ALL tokens update -- including the
+    QUERY tokens attending to the DOC tokens. That cross-looking is the "interaction".
 
-(3) READ OUT the [CLS] vector: it has now absorbed a blend of query AND doc.
+(3) READ OUT one vector -- the [CLS] position (or a pool of all tokens):
+    it has now absorbed a blend of query AND doc.
 
 (4) A linear HEAD (learned weight w, bias b) turns that one vector into ONE number:
-      score = w . cls_vector + b
+      score = w . readout + b
 ```
 
-The key: there is **no reusable "doc vector."** The `[CLS]` output — and therefore the score —
-**depends on the query and doc together**. Change the doc → the `[CLS]` vector changes → the
-score changes. We fake the transformer with a one-step attention so you can watch it.
+The key: there is **no reusable "doc vector."** The readout — and therefore the score —
+**depends on query and doc together**. Change the doc → self-attention produces different token
+vectors → the readout changes → the score changes. Below we run the **full** Step-2
+self-attention (all tokens update), then read the `[CLS]` position.
 """)
 code(r"""
 xvocab = {
@@ -261,18 +305,21 @@ w_head = np.array([0.2, 1.0, -0.3, -0.2]); b_head = -0.1        # the learned sc
 
 def cross_score(query, doc, show=False):
     qtok, dtok = query.split(), doc.split()
-    seq_words = ["[CLS]"] + qtok + ["[SEP]"] + dtok             # (1) ONE glued sequence
-    cls = np.mean([xvocab[t] for t in qtok], axis=0)            # CLS starts as the query summary
-    tok_vecs = [cls] + [xvocab[t] for t in qtok] + [np.zeros(4)] + [xvocab[t] for t in dtok]
-    attn = xsoftmax(np.array([cls @ v for v in tok_vecs]))      # (2) CLS attends over query+doc
-    cls_out = sum(a*v for a, v in zip(attn, tok_vecs))          # (3) joint CLS representation
-    score = w_head @ cls_out + b_head                          # (4) linear head -> ONE number
+    seq_words = ["[CLS]"] + qtok + dtok                        # (1) ONE glued sequence ([SEP] omitted)
+    cls0 = np.mean([xvocab[t] for t in qtok], axis=0)          # [CLS] starts as the query summary
+    V = np.array([cls0] + [xvocab[t] for t in qtok] + [xvocab[t] for t in dtok])
+    new = np.zeros_like(V)                                     # (2) FULL self-attention: EVERY token
+    for i in range(len(V)):                                    #     attends to EVERY token -> all update
+        a = xsoftmax(V[i] @ V.T)
+        new[i] = (a[:, None] * V).sum(0)
+    readout = new[0]                                           # (3) read the [CLS] position
+    score = w_head @ readout + b_head                          # (4) linear head -> ONE number
     if show:
         print(f"  sequence: {seq_words}")
-        for word, a in zip(seq_words, attn):
-            print(f"     {word:11} attn={a:.3f} {'#'*int(a*40)}")
-        print(f"  [CLS] output (query+doc blended): {cls_out.round(3)}")
-        print(f"  score = w . cls + b = {score:.3f}\n")
+        for word, o in zip(seq_words, new):
+            print(f"     {word:11}-> {o.round(3)}")
+        print(f"  read [CLS] = {readout.round(3)}")
+        print(f"  score = w . [CLS] + b = {score:.3f}\n")
     return score
 
 print("QUERY = 'data scientist'\n")
@@ -280,8 +327,46 @@ print("DOC A = 'hiring data scientist' (has the query terms):")
 sA = cross_score("data scientist", "hiring data scientist", show=True)
 print("DOC B = 'remote sales role' (unrelated):")
 sB = cross_score("data scientist", "remote sales role", show=True)
-print(f"score(A)={sA:.3f} > score(B)={sB:.3f}: SAME query, but the doc changed the [CLS] -> different score.")
+print(f"score(A)={sA:.3f} > score(B)={sB:.3f}: EVERY token updated (not just [CLS]); the doc's")
+print("tokens reshaped the whole sequence, so the [CLS] readout -- and the score -- differ.")
 print("A dual encoder can't do this: its doc vector is built with no view of the query.")
+""")
+
+md(r"""
+### The same, fully by hand (2-D, so you can check every number)
+
+To see *exactly* where the score comes from, here it is with tiny **2-D** tokens —
+**dim0 = "remote-ness", dim1 = "data-ness"** — and a head `w=[1,0]` that just reads
+"is remote present?". Query = `"remote data"`. Full self-attention, every token printed.
+""")
+code(r"""
+tok2 = {"remote":np.array([1.,0.]), "data":np.array([0.,1.]),
+        "onsite":np.array([-1.,0.]), "analyst":np.array([0.,1.])}
+w2 = np.array([1.,0.]); b2 = 0.0                              # head reads dim0 = remote signal
+
+def cross_by_hand(query_words, doc_words):
+    seq  = ["[CLS]"] + query_words + doc_words
+    cls0 = np.mean([tok2[t] for t in query_words], axis=0)    # [CLS] starts as mean of query tokens
+    V = np.array([cls0] + [tok2[t] for t in query_words] + [tok2[t] for t in doc_words])
+    new = np.zeros_like(V)                                    # FULL self-attention: all tokens update
+    for i in range(len(V)):
+        logits = V[i] @ V.T                                   # similarity of token i to every token
+        a = np.exp(logits - logits.max()); a = a / a.sum()    # softmax -> attention weights
+        new[i] = (a[:, None] * V).sum(0)                      # new token = weighted blend
+    readout = new[0]; score = w2 @ readout + b2               # read [CLS], head -> ONE number
+    print(f"  query={query_words}  doc={doc_words}")
+    for word, o in zip(seq, new):
+        print(f"     {word:8}-> {o.round(3)}")
+    print(f"  read [CLS] = {readout.round(3)}   score = w.[CLS] + b = {score:.3f}\n")
+    return score
+
+print("DOC A = 'remote data analyst' (contains remote):")
+a = cross_by_hand(["remote","data"], ["remote","data","analyst"])
+print("DOC B = 'onsite data' (onsite = opposite of remote):")
+b = cross_by_hand(["remote","data"], ["onsite","data"])
+print(f"score(A)={a:.3f} > score(B)={b:.3f}")
+print("the doc's remote/onsite token flows through self-attention into EVERY token including")
+print("[CLS], shifting dim0, so the head reads a different number. No two vectors compared.")
 """)
 
 # ---------------------------------------------------------------- retrieve -> rerank
@@ -410,6 +495,28 @@ im = ax.imshow(S, cmap="viridis")
 for i in range(B): ax.add_patch(plt.Rectangle((i-0.5, i-0.5), 1, 1, fill=False, edgecolor="red", lw=2))
 ax.set_xlabel("candidate positive j"); ax.set_ylabel("query i")
 ax.set_title("diagonal = positives (red)\noff-diagonal = free negatives"); fig.colorbar(im, fraction=0.046); plt.show()
+""")
+
+md(r"""
+### From the matrix to the loss (real numbers)
+
+InfoNCE is **just cross-entropy on that matrix**. Take 3 pairs, divide by `τ`, softmax each
+**row**, and the loss is `-log(diagonal probability)`. Here is every number.
+""")
+code(r"""
+Qv = np.array([[0.9,0.1],[0.1,0.9],[0.8,0.6]], dtype=float)    # 3 query vectors
+Pv = np.array([[0.8,0.2],[0.2,0.8],[0.7,0.7]], dtype=float)    # 3 item vectors; pair i<->i are matches
+Qn = Qv/np.linalg.norm(Qv,axis=1,keepdims=True); Pn = Pv/np.linalg.norm(Pv,axis=1,keepdims=True)
+tau = 0.1
+S3 = Qn @ Pn.T
+print("S = queries . items^T :\n", S3.round(3))
+print(f"\nS / tau  (tau={tau}) :\n", (S3/tau).round(2))
+Z = S3/tau; Z = Z - Z.max(1, keepdims=True); P3 = np.exp(Z); P3 = P3/P3.sum(1, keepdims=True)
+print("\nrow softmax (prob each query puts on each item) :\n", P3.round(3))
+losses = [-np.log(P3[i, i]) for i in range(3)]
+print(f"\nper-query loss  -log(diagonal prob) = {np.round(losses,3)}")
+print(f"InfoNCE batch loss = mean = {np.mean(losses):.3f}   <- backprop minimizes THIS number")
+print("row 2 has the highest loss: item0 (~0.31) steals probability from the correct item2 -> a hard negative.")
 """)
 
 md(r"""
@@ -665,6 +772,48 @@ hist = finetune(rounds=3, epochs=8)
 plt.figure(figsize=(5,3)); plt.plot(range(len(hist)), hist, "o-", color=GREEN)
 plt.xticks(range(len(hist)), ["warm\nstart","+hard\nrd1","+hard\nrd2"]); plt.ylabel("recall@1")
 plt.title("fine-tuning + mining rounds reshape the space"); plt.show()
+""")
+
+# ---------------------------------------------------------------- held-out eval
+md(r"""
+## Step 15 · Evaluating on held-out data — recall@k and nDCG
+
+You never judge an encoder on the queries it trained on (it could just memorize). You keep a
+**held-out set**: labeled queries **set aside and never trained on**, used only to measure. E.g.
+10,000 labeled queries → **train on 9,000, hold out 1,000**; report metrics on the 1,000.
+
+Two metrics, worked on one query with graded relevance (`2`=great, `1`=ok, `0`=irrelevant):
+- **recall@k** — of all relevant items, how many landed in the top-k? ("did we *find* them?")
+- **nDCG@k** — reward relevant items ranked **early**, via a `1/log2(rank+1)` discount, then
+  normalize by the best-possible ordering. ("did we *order* them well?")
+""")
+code(r"""
+# one held-out query: the model's ranking + the TRUE relevance of each returned item
+ranked = ["d1", "d2", "d3", "d4", "d5"]
+rel    = {"d1": 0, "d2": 2, "d3": 0, "d4": 1, "d5": 0}     # ground-truth labels (held-out)
+rels   = [rel[x] for x in ranked]
+print("model ranking :", ranked)
+print("true relevance:", rels, " (2=great, 1=ok, 0=irrelevant)\n")
+
+# recall@k : relevant = rel>0 ; here d2,d4 are relevant -> 2 total
+total_rel = sum(1 for v in rel.values() if v > 0)
+for k in [1, 3, 5]:
+    found = sum(1 for x in ranked[:k] if rel[x] > 0)
+    print(f"  recall@{k} = {found}/{total_rel} = {found/total_rel:.2f}")
+
+# nDCG@k : DCG = sum rel/log2(rank+1) ; IDCG = DCG of the ideal order ; nDCG = DCG/IDCG
+def dcg(vals, k): return sum(r/np.log2(i+2) for i, r in enumerate(vals[:k]))
+k = 5
+DCG  = dcg(rels, k)
+IDCG = dcg(sorted(rel.values(), reverse=True), k)          # ideal order [2,1,0,0,0]
+print(f"\n  DCG@{k}  = 2/log2(3) + 1/log2(5) = {DCG:.3f}")
+print(f"  IDCG@{k} = ideal [2,1,0,0,0]      = {IDCG:.3f}")
+print(f"  nDCG@{k} = DCG/IDCG = {DCG/IDCG:.3f}   (1.0 = perfect ordering)")
+print("\nYou compute both PER held-out query, then AVERAGE across the whole held-out set.")
+
+# bar chart: our ranking's nDCG vs the ideal
+plt.figure(figsize=(4.4,3)); plt.bar(["our ranking","ideal"], [DCG/IDCG, 1.0], color=[BLUE, GREEN])
+plt.ylim(0,1.05); plt.ylabel(f"nDCG@{k}"); plt.title("nDCG = how close to the ideal ordering"); plt.show()
 """)
 
 # ------------------------------------------------------------------- recap
