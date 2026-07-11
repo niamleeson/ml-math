@@ -94,16 +94,16 @@ centroids = np.array([[0.0, 0.0], [10.0, 10.0]])   # deliberately bad start
 inertias = []
 for it in range(4):
     # --- assign: distance from every point to every centroid, pick the nearest ---
-    dists = np.linalg.norm(X[:, None, :] - centroids[None, :, :], axis=2)  # shape 10x2
-    assign = dists.argmin(axis=1)
-    inertia = float((dists[np.arange(len(X)), assign] ** 2).sum())
+    dists = np.linalg.norm(X[:, None, :] - centroids[None, :, :], axis=2)  # shape 10x2 (each point's distance to both centroids)
+    assign = dists.argmin(axis=1)                        # iter 0 -> [0 0 0 0 0 1 1 1 1 1]  (nearest centroid per point)
+    inertia = float((dists[np.arange(len(X)), assign] ** 2).sum())  # iter 0 -> 63.0, then 8.0, 8.0, 8.0
     inertias.append(inertia)
     log(f"iter {it}: assignments", assign.tolist())
     log(f"iter {it}: inertia (total squared distance)", round(inertia, 2))
     # --- update: move each centroid to the mean of its members ---
     for k in range(2):
         if (assign == k).any():
-            centroids[k] = X[assign == k].mean(axis=0)
+            centroids[k] = X[assign == k].mean(axis=0)   # after iter 0 -> [[1.4, 1.8], [8.4, 8.2]]  (mean of each cluster)
     log(f"iter {it}: new centroids", np.round(centroids, 2).tolist())
 
 assert inertias[-1] <= inertias[0]                                  # it got better
@@ -131,11 +131,11 @@ ks = range(2, 6)
 inertia_by_k, sil_by_k = {}, {}
 for k in ks:
     km = KMeans(n_clusters=k, n_init=10, random_state=0).fit(X)
-    inertia_by_k[k] = km.inertia_
-    sil_by_k[k] = silhouette_score(X, km.labels_)
+    inertia_by_k[k] = km.inertia_                            # falls with k: 8.00, 5.83, 3.67, 2.83
+    sil_by_k[k] = silhouette_score(X, km.labels_)            # peaks at k=2: 0.858, 0.547, 0.251, 0.175
     log(f"k={k}", f"inertia={km.inertia_:.2f}  silhouette={sil_by_k[k]:.3f}")
 
-best_k = max(sil_by_k, key=sil_by_k.get)
+best_k = max(sil_by_k, key=sil_by_k.get)                    # -> 2  (highest silhouette)
 log("best k by silhouette", best_k)
 assert best_k == 2
 

@@ -56,15 +56,15 @@ compare each prediction to the truth and drop it into one of four buckets: **TP*
 y_true = np.array([1, 1, 1, 1, 0, 0, 0, 0])                  # 8 examples: first 4 are truly positive, last 4 truly negative.
 scores = np.array([0.90, 0.80, 0.60, 0.40, 0.70, 0.35, 0.20, 0.10])  # the model's confidence for each example.
 threshold = 0.5                                              # predict "positive" when score >= 0.5.
-y_pred = (scores >= threshold).astype(int)                   # turn scores into 0/1 predictions.
+y_pred = (scores >= threshold).astype(int)                   # -> [1 1 1 0 1 0 0 0]  (example 4 @0.40 becomes a MISS, example 5 @0.70 a false alarm)
 log("y_true", y_true.tolist())
 log("scores", scores.tolist())
 log("y_pred @ 0.5", y_pred.tolist())                          # note example 4 (score 0.40) is now a MISS, and example 5 (0.70) a false alarm.
 
-TP = int(np.sum((y_true == 1) & (y_pred == 1)))              # truly positive AND predicted positive.
-FP = int(np.sum((y_true == 0) & (y_pred == 1)))              # truly negative BUT predicted positive (false alarm).
-FN = int(np.sum((y_true == 1) & (y_pred == 0)))              # truly positive BUT predicted negative (a miss).
-TN = int(np.sum((y_true == 0) & (y_pred == 0)))              # truly negative AND predicted negative.
+TP = int(np.sum((y_true == 1) & (y_pred == 1)))              # -> 3  (truly positive AND predicted positive)
+FP = int(np.sum((y_true == 0) & (y_pred == 1)))              # -> 1  (truly negative BUT predicted positive = false alarm)
+FN = int(np.sum((y_true == 1) & (y_pred == 0)))              # -> 1  (truly positive BUT predicted negative = a miss)
+TN = int(np.sum((y_true == 0) & (y_pred == 0)))              # -> 3  (truly negative AND predicted negative)
 log("TP (hit)", TP); log("FP (false alarm)", FP); log("FN (miss)", FN); log("TN (correct reject)", TN)
 assert (TP, FP, FN, TN) == (3, 1, 1, 3)                       # pin the counts so the rest of the lesson is trustworthy.
 
@@ -85,13 +85,13 @@ Every classification metric is just a fraction of the four counts above.
 *truly positive*, how many did I catch?" **F1** blends the two (their harmonic mean).
 
 ```python
-precision = TP / (TP + FP)                                   # of everything predicted positive, the fraction truly positive.
+precision = TP / (TP + FP)                                   # -> 0.75  (= 3 / 4; of everything predicted positive, the fraction truly positive)
 log("precision = TP / (TP + FP)", f"{TP} / {TP + FP} = {precision}")
-recall = TP / (TP + FN)                                      # of everything truly positive, the fraction we caught.
+recall = TP / (TP + FN)                                      # -> 0.75  (= 3 / 4; of everything truly positive, the fraction we caught)
 log("recall = TP / (TP + FN)", f"{TP} / {TP + FN} = {recall}")
-f1 = 2 * precision * recall / (precision + recall)           # harmonic mean: punishes a big gap between P and R.
+f1 = 2 * precision * recall / (precision + recall)           # -> 0.75  (harmonic mean of P and R)
 log("F1 = 2*P*R/(P+R)", round(f1, 4))
-accuracy = (TP + TN) / len(y_true)                           # fraction of ALL examples classified correctly.
+accuracy = (TP + TN) / len(y_true)                           # -> 0.75  (= 6 / 8; fraction of ALL examples classified correctly)
 log("accuracy = (TP + TN) / N", accuracy)
 assert abs(precision - 0.75) < 1e-9 and abs(recall - 0.75) < 1e-9
 ```
@@ -137,8 +137,8 @@ useless. **Recall** exposes it.
 ```python
 y_true_imb = np.array([1] + [0] * 19)                       # 1 positive, 19 negatives (5% positive).
 pred_all_negative = np.zeros(20, dtype=int)                 # the lazy model: predict "negative" for everyone.
-accuracy_imb = np.mean(pred_all_negative == y_true_imb)     # right on all 19 negatives, wrong on the 1 positive.
-recall_imb = 0.0                                            # it caught 0 of the 1 true positives.
+accuracy_imb = np.mean(pred_all_negative == y_true_imb)     # -> 0.95  (right on all 19 negatives, wrong on the 1 positive)
+recall_imb = 0.0                                            # -> 0.00  (caught 0 of the 1 true positives)
 log("imbalanced accuracy (always-negative)", accuracy_imb)  # 0.95 — looks excellent!
 log("imbalanced recall (always-negative)", recall_imb)      # 0.00 — catches nothing.
 assert accuracy_imb == 0.95 and recall_imb == 0.0
