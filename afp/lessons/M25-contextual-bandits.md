@@ -20,8 +20,6 @@ Two sub-lessons:
 - **M25.1 Explore/exploit & bandit algorithms** — ε-greedy, UCB, Thompson, regret.
 - **M25.2 Contextual bandits & LinUCB** — request-aware variant/directive selection.
 
-<p class="cur-colab"><a class="cur-colab-btn" href="https://colab.research.google.com/github/niamleeson/ml-math/blob/main/afp/notebooks/M25-contextual-bandits.ipynb" target="_blank" rel="noopener">▶ Open the runnable toy-example notebook (epsilon-greedy learning the best arm + the no-exploration break case) in Google Colab</a></p>
-
 ---
 
 ## M25.1 · Explore/exploit & bandit algorithms
