@@ -63,6 +63,938 @@ BLUE, GREEN, RED, PURPLE, GOLD, GRAY = "#4C72B0", "#55A868", "#C44E52", "#8172B3
 print("ready")
 """)
 
+md("---\n# Part 0 · ✍️ Toy Examples — trace each mechanic by hand")
+
+md(r"""
+Before the full pipeline, here is **one tiny, hand-traceable toy example for every computing
+mechanic** in this lesson — cold-start noise, priors, confidence blending, regime gates, budget
+decisions, transfer features, frozen old models, distillation targets, temperature, evaluation,
+latency tradeoffs, and bias copying. Each toy uses a handful of small numbers, prints every
+intermediate value, includes the concrete `# ->` result in comments, asserts the key fact, and draws
+exactly one picture. The at-scale versions follow in Parts A–C.
+""")
+
+md(r"""
+## ✍️ Toy 1 · tiny cold-start samples make fake spikes
+
+Cold-start starts with a warning: **a few impressions are noisy**. Here 8 brand-new ads each have
+only 20 impressions. Computing raw CTR by hand shows that a couple of lucky clicks can make an ad
+look "hot" even before there is enough evidence.
+""")
+code(r"""
+toy01_rng = np.random.default_rng(0)                              # -> deterministic seed 0
+toy01_clicks = np.array([0, 1, 2, 0, 1, 0, 0, 3])                 # -> 8 tiny click counts
+toy01_imps = np.full(8, 20)                                      # -> [20,20,20,20,20,20,20,20]
+toy01_raw_ctr = toy01_clicks / toy01_imps                        # -> [0,.05,.10,0,.05,0,0,.15]
+toy01_hot = toy01_raw_ctr >= 0.10                                # -> [False,False,True,False,False,False,False,True]
+toy01_hot_share = toy01_hot.mean()                               # -> 0.25
+print("clicks:", toy01_clicks.tolist())
+print("impressions:", toy01_imps.tolist())
+print("raw CTR:", np.round(toy01_raw_ctr, 2).tolist())
+print("looks >=10% CTR:", toy01_hot.tolist())
+print("share that look hot:", toy01_hot_share)
+assert toy01_hot_share == 0.25
+
+plt.figure(figsize=(5.5, 3.2))
+plt.bar(np.arange(8), toy01_raw_ctr, color="tomato")
+plt.axhline(0.10, color="black", linestyle="--", label="10% looks hot")
+plt.xlabel("new ad")
+plt.ylabel("raw CTR")
+plt.title("with only 20 impressions, raw CTR spikes are easy")
+plt.legend()
+plt.show()
+""")
+md("▶ What you'll see: two of 8 tiny samples look like 10–15% CTR, so raw early rates can "
+   "overreact before the ad has earned trust.")
+
+md(r"""
+## ✍️ Toy 2 · metadata prior for a brand-new item
+
+A prior uses **similar old items** when the new item has no history. Here the only metadata feature
+is a category ID. We aggregate old clicks/impressions by category, then assign a prior to a new item
+from its category.
+""")
+code(r"""
+toy02_rng = np.random.default_rng(0)                              # -> deterministic seed 0
+toy02_cat = np.array([0, 0, 1, 1, 2, 2])                          # -> metadata category per old item
+toy02_clicks = np.array([1, 2, 1, 3, 0, 1])                       # -> old clicks
+toy02_imps = np.array([20, 20, 20, 20, 20, 20])                   # -> old impressions
+toy02_cats = np.array([0, 1, 2])                                  # -> all category IDs
+toy02_prior0 = toy02_clicks[toy02_cat == 0].sum() / toy02_imps[toy02_cat == 0].sum()   # -> 0.075
+toy02_prior1 = toy02_clicks[toy02_cat == 1].sum() / toy02_imps[toy02_cat == 1].sum()   # -> 0.100
+toy02_prior2 = toy02_clicks[toy02_cat == 2].sum() / toy02_imps[toy02_cat == 2].sum()   # -> 0.025
+toy02_priors = np.array([toy02_prior0, toy02_prior1, toy02_prior2])                    # -> [.075,.100,.025]
+toy02_global = toy02_clicks.sum() / toy02_imps.sum()                  # -> 0.0667
+toy02_new_cat = 1                                                      # -> new item metadata says category 1
+toy02_new_prior = toy02_priors[toy02_new_cat]                          # -> 0.100
+print("old categories:", toy02_cat.tolist())
+print("old clicks:", toy02_clicks.tolist())
+print("old impressions:", toy02_imps.tolist())
+print("category priors:", np.round(toy02_priors, 3).tolist())
+print("global prior:", round(float(toy02_global), 3))
+print("new item's category:", toy02_new_cat)
+print("new item's starting prior:", round(float(toy02_new_prior), 3))
+assert np.isclose(toy02_new_prior, 0.10)
+
+plt.figure(figsize=(5.2, 3.2))
+plt.bar(["cat 0", "cat 1", "cat 2"], toy02_priors, color="steelblue")
+plt.axhline(toy02_global, color="black", linestyle="--", label="global prior")
+plt.ylabel("prior CTR")
+plt.title("metadata chooses the category prior for a new item")
+plt.legend()
+plt.show()
+""")
+md("▶ What you'll see: category 1 has prior 0.10, so a brand-new category-1 item starts there "
+   "instead of trusting its own nonexistent history.")
+
+md(r"""
+## ✍️ Toy 3 · confidence dial `c_n = n/(n+k)`
+
+The confidence dial is the **decision rule** for how much evidence to trust. With small `n`, `c_n`
+is near 0; as impressions grow, it moves toward 1. The constant `k` controls how cautious the
+handoff is.
+""")
+code(r"""
+toy03_rng = np.random.default_rng(0)                              # -> deterministic seed 0
+toy03_n = np.array([0, 20, 50, 100, 500, 1000])                   # -> evidence sizes
+toy03_k = 1000                                                    # -> cautious handoff constant
+toy03_den = toy03_n + toy03_k                                     # -> [1000,1020,1050,1100,1500,2000]
+toy03_c = toy03_n / toy03_den                                     # -> [0,.0196,.0476,.0909,.3333,.5]
+print("n:", toy03_n.tolist())
+print("n + k:", toy03_den.tolist())
+print("c_n:", np.round(toy03_c, 4).tolist())
+print("at n=20, trust own data only:", round(float(toy03_c[1]), 4))
+print("at n=1000, trust own data:", round(float(toy03_c[-1]), 4))
+assert np.isclose(toy03_c[-1], 0.5)
+
+plt.figure(figsize=(5.5, 3.2))
+plt.plot(toy03_n, toy03_c, "o-", color="seagreen")
+plt.xlabel("impressions n")
+plt.ylabel("confidence c_n")
+plt.title("confidence grows slowly when k=1000")
+plt.show()
+""")
+md("▶ What you'll see: 20 impressions produce `c_n≈0.02`, so early evidence barely moves the "
+   "score away from the prior.")
+
+md(r"""
+## ✍️ Toy 4 · blend prior with learned rate
+
+The score is the weighted average `p = (1-c)·prior + c·learned`. This toy applies the formula to 6
+ads, showing exactly how a high but tiny learned rate gets pulled back toward the prior.
+""")
+code(r"""
+toy04_rng = np.random.default_rng(0)                              # -> deterministic seed 0
+toy04_prior = 0.01                                                # -> safe category prior
+toy04_learned = np.array([0.10, 0.05, 0.00, 0.02, 0.12, 0.08])     # -> raw/learned CTRs
+toy04_n = np.array([20, 20, 20, 100, 500, 1000])                  # -> evidence sizes
+toy04_k = 1000                                                    # -> cautious handoff constant
+toy04_c = toy04_n / (toy04_n + toy04_k)                           # -> [.0196,.0196,.0196,.0909,.3333,.5]
+toy04_prior_part = (1 - toy04_c) * toy04_prior                    # -> prior contribution
+toy04_learned_part = toy04_c * toy04_learned                      # -> learned contribution
+toy04_blend = toy04_prior_part + toy04_learned_part               # -> [.0118,.0108,.0098,.0109,.0467,.045]
+print("prior:", toy04_prior)
+print("learned:", toy04_learned.tolist())
+print("n:", toy04_n.tolist())
+print("c:", np.round(toy04_c, 4).tolist())
+print("prior contribution:", np.round(toy04_prior_part, 4).tolist())
+print("learned contribution:", np.round(toy04_learned_part, 4).tolist())
+print("blended CTR:", np.round(toy04_blend, 4).tolist())
+assert np.isclose(toy04_blend[0], 0.011764705882352941)
+
+plt.figure(figsize=(5.8, 3.2))
+toy04_x = np.arange(6)
+plt.bar(toy04_x - 0.18, toy04_learned, 0.36, color="tomato", label="learned/raw")
+plt.bar(toy04_x + 0.18, toy04_blend, 0.36, color="seagreen", label="blend")
+plt.axhline(toy04_prior, color="black", linestyle="--", label="prior")
+plt.xlabel("ad")
+plt.ylabel("CTR")
+plt.title("blend pulls low-evidence rates toward the prior")
+plt.legend()
+plt.show()
+""")
+md("▶ What you'll see: the 10% rate at n=20 becomes about 1.18%, while high-evidence rows move "
+   "farther away from the prior.")
+
+md(r"""
+## ✍️ Toy 5 · running cold-to-warm handoff
+
+For one item, recompute the cumulative raw rate, confidence, and blend after every impression. This
+is the moving handoff: raw data is jumpy, but the blended estimate changes smoothly.
+""")
+code(r"""
+toy05_rng = np.random.default_rng(0)                              # -> deterministic seed 0
+toy05_clicks = np.array([1, 0, 0, 1, 0, 0, 0, 1, 0, 0])            # -> 10 impressions
+toy05_imps = np.arange(1, 11)                                     # -> [1,2,3,4,5,6,7,8,9,10]
+toy05_cum_clicks = np.cumsum(toy05_clicks)                        # -> [1,1,1,2,2,2,2,3,3,3]
+toy05_raw = toy05_cum_clicks / toy05_imps                         # -> running CTR
+toy05_prior = 0.10                                                # -> starting prior
+toy05_k = 4                                                       # -> tiny k for a hand-sized demo
+toy05_c = toy05_imps / (toy05_imps + toy05_k)                     # -> [.2,.333,.429,.5,.556,.6,.636,.667,.692,.714]
+toy05_blend = (1 - toy05_c) * toy05_prior + toy05_c * toy05_raw   # -> [.28,.233,.2,.3,.267,.24,.218,.283,.262,.243]
+print("click stream:", toy05_clicks.tolist())
+print("cumulative clicks:", toy05_cum_clicks.tolist())
+print("raw running CTR:", np.round(toy05_raw, 3).tolist())
+print("confidence:", np.round(toy05_c, 3).tolist())
+print("blend:", np.round(toy05_blend, 3).tolist())
+assert np.isclose(toy05_blend[-1], 0.24285714285714285)
+
+plt.figure(figsize=(6, 3.2))
+plt.plot(toy05_imps, toy05_raw, "o-", color="tomato", label="raw")
+plt.plot(toy05_imps, toy05_blend, "o-", color="seagreen", label="blend")
+plt.axhline(toy05_prior, color="black", linestyle="--", label="prior")
+plt.xlabel("impressions seen")
+plt.ylabel("CTR estimate")
+plt.title("running handoff: blend smooths the jumpy raw rate")
+plt.legend()
+plt.show()
+""")
+md("▶ What you'll see: the raw CTR starts at 100%, but the blend starts much closer to the prior "
+   "and moves gradually as evidence accumulates.")
+
+md(r"""
+## ✍️ Toy 6 · regime gates: cold, blended, warm
+
+The handoff should be logged with a regime label. A simple gate says **warm** only after enough
+impressions and clicks; otherwise the row is cold or blended.
+""")
+code(r"""
+toy06_rng = np.random.default_rng(0)                              # -> deterministic seed 0
+toy06_imps = np.array([20, 80, 300, 900, 1000, 1200])              # -> candidate histories
+toy06_clicks = np.array([1, 2, 8, 19, 18, 25])                    # -> click counts
+toy06_enough_imps = toy06_imps >= 1000                            # -> [False,False,False,False,True,True]
+toy06_enough_clicks = toy06_clicks >= 20                          # -> [False,False,False,False,False,True]
+toy06_is_warm = toy06_enough_imps & toy06_enough_clicks           # -> [False,False,False,False,False,True]
+toy06_is_blended = (toy06_imps >= 50) & (~toy06_is_warm)          # -> [False,True,True,True,True,False]
+toy06_regime = np.where(toy06_is_warm, "warm", np.where(toy06_is_blended, "blended", "cold"))
+toy06_first_warm = int(np.where(toy06_is_warm)[0][0])             # -> 5
+print("impressions:", toy06_imps.tolist())
+print("clicks:", toy06_clicks.tolist())
+print("enough impressions:", toy06_enough_imps.tolist())
+print("enough clicks:", toy06_enough_clicks.tolist())
+print("warm mask:", toy06_is_warm.tolist())
+print("regimes:", toy06_regime.tolist())
+print("first warm row index:", toy06_first_warm)
+assert toy06_regime.tolist() == ["cold", "blended", "blended", "blended", "blended", "warm"]
+
+plt.figure(figsize=(5.8, 3.4))
+toy06_color = np.where(toy06_is_warm, "seagreen", np.where(toy06_is_blended, "orange", "tomato"))
+plt.scatter(toy06_imps, toy06_clicks, s=110, c=toy06_color)
+plt.axvline(1000, color="black", linestyle="--", label="1000 imps")
+plt.axhline(20, color="gray", linestyle="--", label="20 clicks")
+plt.xlabel("impressions")
+plt.ylabel("clicks")
+plt.title("warm only after both gate thresholds pass")
+plt.legend()
+plt.show()
+""")
+md("▶ What you'll see: only the last row passes both gates, so the system can log exactly where "
+   "the cold→warm handoff happened.")
+
+md(r"""
+## ✍️ Toy 7 · budget uses blended CTR, not raw spikes
+
+Pacing often turns CTR into a value score. If it uses raw CTR, a tiny lucky spike wins. If it uses
+the blend, the proven ad with real evidence wins.
+""")
+code(r"""
+toy07_rng = np.random.default_rng(0)                              # -> deterministic seed 0
+toy07_clicks = np.array([3, 2, 0, 25, 4, 1])                      # -> clicks for 6 ads
+toy07_imps = np.array([20, 100, 20, 1500, 80, 20])                # -> impressions
+toy07_bid = np.ones(6)                                            # -> same bid for hand tracing
+toy07_prior = 0.01                                                # -> safe prior CTR
+toy07_k = 1000                                                    # -> cautious handoff
+toy07_raw = toy07_clicks / toy07_imps                             # -> [.15,.02,0,.0167,.05,.05]
+toy07_c = toy07_imps / (toy07_imps + toy07_k)                     # -> [.0196,.0909,.0196,.6,.0741,.0196]
+toy07_blend = (1 - toy07_c) * toy07_prior + toy07_c * toy07_raw   # -> [.0127,.0109,.0098,.014,.013,.0108]
+toy07_raw_score = toy07_raw * toy07_bid                           # -> raw value scores
+toy07_blend_score = toy07_blend * toy07_bid                       # -> blended value scores
+toy07_raw_winner = int(np.argmax(toy07_raw_score))                # -> 0
+toy07_blend_winner = int(np.argmax(toy07_blend_score))            # -> 3
+print("clicks:", toy07_clicks.tolist())
+print("impressions:", toy07_imps.tolist())
+print("raw CTR:", np.round(toy07_raw, 4).tolist())
+print("confidence:", np.round(toy07_c, 4).tolist())
+print("blended CTR:", np.round(toy07_blend, 4).tolist())
+print("raw-score winner:", toy07_raw_winner)
+print("blend-score winner:", toy07_blend_winner)
+assert toy07_raw_winner == 0 and toy07_blend_winner == 3
+
+plt.figure(figsize=(6, 3.2))
+toy07_x = np.arange(6)
+plt.bar(toy07_x - 0.18, toy07_raw_score, 0.36, color="tomato", label="raw")
+plt.bar(toy07_x + 0.18, toy07_blend_score, 0.36, color="seagreen", label="blended")
+plt.xlabel("ad")
+plt.ylabel("CTR × bid")
+plt.title("budget decision flips from lucky spike to proven ad")
+plt.legend()
+plt.show()
+""")
+md("▶ What you'll see: raw ranking picks ad 0 (3/20), while blended ranking picks ad 3 "
+   "(25/1500) because it has enough evidence.")
+
+md(r"""
+## ✍️ Toy 8 · old model squashes shared features into one probability
+
+Transfer begins with an old model that already knows the shared features. A linear model computes
+`dot(features, weights) + bias`, then a sigmoid turns that logit into one probability.
+""")
+code(r"""
+toy08_rng = np.random.default_rng(0)                              # -> deterministic seed 0
+toy08_X = np.array([[1, 0, 1], [0, 1, 1], [1, 1, 0], [2, 0, 1], [0, 2, 1], [1, 0, 0]], float)
+toy08_w = np.array([0.8, -0.4, 0.6])                              # -> old shared-feature weights
+toy08_b = -0.2                                                    # -> old model bias
+toy08_dot = toy08_X @ toy08_w                                     # -> [1.4,.2,.4,2.2,-.2,.8]
+toy08_logit = toy08_dot + toy08_b                                 # -> [1.2,0,.2,2,-.4,.6]
+toy08_prob = 1 / (1 + np.exp(-toy08_logit))                       # -> [.769,.5,.55,.881,.401,.646]
+print("shared feature table:\n", toy08_X)
+print("old weights:", toy08_w.tolist())
+print("old bias:", toy08_b)
+print("dot products:", np.round(toy08_dot, 3).tolist())
+print("logits:", np.round(toy08_logit, 3).tolist())
+print("old-model probabilities:", np.round(toy08_prob, 3).tolist())
+assert np.isclose(toy08_prob[0], 0.7685247834990175)
+
+plt.figure(figsize=(5.5, 3.2))
+plt.bar(np.arange(6), toy08_prob, color="slateblue")
+plt.xlabel("impression")
+plt.ylabel("old-model probability")
+plt.title("3 shared features become 1 old-model score")
+plt.show()
+""")
+md("▶ What you'll see: every 3-number row becomes one logit and one probability — the old model's "
+   "compressed opinion.")
+
+md(r"""
+## ✍️ Toy 9 · old model is blind to new features
+
+If two impressions have the same shared features, the old model gives the same score even when new
+surface features differ. That is why transfer must add new columns instead of serving the old model
+as-is.
+""")
+code(r"""
+toy09_rng = np.random.default_rng(0)                              # -> deterministic seed 0
+toy09_shared = np.array([[1, 0, 1], [1, 0, 1], [0, 1, 1], [0, 1, 1], [1, 1, 0], [1, 1, 0]], float)
+toy09_new = np.array([[0, 0], [1, 0], [0, 0], [0, 1], [0, 0], [1, 1]], float)
+toy09_w = np.array([0.8, -0.4, 0.6])                              # -> old shared-feature weights
+toy09_b = -0.2                                                    # -> old model bias
+toy09_logit = toy09_shared @ toy09_w + toy09_b                    # -> [1.2,1.2,0,0,.2,.2]
+toy09_prob = 1 / (1 + np.exp(-toy09_logit))                       # -> [.769,.769,.5,.5,.55,.55]
+toy09_pair_same = np.array([toy09_prob[0] == toy09_prob[1],
+                            toy09_prob[2] == toy09_prob[3],
+                            toy09_prob[4] == toy09_prob[5]])      # -> [True,True,True]
+print("shared features:\n", toy09_shared)
+print("new features [is_video, is_weekend]:\n", toy09_new)
+print("old logits:", np.round(toy09_logit, 3).tolist())
+print("old probabilities:", np.round(toy09_prob, 3).tolist())
+print("same score within same-shared pairs:", toy09_pair_same.tolist())
+assert toy09_pair_same.all()
+
+plt.figure(figsize=(5.6, 3.2))
+plt.scatter(toy09_new[:, 0], toy09_prob, s=120, c=toy09_new[:, 1], cmap="coolwarm")
+plt.xlabel("is_video (new feature)")
+plt.ylabel("old-model probability")
+plt.title("old score does not change when only new features change")
+plt.show()
+""")
+md("▶ What you'll see: paired rows with different new features get identical old-model scores, "
+   "proving the old model has no slot for the new signal.")
+
+md(r"""
+## ✍️ Toy 10 · adding features means gluing columns
+
+The new model input is just a table: `[old_pred | is_video | is_weekend]`. `column_stack` makes the
+three-column table that the transfer model can train on.
+""")
+code(r"""
+toy10_rng = np.random.default_rng(0)                              # -> deterministic seed 0
+toy10_old_pred = np.array([0.73, 0.45, 0.62, 0.81, 0.33, 0.58])   # -> old model's one-column opinion
+toy10_new_feats = np.array([[1, 0], [0, 0], [1, 1], [0, 1], [1, 0], [0, 1]], float)
+toy10_old_col = toy10_old_pred.reshape(-1, 1)                    # -> shape (6,1)
+toy10_glued = np.column_stack([toy10_old_col, toy10_new_feats])   # -> shape (6,3)
+print("old_pred column shape:", toy10_old_col.shape)
+print("new feature columns shape:", toy10_new_feats.shape)
+print("glued table shape:", toy10_glued.shape)
+print("glued table [old_pred, is_video, is_weekend]:\n", toy10_glued)
+assert toy10_glued.shape == (6, 3)
+
+plt.figure(figsize=(5, 3.4))
+plt.imshow(toy10_glued, aspect="auto", cmap="viridis")
+plt.colorbar(label="value")
+plt.xticks([0, 1, 2], ["old_pred", "video", "weekend"])
+plt.yticks(np.arange(6), [f"row {i}" for i in range(6)])
+plt.title("feature addition = side-by-side columns")
+plt.show()
+""")
+md("▶ What you'll see: a `(6,1)` old-score column and `(6,2)` new-feature table become one "
+   "`(6,3)` transfer input.")
+
+md(r"""
+## ✍️ Toy 11 · one gradient step learns one weight per column
+
+A logistic head learns **one weight per glued column**. Starting from zeros, compute probabilities,
+errors, gradients, and one update by hand.
+""")
+code(r"""
+toy11_rng = np.random.default_rng(0)                              # -> deterministic seed 0
+toy11_X = np.array([[0.8, 1, 0], [0.7, 0, 0], [0.3, 0, 1], [0.6, 1, 0], [0.2, 0, 1], [0.4, 0, 0]], float)
+toy11_y = np.array([1, 1, 0, 1, 0, 0], float)                     # -> labels
+toy11_w = np.array([0.0, 0.0, 0.0])                               # -> start with 3 zero weights
+toy11_b = 0.0                                                     # -> zero bias
+toy11_logit = toy11_X @ toy11_w + toy11_b                         # -> [0,0,0,0,0,0]
+toy11_prob = 1 / (1 + np.exp(-toy11_logit))                       # -> [.5,.5,.5,.5,.5,.5]
+toy11_error = toy11_prob - toy11_y                                # -> [-.5,-.5,.5,-.5,.5,.5]
+toy11_grad_w = toy11_X.T @ toy11_error / len(toy11_y)             # -> [-.1,-.1667,.1667]
+toy11_grad_b = toy11_error.mean()                                 # -> 0
+toy11_lr = 1.0                                                    # -> one simple learning-rate step
+toy11_w_after = toy11_w - toy11_lr * toy11_grad_w                 # -> [.1,.1667,-.1667]
+toy11_b_after = toy11_b - toy11_lr * toy11_grad_b                 # -> 0
+print("X [old_pred, video, weekend]:\n", toy11_X)
+print("labels:", toy11_y.tolist())
+print("initial logits:", toy11_logit.tolist())
+print("initial probabilities:", toy11_prob.tolist())
+print("errors prob-label:", toy11_error.tolist())
+print("weight gradient:", np.round(toy11_grad_w, 4).tolist())
+print("bias gradient:", round(float(toy11_grad_b), 4))
+print("updated weights:", np.round(toy11_w_after, 4).tolist())
+print("updated bias:", round(float(toy11_b_after), 4))
+assert toy11_w_after[1] > 0 and toy11_w_after[2] < 0
+
+plt.figure(figsize=(5.4, 3.2))
+plt.bar(["old_pred", "video", "weekend"], toy11_w_after, color=["slateblue", "seagreen", "tomato"])
+plt.axhline(0, color="black", linewidth=0.8)
+plt.ylabel("weight after one update")
+plt.title("one learned weight per glued column")
+plt.show()
+""")
+md("▶ What you'll see: the video weight moves positive, the weekend weight moves negative, and "
+   "the old-pred column gets its own learned weight too.")
+
+md(r"""
+## ✍️ Toy 12 · transfer inference end to end
+
+Inference chains the old model and the new head: shared features → old probability → glue with new
+features → weighted sum → sigmoid. This toy traces all 6 rows with small numbers.
+""")
+code(r"""
+toy12_rng = np.random.default_rng(0)                              # -> deterministic seed 0
+toy12_shared = np.array([[1, 0, 2], [0, 1, 1], [2, 0, 1], [1, 1, 0], [0, 2, 1], [1, 0, 0]], float)
+toy12_old_w = np.array([0.7, -0.2, 0.5])                          # -> old shared weights
+toy12_old_b = -0.1                                                # -> old bias
+toy12_old_dot = toy12_shared @ toy12_old_w                        # -> [1.7,.3,1.9,.5,.1,.7]
+toy12_old_logit = toy12_old_dot + toy12_old_b                     # -> [1.6,.2,1.8,.4,0,.6]
+toy12_old_pred = 1 / (1 + np.exp(-toy12_old_logit))               # -> [.832,.55,.858,.599,.5,.646]
+toy12_new = np.array([[1, 0], [0, 1], [1, 1], [0, 0], [1, 0], [0, 1]], float)
+toy12_glued = np.column_stack([toy12_old_pred, toy12_new])        # -> 6 rows x 3 columns
+toy12_head_w = np.array([1.5, 0.6, -0.4])                         # -> new-head weights
+toy12_head_b = -0.8                                               # -> new-head bias
+toy12_terms = toy12_glued * toy12_head_w                          # -> per-feature contributions
+toy12_score = toy12_terms.sum(axis=1) + toy12_head_b              # -> [1.048,-.375,.687,.098,.55,-.232]
+toy12_prob = 1 / (1 + np.exp(-toy12_score))                       # -> [.74,.407,.665,.524,.634,.442]
+print("shared features:\n", toy12_shared)
+print("old dot:", np.round(toy12_old_dot, 3).tolist())
+print("old logit:", np.round(toy12_old_logit, 3).tolist())
+print("old probability:", np.round(toy12_old_pred, 3).tolist())
+print("new features:\n", toy12_new)
+print("glued [old_pred, video, weekend]:\n", np.round(toy12_glued, 3))
+print("head contribution terms:\n", np.round(toy12_terms, 3))
+print("final score:", np.round(toy12_score, 3).tolist())
+print("final probability:", np.round(toy12_prob, 3).tolist())
+assert np.isclose(toy12_prob[0], 0.7403959601228155)
+
+plt.figure(figsize=(5.8, 3.2))
+plt.plot(np.arange(6), toy12_old_pred, "o-", color="gray", label="old probability")
+plt.plot(np.arange(6), toy12_prob, "o-", color="seagreen", label="transfer probability")
+plt.xlabel("impression")
+plt.ylabel("probability")
+plt.title("new head adjusts the old model with new features")
+plt.legend()
+plt.show()
+""")
+md("▶ What you'll see: the transfer probability follows the old score but shifts up or down when "
+   "`is_video` or `is_weekend` contributes.")
+
+md(r"""
+## ✍️ Toy 13 · evaluate a cold slice with AUC by hand
+
+To compare scratch, old-only, and transfer on a cold slice, AUC counts positive-negative pairs:
+what fraction put the positive above the negative?
+""")
+code(r"""
+toy13_rng = np.random.default_rng(0)                              # -> deterministic seed 0
+toy13_y = np.array([1, 1, 1, 0, 0, 0])                            # -> 3 positives, 3 negatives
+toy13_scratch = np.array([0.70, 0.30, 0.45, 0.60, 0.20, 0.40])    # -> scratch scores
+toy13_old = np.array([0.60, 0.55, 0.40, 0.50, 0.45, 0.35])        # -> old-only scores
+toy13_transfer = np.array([0.80, 0.70, 0.65, 0.40, 0.35, 0.30])   # -> transfer scores
+toy13_pos_transfer = toy13_transfer[toy13_y == 1]                 # -> [.8,.7,.65]
+toy13_neg_transfer = toy13_transfer[toy13_y == 0]                 # -> [.4,.35,.3]
+toy13_pair_transfer = (toy13_pos_transfer[:, None] > toy13_neg_transfer[None, :]).astype(float)
+toy13_auc_transfer = toy13_pair_transfer.mean()                  # -> 1.0
+toy13_auc_scratch = ((toy13_scratch[toy13_y == 1, None] > toy13_scratch[toy13_y == 0][None, :]).astype(float)).mean()
+toy13_auc_old = ((toy13_old[toy13_y == 1, None] > toy13_old[toy13_y == 0][None, :]).astype(float)).mean()
+toy13_aucs = np.array([toy13_auc_scratch, toy13_auc_old, toy13_auc_transfer])   # -> [.667,.778,1.0]
+print("labels:", toy13_y.tolist())
+print("scratch scores:", toy13_scratch.tolist())
+print("old-only scores:", toy13_old.tolist())
+print("transfer scores:", toy13_transfer.tolist())
+print("transfer positive scores:", toy13_pos_transfer.tolist())
+print("transfer negative scores:", toy13_neg_transfer.tolist())
+print("transfer pair wins:\n", toy13_pair_transfer)
+print("AUCs [scratch, old-only, transfer]:", np.round(toy13_aucs, 3).tolist())
+assert toy13_auc_transfer == 1.0 and toy13_auc_transfer > toy13_auc_old > toy13_auc_scratch
+
+plt.figure(figsize=(5.4, 3.2))
+plt.bar(["scratch", "old-only", "transfer"], toy13_aucs, color=["tomato", "gray", "seagreen"])
+plt.ylim(0, 1.05)
+plt.ylabel("AUC on cold slice")
+plt.title("transfer ranks the cold slice best")
+plt.show()
+""")
+md("▶ What you'll see: transfer wins all 9 positive-negative pairs, while scratch and old-only "
+   "miss some pairs.")
+
+md(r"""
+## ✍️ Toy 14 · negative transfer when the old model is wrong
+
+Reusing a source model is a hypothesis. If its scores are backwards for the new task, the transfer
+feature can hurt more than training from scratch.
+""")
+code(r"""
+toy14_rng = np.random.default_rng(0)                              # -> deterministic seed 0
+toy14_y = np.array([1, 1, 1, 0, 0, 0])                            # -> 3 positives, 3 negatives
+toy14_scratch = np.array([0.55, 0.50, 0.45, 0.48, 0.44, 0.42])    # -> weak but mostly right
+toy14_good = np.array([0.82, 0.75, 0.68, 0.35, 0.30, 0.25])       # -> related old model helps
+toy14_wrong = np.array([0.20, 0.30, 0.35, 0.80, 0.70, 0.60])      # -> mismatched old model hurts
+toy14_auc_scratch = ((toy14_scratch[toy14_y == 1, None] > toy14_scratch[toy14_y == 0][None, :]).astype(float)).mean()
+toy14_auc_good = ((toy14_good[toy14_y == 1, None] > toy14_good[toy14_y == 0][None, :]).astype(float)).mean()
+toy14_auc_wrong = ((toy14_wrong[toy14_y == 1, None] > toy14_wrong[toy14_y == 0][None, :]).astype(float)).mean()
+toy14_aucs = np.array([toy14_auc_scratch, toy14_auc_good, toy14_auc_wrong])      # -> [.889,1.0,0.0]
+print("labels:", toy14_y.tolist())
+print("scratch scores:", toy14_scratch.tolist())
+print("good-transfer scores:", toy14_good.tolist())
+print("wrong-transfer scores:", toy14_wrong.tolist())
+print("AUCs [scratch, good transfer, wrong transfer]:", np.round(toy14_aucs, 3).tolist())
+assert toy14_auc_wrong < toy14_auc_scratch < toy14_auc_good
+
+plt.figure(figsize=(5.6, 3.2))
+plt.bar(["scratch", "good\ntransfer", "wrong\ntransfer"], toy14_aucs, color=["gray", "seagreen", "tomato"])
+plt.ylim(0, 1.05)
+plt.ylabel("AUC")
+plt.title("mismatched source model causes negative transfer")
+plt.show()
+""")
+md("▶ What you'll see: the good source reaches AUC 1.0, but the wrong source ranks every pair "
+   "backwards and falls below scratch.")
+
+md(r"""
+## ✍️ Toy 15 · old net logit and BCE-with-logits loss
+
+The PyTorch old net is also a linear logit. `BCEWithLogitsLoss` means the model returns raw logits,
+and the loss applies the sigmoid internally in a stable way.
+""")
+code(r"""
+toy15_rng = np.random.default_rng(0)                              # -> deterministic seed 0
+toy15_X = np.array([[1, 0, 1], [0, 1, 1], [1, 1, 0], [2, 0, 1], [0, 2, 1], [1, 0, 0]], float)
+toy15_w = np.array([0.4, -0.3, 0.2])                              # -> old-net weights
+toy15_b = -0.1                                                    # -> old-net bias
+toy15_y = np.array([1, 0, 1, 1, 0, 0], float)                     # -> labels
+toy15_logit = toy15_X @ toy15_w + toy15_b                         # -> [.5,-.2,0,.9,-.5,.3]
+toy15_prob = 1 / (1 + np.exp(-toy15_logit))                       # -> [.622,.45,.5,.711,.378,.574]
+toy15_bce = np.logaddexp(0, toy15_logit) - toy15_y * toy15_logit  # -> stable BCE per row
+toy15_loss = toy15_bce.mean()                                     # -> .5725
+print("features:\n", toy15_X)
+print("weights:", toy15_w.tolist())
+print("bias:", toy15_b)
+print("labels:", toy15_y.tolist())
+print("logits:", np.round(toy15_logit, 3).tolist())
+print("sigmoid probabilities:", np.round(toy15_prob, 3).tolist())
+print("BCE terms:", np.round(toy15_bce, 3).tolist())
+print("mean BCE loss:", round(float(toy15_loss), 4))
+assert np.isclose(toy15_loss, 0.572491522917061)
+
+plt.figure(figsize=(5.6, 3.2))
+plt.bar(np.arange(6), toy15_bce, color="slateblue")
+plt.xlabel("training row")
+plt.ylabel("BCE loss")
+plt.title("BCEWithLogitsLoss applies sigmoid inside the loss")
+plt.show()
+""")
+md("▶ What you'll see: logits are raw scores; the printed probabilities are for interpretation, "
+   "while the stable BCE formula computes the loss directly from logits.")
+
+md(r"""
+## ✍️ Toy 16 · freezing means old parameters do not update
+
+Freezing sets old parameters to "do not train." Even if an old gradient exists, the update leaves
+old weights unchanged while trainable head weights move.
+""")
+code(r"""
+toy16_rng = np.random.default_rng(0)                              # -> deterministic seed 0
+toy16_old_w = np.array([0.50, -0.50, 0.25])                       # -> frozen old weights before
+toy16_old_grad = np.array([0.30, 0.20, -0.40])                    # -> gradient that would have moved them
+toy16_head_w = np.array([0.10, 0.20, -0.10])                      # -> trainable head weights before
+toy16_head_grad = np.array([-0.20, 0.10, 0.30])                   # -> head gradient
+toy16_lr = 0.50                                                   # -> learning rate
+toy16_old_after = toy16_old_w.copy()                              # -> unchanged because frozen
+toy16_head_after = toy16_head_w - toy16_lr * toy16_head_grad      # -> [.2,.15,-.25]
+print("old weights before:", toy16_old_w.tolist())
+print("old gradient:", toy16_old_grad.tolist())
+print("old weights after frozen update:", toy16_old_after.tolist())
+print("head weights before:", toy16_head_w.tolist())
+print("head gradient:", toy16_head_grad.tolist())
+print("head weights after update:", toy16_head_after.tolist())
+assert np.allclose(toy16_old_after, toy16_old_w) and not np.allclose(toy16_head_after, toy16_head_w)
+
+plt.figure(figsize=(5.8, 3.2))
+toy16_x = np.arange(3)
+plt.bar(toy16_x - 0.18, toy16_head_w, 0.36, color="gray", label="head before")
+plt.bar(toy16_x + 0.18, toy16_head_after, 0.36, color="seagreen", label="head after")
+plt.axhline(0, color="black", linewidth=0.8)
+plt.xticks(toy16_x, ["w0", "w1", "w2"])
+plt.ylabel("head weight")
+plt.title("head moves; frozen old weights do not")
+plt.legend()
+plt.show()
+""")
+md("▶ What you'll see: old weights are identical before/after, while the head weights change by "
+   "`-lr × gradient`.")
+
+md(r"""
+## ✍️ Toy 17 · composed net forward pass
+
+In the PyTorch transfer version, the new model **contains** the old model. The forward pass computes
+an old logit, glues it to two new features, then applies a head.
+""")
+code(r"""
+toy17_rng = np.random.default_rng(0)                              # -> deterministic seed 0
+toy17_shared = np.array([[1, 0], [0, 1], [1, 1], [2, 0], [0, 2], [2, 1]], float)
+toy17_new = np.array([[1, 0], [0, 1], [1, 1], [0, 0], [1, 0], [0, 1]], float)
+toy17_old_w = np.array([0.9, -0.4])                               # -> old submodule weights
+toy17_old_b = 0.1                                                 # -> old submodule bias
+toy17_old_logit = toy17_shared @ toy17_old_w + toy17_old_b        # -> [1,-.3,.6,1.9,-.7,1.5]
+toy17_old_prob = 1 / (1 + np.exp(-toy17_old_logit))               # -> [.731,.426,.646,.87,.332,.818]
+toy17_z = np.column_stack([toy17_old_logit, toy17_new])           # -> [old_logit, is_video, is_weekend]
+toy17_head_w = np.array([0.8, 0.5, -0.3])                         # -> head weights
+toy17_head_b = -0.2                                               # -> head bias
+toy17_final_logit = toy17_z @ toy17_head_w + toy17_head_b         # -> [1.1,-.74,.48,1.32,-.26,.7]
+toy17_final_prob = 1 / (1 + np.exp(-toy17_final_logit))           # -> [.75,.323,.618,.789,.435,.668]
+print("shared features:\n", toy17_shared)
+print("new features:\n", toy17_new)
+print("old logits:", np.round(toy17_old_logit, 3).tolist())
+print("old probabilities:", np.round(toy17_old_prob, 3).tolist())
+print("head input z:\n", np.round(toy17_z, 3))
+print("final logits:", np.round(toy17_final_logit, 3).tolist())
+print("final probabilities:", np.round(toy17_final_prob, 3).tolist())
+assert np.isclose(toy17_final_prob[0], 0.7502601055951177)
+
+plt.figure(figsize=(5.8, 3.2))
+plt.plot(np.arange(6), toy17_old_prob, "o-", color="gray", label="old submodule prob")
+plt.plot(np.arange(6), toy17_final_prob, "o-", color="seagreen", label="composed net prob")
+plt.xlabel("impression")
+plt.ylabel("probability")
+plt.title("old submodule + head = composed transfer net")
+plt.legend()
+plt.show()
+""")
+md("▶ What you'll see: the old net produces one logit per row, the head sees that logit plus two "
+   "new features, and final probabilities differ from old-only probabilities.")
+
+md(r"""
+## ✍️ Toy 18 · training only the head
+
+Once the old net is frozen, optimization should use only head parameters. This toy computes one head
+gradient step and proves the old weights stayed unchanged.
+""")
+code(r"""
+toy18_rng = np.random.default_rng(0)                              # -> deterministic seed 0
+toy18_z = np.array([[0.9, 1, 0], [-0.3, 0, 1], [0.6, 1, 1], [1.2, 0, 0], [-0.7, 1, 0], [0.1, 0, 1]], float)
+toy18_y = np.array([1, 0, 1, 1, 0, 0], float)                     # -> labels
+toy18_old_w_before = np.array([0.9, -0.4])                        # -> frozen old weights
+toy18_head_w = np.array([0.0, 0.0, 0.0])                          # -> trainable head starts at zero
+toy18_head_b = 0.0                                                # -> trainable head bias
+toy18_logit = toy18_z @ toy18_head_w + toy18_head_b               # -> [0,0,0,0,0,0]
+toy18_prob = 1 / (1 + np.exp(-toy18_logit))                       # -> [.5,.5,.5,.5,.5,.5]
+toy18_error = toy18_prob - toy18_y                                # -> [-.5,.5,-.5,-.5,.5,.5]
+toy18_grad_w = toy18_z.T @ toy18_error / len(toy18_y)             # -> [-.3,-.0833,.0833]
+toy18_grad_b = toy18_error.mean()                                 # -> 0
+toy18_head_after = toy18_head_w - toy18_grad_w                    # -> [.3,.0833,-.0833]
+toy18_old_w_after = toy18_old_w_before.copy()                     # -> unchanged
+print("head input z:\n", toy18_z)
+print("labels:", toy18_y.tolist())
+print("head probabilities before update:", toy18_prob.tolist())
+print("head errors:", toy18_error.tolist())
+print("head gradient:", np.round(toy18_grad_w, 4).tolist())
+print("head bias gradient:", round(float(toy18_grad_b), 4))
+print("head weights after update:", np.round(toy18_head_after, 4).tolist())
+print("old weights before:", toy18_old_w_before.tolist())
+print("old weights after:", toy18_old_w_after.tolist())
+assert np.allclose(toy18_old_w_before, toy18_old_w_after) and toy18_head_after[0] > 0
+
+plt.figure(figsize=(5.4, 3.2))
+plt.bar(["old_logit", "video", "weekend"], toy18_head_after, color=["slateblue", "seagreen", "tomato"])
+plt.axhline(0, color="black", linewidth=0.8)
+plt.ylabel("head weight after one update")
+plt.title("only the head receives the update")
+plt.show()
+""")
+md("▶ What you'll see: the head learns weights from the composed input, while the printed old "
+   "weights are unchanged.")
+
+md(r"""
+## ✍️ Toy 19 · scratch net vs transfer net comparison
+
+The PyTorch section repeats the same evaluation idea: score the same cold slice with a scratch net,
+an old-only net, and a transfer net, then compare AUC.
+""")
+code(r"""
+toy19_rng = np.random.default_rng(0)                              # -> deterministic seed 0
+toy19_y = np.array([1, 1, 1, 0, 0, 0])                            # -> 3 positives, 3 negatives
+toy19_scratch = np.array([0.62, 0.48, 0.40, 0.58, 0.35, 0.30])    # -> scratch-net scores
+toy19_oldonly = np.array([0.70, 0.60, 0.45, 0.50, 0.42, 0.36])    # -> old-only scores
+toy19_transfer = np.array([0.78, 0.70, 0.66, 0.44, 0.38, 0.25])   # -> transfer-net scores
+toy19_auc_scratch = ((toy19_scratch[toy19_y == 1, None] > toy19_scratch[toy19_y == 0][None, :]).astype(float)).mean()
+toy19_auc_oldonly = ((toy19_oldonly[toy19_y == 1, None] > toy19_oldonly[toy19_y == 0][None, :]).astype(float)).mean()
+toy19_auc_transfer = ((toy19_transfer[toy19_y == 1, None] > toy19_transfer[toy19_y == 0][None, :]).astype(float)).mean()
+toy19_aucs = np.array([toy19_auc_scratch, toy19_auc_oldonly, toy19_auc_transfer])       # -> [.778,.889,1.0]
+print("labels:", toy19_y.tolist())
+print("scratch-net scores:", toy19_scratch.tolist())
+print("old-only scores:", toy19_oldonly.tolist())
+print("transfer-net scores:", toy19_transfer.tolist())
+print("AUCs [scratch net, old-only, transfer net]:", np.round(toy19_aucs, 3).tolist())
+assert toy19_auc_transfer > toy19_auc_oldonly > toy19_auc_scratch
+
+plt.figure(figsize=(5.4, 3.2))
+plt.bar(["scratch\nnet", "old-only", "transfer\nnet"], toy19_aucs, color=["tomato", "gray", "seagreen"])
+plt.ylim(0, 1.05)
+plt.ylabel("AUC")
+plt.title("frozen-old transfer net ranks best")
+plt.show()
+""")
+md("▶ What you'll see: the transfer net has the highest AUC on the toy cold slice, matching the "
+   "larger PyTorch comparison later.")
+
+md(r"""
+## ✍️ Toy 20 · teacher is nonlinear, student is simpler
+
+Distillation starts with a strong teacher and a lighter student. This toy makes the teacher use an
+interaction term that the simple linear student misses.
+""")
+code(r"""
+toy20_rng = np.random.default_rng(0)                              # -> deterministic seed 0
+toy20_X = np.array([[0, 0, 0], [1, 0, 0], [0, 1, 1], [1, 1, 0], [2, 1, 1], [1, 2, 0]], float)
+toy20_linear = 0.8 * toy20_X[:, 0] - 0.5 * toy20_X[:, 1] + 0.3 * toy20_X[:, 2] - 0.2
+toy20_interaction = 1.2 * toy20_X[:, 0] * toy20_X[:, 1]           # -> [0,0,0,1.2,2.4,2.4]
+toy20_teacher_logit = toy20_linear + toy20_interaction            # -> [-.2,.6,-.4,1.3,3.6,2.0]
+toy20_student_logit = toy20_linear                                # -> simple student misses interaction
+toy20_teacher_prob = 1 / (1 + np.exp(-toy20_teacher_logit))       # -> [.45,.646,.401,.786,.973,.881]
+toy20_student_prob = 1 / (1 + np.exp(-toy20_student_logit))       # -> [.45,.646,.401,.525,.769,.401]
+print("features:\n", toy20_X)
+print("linear part:", np.round(toy20_linear, 3).tolist())
+print("teacher interaction:", np.round(toy20_interaction, 3).tolist())
+print("teacher logits:", np.round(toy20_teacher_logit, 3).tolist())
+print("student logits:", np.round(toy20_student_logit, 3).tolist())
+print("teacher probabilities:", np.round(toy20_teacher_prob, 3).tolist())
+print("student probabilities:", np.round(toy20_student_prob, 3).tolist())
+assert toy20_teacher_prob[-1] > toy20_student_prob[-1]
+
+plt.figure(figsize=(5.8, 3.2))
+plt.plot(np.arange(6), toy20_teacher_prob, "o-", color="purple", label="teacher")
+plt.plot(np.arange(6), toy20_student_prob, "o-", color="seagreen", label="student")
+plt.xlabel("item")
+plt.ylabel("probability")
+plt.title("teacher captures interaction the student misses")
+plt.legend()
+plt.show()
+""")
+md("▶ What you'll see: rows with feature interactions get much higher teacher probabilities than "
+   "the simple student can produce.")
+
+md(r"""
+## ✍️ Toy 21 · temperature softens teacher probabilities
+
+Temperature divides the teacher logit before the sigmoid. Higher `T` pulls probabilities toward
+0.5, exposing "almost positive" and "almost negative" cases.
+""")
+code(r"""
+toy21_rng = np.random.default_rng(0)                              # -> deterministic seed 0
+toy21_p = np.array([0.92, 0.62, 0.40, 0.08, 0.55, 0.20])          # -> teacher probabilities
+toy21_clip = np.clip(toy21_p, 1e-6, 1 - 1e-6)                    # -> unchanged here
+toy21_logit = np.log(toy21_clip / (1 - toy21_clip))               # -> [2.442,.49,-.405,-2.442,.201,-1.386]
+toy21_soft_T2 = 1 / (1 + np.exp(-(toy21_logit / 2)))              # -> [.772,.561,.449,.228,.525,.333]
+toy21_soft_T4 = 1 / (1 + np.exp(-(toy21_logit / 4)))              # -> [.648,.531,.475,.352,.513,.414]
+toy21_hard = (toy21_p > 0.5).astype(int)                          # -> [1,1,0,0,1,0]
+print("teacher probabilities:", toy21_p.tolist())
+print("teacher logits:", np.round(toy21_logit, 3).tolist())
+print("soft targets T=2:", np.round(toy21_soft_T2, 3).tolist())
+print("soft targets T=4:", np.round(toy21_soft_T4, 3).tolist())
+print("hard labels:", toy21_hard.tolist())
+assert abs(toy21_soft_T4[0] - 0.5) < abs(toy21_p[0] - 0.5)
+
+plt.figure(figsize=(6, 3.2))
+toy21_x = np.arange(6)
+plt.bar(toy21_x - 0.22, toy21_p, 0.22, color="purple", label="T=1")
+plt.bar(toy21_x, toy21_soft_T2, 0.22, color="seagreen", label="T=2")
+plt.bar(toy21_x + 0.22, toy21_soft_T4, 0.22, color="orange", label="T=4")
+plt.axhline(0.5, color="black", linewidth=0.8)
+plt.xlabel("item")
+plt.ylabel("target probability")
+plt.title("higher temperature moves targets toward 0.5")
+plt.legend()
+plt.show()
+""")
+md("▶ What you'll see: 0.92 softens to 0.77 at T=2 and 0.65 at T=4, while hard labels would only "
+   "say 1 or 0.")
+
+md(r"""
+## ✍️ Toy 22 · hard-label loss vs soft-target distillation loss
+
+Hard labels collapse teacher probabilities to 0/1. Distillation keeps the teacher's soft target and
+computes BCE against that probability, preserving dark knowledge.
+""")
+code(r"""
+toy22_rng = np.random.default_rng(0)                              # -> deterministic seed 0
+toy22_teacher = np.array([0.92, 0.62, 0.40, 0.08, 0.55, 0.20])    # -> soft teacher targets
+toy22_hard = (toy22_teacher > 0.5).astype(float)                  # -> [1,1,0,0,1,0]
+toy22_student = np.array([0.70, 0.70, 0.30, 0.30, 0.30, 0.30])    # -> student probabilities
+toy22_hard_bce = -(toy22_hard * np.log(toy22_student) + (1 - toy22_hard) * np.log(1 - toy22_student))
+toy22_soft_bce = -(toy22_teacher * np.log(toy22_student) + (1 - toy22_teacher) * np.log(1 - toy22_student))
+toy22_hard_loss = toy22_hard_bce.mean()                           # -> .4979
+toy22_soft_loss = toy22_soft_bce.mean()                           # -> .5953
+print("teacher soft targets:", toy22_teacher.tolist())
+print("hard labels:", toy22_hard.astype(int).tolist())
+print("student probabilities:", toy22_student.tolist())
+print("hard-label BCE terms:", np.round(toy22_hard_bce, 3).tolist())
+print("soft-target BCE terms:", np.round(toy22_soft_bce, 3).tolist())
+print("mean hard loss:", round(float(toy22_hard_loss), 4))
+print("mean soft distillation loss:", round(float(toy22_soft_loss), 4))
+assert not np.isclose(toy22_hard_loss, toy22_soft_loss)
+
+plt.figure(figsize=(5.8, 3.2))
+toy22_x = np.arange(6)
+plt.bar(toy22_x - 0.18, toy22_hard_bce, 0.36, color="gray", label="hard BCE")
+plt.bar(toy22_x + 0.18, toy22_soft_bce, 0.36, color="seagreen", label="soft BCE")
+plt.xlabel("item")
+plt.ylabel("loss")
+plt.title("soft targets give a different teaching signal")
+plt.legend()
+plt.show()
+""")
+md("▶ What you'll see: the 0.55 teacher target is not treated like the 0.92 target; soft BCE "
+   "keeps that uncertainty visible.")
+
+md(r"""
+## ✍️ Toy 23 · teacher labels an unlabeled pool with soft logits
+
+The distilled student can learn from many unlabeled rows after the teacher scores them. Here the
+teacher makes soft probabilities, we convert them to logits, and a tiny ridge solve fits a student.
+""")
+code(r"""
+toy23_rng = np.random.default_rng(0)                              # -> deterministic seed 0
+toy23_X = np.array([[0, 0], [1, 0], [0, 1], [1, 1], [2, 0], [0, 2]], float)
+toy23_teacher_w = np.array([1.0, -0.5])                           # -> teacher logit weights
+toy23_teacher_b = 0.2                                             # -> teacher bias
+toy23_teacher_logit = toy23_X @ toy23_teacher_w + toy23_teacher_b # -> [.2,1.2,-.3,.7,2.2,-.8]
+toy23_teacher_prob = 1 / (1 + np.exp(-toy23_teacher_logit))       # -> [.55,.769,.426,.668,.9,.31]
+toy23_X_aug = np.column_stack([np.ones(len(toy23_X)), toy23_X])   # -> add bias column
+toy23_alpha = 0.1                                                 # -> small ridge penalty
+toy23_I = np.eye(3)                                               # -> 3x3 identity
+toy23_I[0, 0] = 0.0                                               # -> do not penalize bias
+toy23_left = toy23_X_aug.T @ toy23_X_aug + toy23_alpha * toy23_I  # -> normal-equation left side
+toy23_right = toy23_X_aug.T @ toy23_teacher_logit                 # -> normal-equation right side
+toy23_student_coef = np.linalg.solve(toy23_left, toy23_right)     # -> [.219,.971,-.499]
+toy23_student_logit = toy23_X_aug @ toy23_student_coef            # -> [.219,1.19,-.281,.691,2.161,-.78]
+toy23_corr = np.corrcoef(toy23_teacher_logit, toy23_student_logit)[0, 1]
+print("unlabeled features:\n", toy23_X)
+print("teacher logits:", np.round(toy23_teacher_logit, 3).tolist())
+print("teacher probabilities:", np.round(toy23_teacher_prob, 3).tolist())
+print("student coefficients [bias,w0,w1]:", np.round(toy23_student_coef, 3).tolist())
+print("student logits:", np.round(toy23_student_logit, 3).tolist())
+print("teacher-student logit correlation:", round(float(toy23_corr), 4))
+assert toy23_corr > 0.99
+
+plt.figure(figsize=(4.5, 4))
+plt.scatter(toy23_teacher_logit, toy23_student_logit, s=120, color="seagreen")
+plt.plot([-1, 2.5], [-1, 2.5], color="black", linestyle="--")
+plt.xlabel("teacher logit")
+plt.ylabel("student logit")
+plt.title("student fits teacher soft logits")
+plt.show()
+""")
+md("▶ What you'll see: the student logits almost lie on the teacher-logit diagonal, showing how "
+   "unlabeled rows become soft supervision.")
+
+md(r"""
+## ✍️ Toy 24 · quality-vs-latency tradeoff
+
+Distillation is useful when a small student is much faster but only slightly worse. Compute the AUC
+drop and speedup explicitly, then view the serving options.
+""")
+code(r"""
+toy24_rng = np.random.default_rng(0)                              # -> deterministic seed 0
+toy24_names = np.array(["teacher", "student", "tiny", "ensemble", "cached", "rule"])
+toy24_latency = np.array([40, 5, 3, 60, 12, 1], float)            # -> milliseconds
+toy24_auc = np.array([0.88, 0.84, 0.80, 0.89, 0.86, 0.70])        # -> quality scores
+toy24_auc_drop = toy24_auc[0] - toy24_auc[1]                      # -> 0.04
+toy24_speedup = toy24_latency[0] / toy24_latency[1]               # -> 8.0
+toy24_good_trade = (toy24_speedup >= 5) & (toy24_auc_drop <= 0.05)
+print("model names:", toy24_names.tolist())
+print("latency ms:", toy24_latency.tolist())
+print("AUC:", toy24_auc.tolist())
+print("teacher-student AUC drop:", round(float(toy24_auc_drop), 3))
+print("teacher-student speedup:", round(float(toy24_speedup), 1), "x")
+print("is the trade acceptable in this toy?", bool(toy24_good_trade))
+assert toy24_good_trade
+
+plt.figure(figsize=(5.8, 3.5))
+plt.scatter(toy24_latency, toy24_auc, s=120, color="slateblue")
+for toy24_i, toy24_name in enumerate(toy24_names):
+    plt.annotate(toy24_name, (toy24_latency[toy24_i], toy24_auc[toy24_i]), xytext=(5, 2), textcoords="offset points")
+plt.xlabel("latency ms (lower is better)")
+plt.ylabel("AUC (higher is better)")
+plt.title("student: small AUC drop, big speedup")
+plt.show()
+""")
+md("▶ What you'll see: the student is 8× faster than the teacher with only a 0.04 AUC drop, which "
+   "is the basic distillation tradeoff.")
+
+md(r"""
+## ✍️ Toy 25 · student copies teacher bias
+
+Distillation imitates the teacher; it does not magically fix teacher bias. If the teacher scores one
+group lower for the same quality, the student learns that pattern too.
+""")
+code(r"""
+toy25_rng = np.random.default_rng(0)                              # -> deterministic seed 0
+toy25_quality = np.array([0.9, 0.8, 0.7, 0.6, 0.9, 0.8, 0.7, 0.6])
+toy25_group = np.array([0, 0, 0, 0, 1, 1, 1, 1])                  # -> group 1 is teacher-penalized
+toy25_teacher = toy25_quality - 0.2 * toy25_group                 # -> group 1 gets lower scores
+toy25_noise = np.array([0.01, -0.01, 0.00, 0.01, -0.01, 0.00, 0.01, -0.01])
+toy25_student = toy25_teacher + toy25_noise                       # -> close imitation of teacher
+toy25_corr = np.corrcoef(toy25_teacher, toy25_student)[0, 1]      # -> .9984
+toy25_group0_mean = toy25_student[toy25_group == 0].mean()        # -> .7525
+toy25_group1_mean = toy25_student[toy25_group == 1].mean()        # -> .5475
+toy25_gap = toy25_group0_mean - toy25_group1_mean                 # -> .205
+print("true quality:", toy25_quality.tolist())
+print("group:", toy25_group.tolist())
+print("teacher scores:", np.round(toy25_teacher, 3).tolist())
+print("student scores:", np.round(toy25_student, 3).tolist())
+print("teacher-student correlation:", round(float(toy25_corr), 4))
+print("student group 0 mean:", round(float(toy25_group0_mean), 4))
+print("student group 1 mean:", round(float(toy25_group1_mean), 4))
+print("student copied gap:", round(float(toy25_gap), 4))
+assert toy25_corr > 0.99 and toy25_gap > 0.19
+
+plt.figure(figsize=(4.7, 4))
+plt.scatter(toy25_teacher, toy25_student, c=toy25_group, cmap="coolwarm", s=130)
+plt.plot([0.35, 0.95], [0.35, 0.95], color="black", linestyle="--")
+plt.xlabel("teacher score")
+plt.ylabel("student score")
+plt.title("student closely imitates teacher, bias included")
+plt.show()
+""")
+md("▶ What you'll see: student scores are almost perfectly correlated with teacher scores, so the "
+   "teacher's group gap remains in the distilled model.")
+
 # =================================================================== PART A
 md("---\n# Part A · Cold-start & the confidence blend")
 
