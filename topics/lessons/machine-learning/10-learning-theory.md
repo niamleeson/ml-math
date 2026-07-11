@@ -1,5 +1,60 @@
 # Learning Theory
-> **Source:** CS 229 · **Category:** Formula/Theorem · **Type:** 🧮 Numeric · [↑ Full reference](../../ai-ml-cheatsheets.md)
+> **Source:** CS 229 · **Category:** Formula/Theorem · **Type:** 💻 Colab · [↑ Full reference](../../ai-ml-cheatsheets.md)
+> 📓 This section is written as a runnable notebook; an `.ipynb` will be generated from it. [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](#)
+
+## 0. Step-by-Step Worked Example — Start Here (Beginner Friendly)
+
+> 🧑‍🎓 **New to this topic? Start here.** This is a gentle, fully runnable walkthrough that
+> builds up the core idea one tiny step at a time. Each step **prints** the numbers it
+> computes and **draws a picture** so you can *see* what is happening. Run the cells in order
+> from top to bottom. Nothing here needs the internet or any downloaded data.
+
+### The Big Picture — What You'll Learn
+
+- Model error splits into **bias** (too simple) and **variance** (too flexible).
+- As complexity rises, train error keeps falling but **test error is U-shaped**.
+- The best model is at the bottom of that U — not the one with the lowest train error.
+
+### Step 0 — Set up our tools
+
+We import NumPy (arrays + math) and Matplotlib (pictures), fix a **seed** for reproducibility,
+and define a tiny `log()` helper so every printed line is clearly labeled.
+
+```python
+import numpy as np
+import matplotlib.pyplot as plt
+
+np.random.seed(0)
+plt.rcParams["figure.figsize"] = (6, 4)
+
+def log(label, value):
+    print(f"[{label}] {value}")
+
+log("setup", "tools ready — NumPy + Matplotlib imported, seed fixed to 0")
+```
+▶ What you'll see: one line confirming the tools are ready.
+
+### Step 1 — The bias–variance U-curve by hand
+
+We fit polynomials of increasing **degree** (complexity) to noisy data and track train vs test error. Watch train error fall forever while test error first drops (less bias) then shoots up (more variance).
+
+```python
+x = np.linspace(0, 1, 20); y = np.sin(2*np.pi*x) + np.random.normal(0, 0.2, 20)
+tr_i, te_i = np.arange(14), np.arange(14, 20)                  # train on first 14, test on last 6
+degrees = range(1, 9); train_err, test_err = [], []
+for d in degrees:
+    c = np.polyfit(x[tr_i], y[tr_i], d)                       # fit at this complexity
+    train_err.append(np.mean((np.polyval(c, x[tr_i]) - y[tr_i]) ** 2))
+    test_err.append(np.mean((np.polyval(c, x[te_i]) - y[te_i]) ** 2))
+    log(f"degree {d}", f"train={train_err[-1]:.3f}  test={test_err[-1]:.3f}")
+assert train_err[-1] < train_err[0]                           # complexity always lowers TRAIN error
+
+plt.plot(list(degrees), train_err, "-o", label="train")
+plt.plot(list(degrees), test_err, "-o", label="test"); plt.yscale("log")
+plt.title("bias–variance: train falls, test is U-shaped"); plt.xlabel("polynomial degree (complexity)")
+plt.ylabel("MSE (log)"); plt.legend(); plt.show()
+```
+▶ What you'll see: train error sliding down monotonically while test error bottoms out early then blows up.
 
 ## 1. Overview
 

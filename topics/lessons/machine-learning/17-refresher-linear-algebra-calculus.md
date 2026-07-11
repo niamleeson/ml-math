@@ -1,5 +1,70 @@
 # Refresher: Linear Algebra & Calculus
-> **Source:** CS 229 · **Category:** Formula · **Type:** 🧮 Numeric · [↑ Full reference](../../ai-ml-cheatsheets.md)
+> **Source:** CS 229 · **Category:** Formula · **Type:** 💻 Colab · [↑ Full reference](../../ai-ml-cheatsheets.md)
+> 📓 This section is written as a runnable notebook; an `.ipynb` will be generated from it. [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](#)
+
+## 0. Step-by-Step Worked Example — Start Here (Beginner Friendly)
+
+> 🧑‍🎓 **New to this topic? Start here.** This is a gentle, fully runnable walkthrough that
+> builds up the core idea one tiny step at a time. Each step **prints** the numbers it
+> computes and **draws a picture** so you can *see* what is happening. Run the cells in order
+> from top to bottom. Nothing here needs the internet or any downloaded data.
+
+### The Big Picture — What You'll Learn
+
+- A **dot product** and **norm** summarize vectors; a **matrix** transforms them.
+- The **gradient** points uphill; gradient descent steps the opposite way.
+- All of it reduces to small, checkable arithmetic.
+
+### Step 0 — Set up our tools
+
+We import NumPy (arrays + math) and Matplotlib (pictures), fix a **seed** for reproducibility,
+and define a tiny `log()` helper so every printed line is clearly labeled.
+
+```python
+import numpy as np
+import matplotlib.pyplot as plt
+
+np.random.seed(0)
+plt.rcParams["figure.figsize"] = (6, 4)
+
+def log(label, value):
+    print(f"[{label}] {value}")
+
+log("setup", "tools ready — NumPy + Matplotlib imported, seed fixed to 0")
+```
+▶ What you'll see: one line confirming the tools are ready.
+
+### Step 1 — Vectors and a matrix transform
+
+The **dot product** multiplies matching components and adds; the **norm** is the Pythagorean length; a **matrix times a vector** produces a new vector (each output = a row dotted with the vector).
+
+```python
+v = np.array([3, 4]); M = np.array([[1, 2], [3, 4]])
+log("dot(v, v)", int(np.dot(v, v)))
+log("norm(v) = sqrt(dot(v,v))", round(np.linalg.norm(v), 3))
+Mv = M @ v
+log("M v (each row dotted with v)", Mv.tolist())
+assert round(np.linalg.norm(v), 3) == 5.0
+```
+▶ What you'll see: dot 25, norm 5.0, and `M v = [11, 25]`.
+
+### Step 2 — Gradient and one descent step
+
+For `f(x,y) = x² + y²`, the **gradient** is `[2x, 2y]` — it points uphill. **Gradient descent** takes a small step in the *opposite* direction to go downhill toward the minimum at the origin.
+
+```python
+grad = lambda p: 2 * np.array(p, float)                       # gradient of x^2 + y^2
+p = np.array([3.0, 4.0]); log("gradient at (3,4)", grad(p).tolist())
+assert (grad(p) == [6, 8]).all()
+lr = 0.1; p_new = p - lr * grad(p)                            # step downhill
+log("after one step p - 0.1*grad", np.round(p_new, 2).tolist())
+
+xs = np.linspace(-4, 4, 40); ys = np.linspace(-4, 4, 40); XX, YY = np.meshgrid(xs, ys)
+plt.contour(XX, YY, XX**2 + YY**2, levels=12)
+plt.annotate("", xy=p_new, xytext=p, arrowprops=dict(arrowstyle="->", color="red"))
+plt.title("gradient descent step on x^2+y^2"); plt.scatter([0], [0], marker="*", s=200); plt.show()
+```
+▶ What you'll see: gradient [6, 8], a step to [2.4, 3.2], and an arrow moving toward the center.
 
 ## 1. Overview
 

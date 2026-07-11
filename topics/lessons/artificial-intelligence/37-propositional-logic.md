@@ -1,5 +1,61 @@
 # Propositional Logic
-> **Source:** CS 221 · **Category:** Formula/Concept · **Type:** 🧮 Numeric · [↑ Full reference](../../ai-ml-cheatsheets.md)
+> **Source:** CS 221 · **Category:** Formula/Concept · **Type:** 💻 Colab · [↑ Full reference](../../ai-ml-cheatsheets.md)
+> 📓 This section is written as a runnable notebook; an `.ipynb` will be generated from it. [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](#)
+
+## 0. Step-by-Step Worked Example — Start Here (Beginner Friendly)
+
+> 🧑‍🎓 **New to this topic? Start here.** This is a gentle, fully runnable walkthrough that
+> builds up the core idea one tiny step at a time. Each step **prints** the numbers it
+> computes and **draws a picture** so you can *see* what is happening. Run the cells in order
+> from top to bottom. Nothing here needs the internet or any downloaded data.
+
+### The Big Picture — What You'll Learn
+
+- A **truth table** lists every combination of true/false for the variables.
+- A formula is a **tautology** if it is true in *every* row.
+- **Modus ponens** — from `A` and `A→B`, conclude `B` — is one such always-true pattern.
+
+### Step 0 — Set up our tools
+
+We import NumPy (arrays + math) and Matplotlib (pictures), fix a **seed** for reproducibility,
+and define a tiny `log()` helper so every printed line is clearly labeled.
+
+```python
+import numpy as np
+import matplotlib.pyplot as plt
+
+np.random.seed(0)
+plt.rcParams["figure.figsize"] = (6, 4)
+
+def log(label, value):
+    print(f"[{label}] {value}")
+
+log("setup", "tools ready — NumPy + Matplotlib imported, seed fixed to 0")
+```
+▶ What you'll see: one line confirming the tools are ready.
+
+### Step 1 — Build a truth table and check a tautology
+
+We enumerate all truth assignments for `A, B` and evaluate the implication `A→B` (false only when A is true and B is false), then the full modus-ponens formula `(A ∧ (A→B)) → B`. If it's true in every row, it's a **tautology**.
+
+```python
+import itertools
+rows = []
+for A, B in itertools.product([False, True], repeat=2):       # all 4 assignments
+    A_implies_B = (not A) or B                                # A -> B
+    formula = (not (A and A_implies_B)) or B                  # (A ∧ (A→B)) -> B
+    rows.append((A, B, A_implies_B, formula))
+    log(f"A={A}, B={B}", f"A→B={A_implies_B}, formula={formula}")
+is_tautology = all(r[3] for r in rows)
+log("tautology? (true in every row)", is_tautology)
+assert is_tautology
+
+grid = np.array([[int(r[0]), int(r[1]), int(r[2]), int(r[3])] for r in rows])
+plt.imshow(grid, cmap="Greys", aspect="auto")
+plt.xticks(range(4), ["A", "B", "A→B", "formula"]); plt.yticks(range(4), [f"row {i}" for i in range(4)])
+plt.title("truth table (white=False, black=True)"); plt.show()
+```
+▶ What you'll see: all 4 rows of the last column are True → the formula is a tautology.
 
 ## 1. Overview
 

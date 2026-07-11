@@ -1,5 +1,72 @@
 # Continuous Random Variables
-> **Source:** Probability (MIT) · **Category:** Distributions/Formula · **Type:** 🧮 Numeric · [↑ Full reference](../../ai-ml-cheatsheets.md)
+> **Source:** Probability (MIT) · **Category:** Distributions/Formula · **Type:** 💻 Colab · [↑ Full reference](../../ai-ml-cheatsheets.md)
+> 📓 This section is written as a runnable notebook; an `.ipynb` will be generated from it. [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](#)
+
+## 0. Step-by-Step Worked Example — Start Here (Beginner Friendly)
+
+> 🧑‍🎓 **New to this topic? Start here.** This is a gentle, fully runnable walkthrough that
+> builds up the core idea one tiny step at a time. Each step **prints** the numbers it
+> computes and **draws a picture** so you can *see* what is happening. Run the cells in order
+> from top to bottom. Nothing here needs the internet or any downloaded data.
+
+### The Big Picture — What You'll Learn
+
+- For a **continuous** variable, probability is an **area under the density (PDF)**, not a count.
+- The **CDF** accumulates that area; `P(a<X<b) = F(b) − F(a)`.
+- Sampling many draws and taking a fraction *approximates* that area.
+
+### Step 0 — Set up our tools
+
+We import NumPy (arrays + math) and Matplotlib (pictures), fix a **seed** for reproducibility,
+and define a tiny `log()` helper so every printed line is clearly labeled.
+
+```python
+import numpy as np
+import matplotlib.pyplot as plt
+
+np.random.seed(0)
+plt.rcParams["figure.figsize"] = (6, 4)
+
+def log(label, value):
+    print(f"[{label}] {value}")
+
+log("setup", "tools ready — NumPy + Matplotlib imported, seed fixed to 0")
+```
+▶ What you'll see: one line confirming the tools are ready.
+
+### Step 1 — Uniform density: probability is an area
+
+For `U ~ Uniform(0,1)`, the density is a flat line at height 1 on [0,1]. So `P(0.2 < U < 0.5)` is just the **area** of that strip: width × height.
+
+```python
+a, b = 0.2, 0.5
+P = (b - a) * 1.0                                              # area of the rectangle under the flat density
+log("P(0.2 < U < 0.5) = width * height", f"({b}-{a}) * 1 = {P}")
+assert abs(P - 0.3) < 1e-9
+
+grid = np.linspace(-0.2, 1.2, 400); dens = ((grid >= 0) & (grid <= 1)).astype(float)
+plt.plot(grid, dens); plt.fill_between(grid, dens, where=(grid >= a) & (grid <= b), alpha=0.4)
+plt.title("Uniform(0,1): shaded area = P(0.2<U<0.5)"); plt.xlabel("u"); plt.ylabel("density"); plt.show()
+```
+▶ What you'll see: a flat density with a shaded strip whose area is 0.3.
+
+### Step 2 — Normal density, CDF, and checking area by sampling
+
+The standard normal `Z ~ N(0,1)` is the bell curve. We estimate `P(-1 < Z < 1)` two ways: by **sampling** many draws and taking the fraction inside, and by reading it off the picture (~0.68).
+
+```python
+z = np.random.normal(0, 1, 100_000)                           # 100k draws from the bell curve
+emp = np.mean((z > -1) & (z < 1))                             # fraction landing in (-1, 1)
+log("P(-1 < Z < 1) by sampling", round(emp, 3))
+assert abs(emp - 0.68) < 0.02
+
+grid = np.linspace(-4, 4, 400)
+pdf = np.exp(-grid**2 / 2) / np.sqrt(2 * np.pi)
+plt.hist(z, bins=60, density=True, alpha=0.4, label="samples")
+plt.plot(grid, pdf, label="true PDF"); plt.axvline(-1, ls="--"); plt.axvline(1, ls="--")
+plt.title("Normal(0,1): histogram vs PDF, dashed = ±1"); plt.legend(); plt.show()
+```
+▶ What you'll see: the sample fraction ≈ 0.68 and the histogram matching the bell-curve PDF.
 
 ## 1. Overview
 
