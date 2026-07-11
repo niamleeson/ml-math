@@ -2,6 +2,291 @@
 > **Source:** CS 229 · **Category:** Model · **Type:** ⚖️ Both · [↑ Full reference](../../ai-ml-cheatsheets.md)
 > 📓 The coded examples form a runnable notebook section; an `.ipynb` will be generated. [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](#)
 
+## ✍️ Toy Examples
+
+These tiny examples isolate the computational mechanics from the full lesson. Each toy uses small arrays, prints the intermediate values, and draws one picture so the boundary, margins, losses, kernels, and support vectors are hand-checkable.
+
+### ✍️ Toy 1 · decision boundary from signed scores
+
+A linear SVM classifies by the sign of $w^Tx-b$. The boundary is where that score is zero, so one dot product gives both predictions and the separating line.
+
+```python
+import numpy as np, matplotlib.pyplot as plt
+
+t1_rng = np.random.default_rng(0)  # -> fixed seed for reproducibility
+t1_X = np.array([[-2, -1], [-1, -2], [-1, 0], [1, 0], [0, 1], [2, 1]], dtype=float)  # -> 6 items, 2 features
+t1_y = np.array([-1, -1, -1, 1, 1, 1])  # -> SVM labels
+t1_w = np.array([1.0, 1.0])  # -> normal vector to the line
+t1_b = 0.0  # -> offset in w^T x - b
+t1_scores = t1_X @ t1_w - t1_b  # -> [-3,-3,-1,1,1,3]
+t1_pred = np.where(t1_scores >= 0.0, 1, -1)  # -> [-1,-1,-1,1,1,1]
+t1_correct = t1_pred == t1_y  # -> all True
+t1_x_grid = np.linspace(-3.0, 3.0, 200)  # -> plotting grid
+t1_y_boundary = (t1_b - t1_w[0] * t1_x_grid) / t1_w[1]  # -> x2 = -x1
+print("rng seed fixed:", 0)
+print("points:\n", t1_X)
+print("labels:", t1_y)
+print("w:", t1_w)
+print("b:", t1_b)
+print("scores w^T x - b:", t1_scores)
+print("predicted labels:", t1_pred)
+print("correct mask:", t1_correct)
+assert np.all(t1_correct)
+
+plt.figure(figsize=(4.6, 4.0))
+plt.scatter(t1_X[t1_y == -1, 0], t1_X[t1_y == -1, 1], color="tab:blue", edgecolor="black", s=80, label="class -1")
+plt.scatter(t1_X[t1_y == 1, 0], t1_X[t1_y == 1, 1], color="tab:orange", edgecolor="black", s=80, label="class +1")
+plt.plot(t1_x_grid, t1_y_boundary, color="black", linewidth=2, label="score = 0")
+plt.xlim(-3, 3)
+plt.ylim(-3, 3)
+plt.xlabel("feature 1")
+plt.ylabel("feature 2")
+plt.title("Decision boundary from sign(w^T x - b)")
+plt.legend()
+plt.tight_layout()
+plt.show()
+plt.close()
+```
+▶ What you'll see: negative scores on one side, positive scores on the other, and the zero-score line separating them.
+
+### ✍️ Toy 2 · functional margin, geometric margin, and width
+
+The functional margin $y(w^Tx-b)$ checks correct-side score. Dividing by $\|w\|$ turns it into a distance, and the canonical margin strip has width $2/\|w\|$.
+
+```python
+import numpy as np, matplotlib.pyplot as plt
+
+t2_rng = np.random.default_rng(0)  # -> fixed seed for reproducibility
+t2_X = np.array([[-2, -1], [-1, -2], [-1, 0], [1, 0], [0, 1], [2, 1]], dtype=float)  # -> 6 items, 2 features
+t2_y = np.array([-1, -1, -1, 1, 1, 1])  # -> labels
+t2_w = np.array([1.0, 1.0])  # -> separator normal
+t2_b = 0.0  # -> boundary offset
+t2_scores = t2_X @ t2_w - t2_b  # -> [-3,-3,-1,1,1,3]
+t2_functional = t2_y * t2_scores  # -> [3,3,1,1,1,3]
+t2_norm = np.linalg.norm(t2_w)  # -> 1.414
+t2_geometric = t2_functional / t2_norm  # -> [2.121,2.121,0.707,0.707,0.707,2.121]
+t2_margin_width = 2.0 / t2_norm  # -> 1.414
+t2_support_like = np.isclose(t2_functional, 1.0)  # -> closest margin points
+t2_x_grid = np.linspace(-3.0, 3.0, 200)  # -> plotting grid
+t2_boundary = (t2_b - t2_w[0] * t2_x_grid) / t2_w[1]  # -> score 0 line
+t2_plus_margin = (t2_b + 1.0 - t2_w[0] * t2_x_grid) / t2_w[1]  # -> score +1 line
+t2_minus_margin = (t2_b - 1.0 - t2_w[0] * t2_x_grid) / t2_w[1]  # -> score -1 line
+print("rng seed fixed:", 0)
+print("scores:", t2_scores)
+print("functional margins:", t2_functional)
+print("||w||:", round(float(t2_norm), 3))
+print("geometric margins:", np.round(t2_geometric, 3))
+print("margin width 2/||w||:", round(float(t2_margin_width), 3))
+print("points on canonical margin:", np.where(t2_support_like)[0])
+assert np.isclose(np.min(t2_functional), 1.0)
+assert np.isclose(t2_margin_width, np.sqrt(2.0))
+
+plt.figure(figsize=(4.8, 4.0))
+plt.scatter(t2_X[t2_y == -1, 0], t2_X[t2_y == -1, 1], color="tab:blue", edgecolor="black", s=80, label="class -1")
+plt.scatter(t2_X[t2_y == 1, 0], t2_X[t2_y == 1, 1], color="tab:orange", edgecolor="black", s=80, label="class +1")
+plt.scatter(t2_X[t2_support_like, 0], t2_X[t2_support_like, 1], s=180, facecolors="none", edgecolors="crimson", linewidths=2, label="margin points")
+plt.plot(t2_x_grid, t2_boundary, color="black", linewidth=2, label="boundary")
+plt.plot(t2_x_grid, t2_plus_margin, color="black", linestyle="--", label="margins")
+plt.plot(t2_x_grid, t2_minus_margin, color="black", linestyle="--")
+plt.xlim(-3, 3)
+plt.ylim(-3, 3)
+plt.xlabel("feature 1")
+plt.ylabel("feature 2")
+plt.title("Margins are score distances scaled by ||w||")
+plt.legend()
+plt.tight_layout()
+plt.show()
+plt.close()
+```
+▶ What you'll see: functional margins, geometric distances, the $2/\|w\|$ width, and circled points touching the margin lines.
+
+### ✍️ Toy 3 · hinge loss charges margin violations
+
+Hinge loss is $\max(0,1-yf(x))$. Safe points outside the margin pay zero, inside-margin points pay a fraction, and misclassified points pay more than one.
+
+```python
+import numpy as np, matplotlib.pyplot as plt
+
+t3_rng = np.random.default_rng(0)  # -> fixed seed for reproducibility
+t3_X = np.array([[-2, -1], [-1, -1], [-0.2, 0.5], [0.2, -0.1], [1, 1], [2, 1]], dtype=float)  # -> 6 items, 2 features
+t3_y = np.array([-1, -1, -1, 1, 1, 1], dtype=float)  # -> labels with two awkward points
+t3_w = np.array([0.8, 0.6])  # -> candidate separator
+t3_b = 0.0  # -> offset
+t3_scores = t3_X @ t3_w - t3_b  # -> [-2.2,-1.4,0.14,0.1,1.4,2.2]
+t3_signed = t3_y * t3_scores  # -> [2.2,1.4,-0.14,0.1,1.4,2.2]
+t3_hinge = np.maximum(0.0, 1.0 - t3_signed)  # -> [0,0,1.14,0.9,0,0]
+t3_status = np.where(t3_signed >= 1.0, "safe", np.where(t3_signed > 0.0, "inside margin", "misclassified"))  # -> point categories
+t3_loss_sum = np.sum(t3_hinge)  # -> 2.04
+t3_margin_grid = np.linspace(-1.5, 2.5, 200)  # -> signed-margin grid
+t3_hinge_grid = np.maximum(0.0, 1.0 - t3_margin_grid)  # -> hinge curve
+print("rng seed fixed:", 0)
+print("points:\n", t3_X)
+print("labels:", t3_y)
+print("scores:", np.round(t3_scores, 3))
+print("signed margins y*f(x):", np.round(t3_signed, 3))
+print("hinge losses:", np.round(t3_hinge, 3))
+print("statuses:", t3_status)
+print("total hinge loss:", round(float(t3_loss_sum), 3))
+assert t3_hinge[2] > 1.0
+assert 0.0 < t3_hinge[3] < 1.0
+
+plt.figure(figsize=(4.8, 3.6))
+plt.plot(t3_margin_grid, t3_hinge_grid, color="crimson", linewidth=2, label="max(0, 1 - margin)")
+plt.scatter(t3_signed, t3_hinge, color="black", s=70, zorder=3, label="toy points")
+plt.axvline(1.0, color="gray", linestyle="--", label="margin satisfied")
+plt.axvline(0.0, color="gray", linestyle=":", label="decision boundary")
+plt.xlabel("signed margin y f(x)")
+plt.ylabel("hinge loss")
+plt.title("Hinge loss is zero only after margin 1")
+plt.legend()
+plt.tight_layout()
+plt.show()
+plt.close()
+```
+▶ What you'll see: safe points with zero loss, one misclassified point with loss above 1, and one inside-margin point with fractional loss.
+
+### ✍️ Toy 4 · RBF kernel Gram matrix
+
+The kernel trick replaces explicit features with pairwise similarities. An RBF Gram matrix stores $K(x_i,x_j)=\exp(-\gamma\|x_i-x_j\|^2)$ for every pair.
+
+```python
+import numpy as np, matplotlib.pyplot as plt
+
+t4_rng = np.random.default_rng(0)  # -> fixed seed for reproducibility
+t4_X = np.array([[0, 0], [1, 0], [0, 1], [3, 3], [4, 3], [3, 4]], dtype=float)  # -> 6 items, 2 features
+t4_gamma = 0.5  # -> RBF sharpness
+t4_diff = t4_X[:, None, :] - t4_X[None, :, :]  # -> all pairwise differences
+t4_dist2 = np.sum(t4_diff ** 2, axis=2)  # -> squared distance matrix
+t4_gram = np.exp(-t4_gamma * t4_dist2)  # -> RBF similarities
+t4_diag = np.diag(t4_gram)  # -> all ones
+t4_near_similarity = t4_gram[0, 1]  # -> 0.607
+t4_far_similarity = t4_gram[0, 3]  # -> 0.00012
+print("rng seed fixed:", 0)
+print("points:\n", t4_X)
+print("gamma:", t4_gamma)
+print("squared distances:\n", t4_dist2)
+print("RBF Gram matrix:\n", np.round(t4_gram, 3))
+print("diagonal similarities:", np.round(t4_diag, 3))
+print("near similarity K(0,1):", round(float(t4_near_similarity), 3))
+print("far similarity K(0,3):", round(float(t4_far_similarity), 6))
+assert np.allclose(t4_diag, np.ones_like(t4_diag))
+assert t4_near_similarity > t4_far_similarity
+
+plt.figure(figsize=(4.3, 3.8))
+plt.imshow(t4_gram, cmap="viridis", vmin=0.0, vmax=1.0)
+plt.colorbar(label="RBF similarity")
+plt.title("RBF Gram matrix: nearby pairs glow")
+plt.xlabel("point j")
+plt.ylabel("point i")
+plt.tight_layout()
+plt.show()
+plt.close()
+```
+▶ What you'll see: a pairwise distance matrix, an RBF Gram matrix with ones on the diagonal, and bright blocks for nearby points.
+
+### ✍️ Toy 5 · support vectors are the nonzero-alpha points
+
+In the dual view, $w=\sum_i\alpha_i y_i x_i$. Points with $\alpha_i=0$ contribute nothing; points with $\alpha_i>0$ are the support vectors that define the separator.
+
+```python
+import numpy as np, matplotlib.pyplot as plt
+
+t5_rng = np.random.default_rng(0)  # -> fixed seed for reproducibility
+t5_X = np.array([[-2, -1], [-1, -2], [-1, 0], [1, 0], [0, 1], [2, 1]], dtype=float)  # -> 6 items, 2 features
+t5_y = np.array([-1, -1, -1, 1, 1, 1], dtype=float)  # -> labels
+t5_alpha = np.array([0.0, 0.0, 0.5, 0.5, 1.0, 0.0])  # -> only three nonzero multipliers
+t5_contrib = t5_alpha[:, None] * t5_y[:, None] * t5_X  # -> each point's vector contribution
+t5_w = np.sum(t5_contrib, axis=0)  # -> [1,1]
+t5_b = 0.0  # -> offset
+t5_scores = t5_X @ t5_w - t5_b  # -> [-3,-3,-1,1,1,3]
+t5_margins = t5_y * t5_scores  # -> [3,3,1,1,1,3]
+t5_support_mask = t5_alpha > 0.0  # -> [False,False,True,True,True,False]
+t5_support_indices = np.where(t5_support_mask)[0]  # -> [2,3,4]
+t5_x_grid = np.linspace(-3.0, 3.0, 200)  # -> plotting grid
+t5_boundary = (t5_b - t5_w[0] * t5_x_grid) / t5_w[1]  # -> boundary line
+t5_plus_margin = (t5_b + 1.0 - t5_w[0] * t5_x_grid) / t5_w[1]  # -> +1 margin
+t5_minus_margin = (t5_b - 1.0 - t5_w[0] * t5_x_grid) / t5_w[1]  # -> -1 margin
+print("rng seed fixed:", 0)
+print("alphas:", t5_alpha)
+print("per-point contributions:\n", t5_contrib)
+print("dual-built w:", t5_w)
+print("scores:", t5_scores)
+print("margins:", t5_margins)
+print("support vector indices:", t5_support_indices)
+assert np.allclose(t5_w, np.array([1.0, 1.0]))
+assert np.allclose(t5_margins[t5_support_mask], np.ones(np.sum(t5_support_mask)))
+
+plt.figure(figsize=(4.8, 4.0))
+plt.scatter(t5_X[t5_y == -1, 0], t5_X[t5_y == -1, 1], color="tab:blue", edgecolor="black", s=80, label="class -1")
+plt.scatter(t5_X[t5_y == 1, 0], t5_X[t5_y == 1, 1], color="tab:orange", edgecolor="black", s=80, label="class +1")
+plt.scatter(t5_X[t5_support_mask, 0], t5_X[t5_support_mask, 1], s=190, facecolors="none", edgecolors="crimson", linewidths=2, label="support vectors")
+plt.plot(t5_x_grid, t5_boundary, color="black", linewidth=2, label="boundary")
+plt.plot(t5_x_grid, t5_plus_margin, color="black", linestyle="--", label="margins")
+plt.plot(t5_x_grid, t5_minus_margin, color="black", linestyle="--")
+plt.xlim(-3, 3)
+plt.ylim(-3, 3)
+plt.xlabel("feature 1")
+plt.ylabel("feature 2")
+plt.title("Only nonzero-alpha points build w")
+plt.legend()
+plt.tight_layout()
+plt.show()
+plt.close()
+```
+▶ What you'll see: zero-alpha rows contributing `[0, 0]`, support vectors circled, and those support vectors sitting on the margin lines.
+
+### ✍️ Toy 6 · soft-margin C changes the tradeoff
+
+The soft-margin objective is $\frac12\|w\|^2+C\sum_i\max(0,1-y_if_i)$. Small $C$ tolerates violations for a smaller norm; large $C$ makes the lower-hinge candidate win.
+
+```python
+import numpy as np, matplotlib.pyplot as plt
+
+t6_rng = np.random.default_rng(0)  # -> fixed seed for reproducibility
+t6_X = np.array([[-2, -1], [-1, -1], [-0.2, 0.5], [0.2, -0.1], [1, 1], [2, 1]], dtype=float)  # -> 6 items, 2 features
+t6_y = np.array([-1, -1, -1, 1, 1, 1], dtype=float)  # -> labels with overlap
+t6_w_wide = np.array([0.4, 0.3])  # -> small norm, more violations
+t6_w_tight = np.array([1.1, 0.9])  # -> larger norm, fewer violations
+t6_C_values = np.array([0.1, 1.0, 10.0])  # -> soft-margin penalties
+t6_scores_wide = t6_X @ t6_w_wide  # -> [-1.1,-0.7,0.07,0.05,0.7,1.1]
+t6_scores_tight = t6_X @ t6_w_tight  # -> [-3.1,-2,0.23,0.13,2,3.1]
+t6_signed_wide = t6_y * t6_scores_wide  # -> [1.1,0.7,-0.07,0.05,0.7,1.1]
+t6_signed_tight = t6_y * t6_scores_tight  # -> [3.1,2,-0.23,0.13,2,3.1]
+t6_hinge_wide = np.maximum(0.0, 1.0 - t6_signed_wide)  # -> sum 2.62
+t6_hinge_tight = np.maximum(0.0, 1.0 - t6_signed_tight)  # -> sum 2.10
+t6_reg_wide = 0.5 * np.sum(t6_w_wide ** 2)  # -> 0.125
+t6_reg_tight = 0.5 * np.sum(t6_w_tight ** 2)  # -> 1.010
+t6_obj_wide = t6_reg_wide + t6_C_values * np.sum(t6_hinge_wide)  # -> [0.387,2.745,26.325]
+t6_obj_tight = t6_reg_tight + t6_C_values * np.sum(t6_hinge_tight)  # -> [1.22,3.11,22.01]
+t6_best = np.where(t6_obj_wide < t6_obj_tight, "wide", "tight")  # -> ['wide','wide','tight']
+print("rng seed fixed:", 0)
+print("C values:", t6_C_values)
+print("wide signed margins:", np.round(t6_signed_wide, 3))
+print("tight signed margins:", np.round(t6_signed_tight, 3))
+print("wide hinge losses:", np.round(t6_hinge_wide, 3))
+print("tight hinge losses:", np.round(t6_hinge_tight, 3))
+print("wide regularizer:", round(float(t6_reg_wide), 3))
+print("tight regularizer:", round(float(t6_reg_tight), 3))
+print("wide objectives:", np.round(t6_obj_wide, 3))
+print("tight objectives:", np.round(t6_obj_tight, 3))
+print("best candidate by C:", t6_best)
+assert t6_best[0] == "wide"
+assert t6_best[-1] == "tight"
+
+plt.figure(figsize=(4.8, 3.6))
+plt.plot(t6_C_values, t6_obj_wide, "o-", label="wide / more hinge")
+plt.plot(t6_C_values, t6_obj_tight, "s-", label="tight / less hinge")
+plt.xscale("log")
+plt.xlabel("C")
+plt.ylabel("soft-margin objective")
+plt.title("Increasing C favors fewer violations")
+plt.legend()
+plt.tight_layout()
+plt.show()
+plt.close()
+```
+▶ What you'll see: objective values for three C settings; the small-norm candidate wins at low C, while the lower-violation candidate wins at high C.
+
 ## 0. Step-by-Step Worked Example — Start Here (Beginner Friendly)
 
 > 🧑‍🎓 **New to this topic? Start here.** This is a gentle, fully runnable walkthrough that

@@ -2,6 +2,263 @@
 > **Source:** CS 230 · **Category:** Model · **Type:** ⚖️ Both · [↑ Full reference](../../ai-ml-cheatsheets.md)
 > 📓 The coded examples form a runnable notebook section; an .ipynb will be generated.
 
+
+## ✍️ Toy Examples
+
+Before the full worked example, these small toys trace the RNN mechanics by hand: one hidden-state update, BPTT accumulation, vanishing-gradient products, LSTM gates, and the GRU update blend. Each block is self-contained, prints the intermediate numbers, checks itself with an assert, and draws exactly one picture.
+
+### ✍️ Toy 1 · vanilla RNN step $h_t$
+
+One vanilla RNN step combines the previous hidden state, the current input, and a bias, then applies `tanh`.
+
+```python
+import numpy as np
+import matplotlib.pyplot as plt
+
+t1_rng = np.random.default_rng(0)  # -> reproducible generator
+
+t1_x = np.array([1.0, 0.0, -1.0])  # -> current input x_t
+t1_h_prev = np.array([0.5, -0.2])  # -> previous hidden state
+t1_w_hh = np.array([[0.4, 0.1], [-0.3, 0.2]])  # -> recurrent weights
+t1_w_xh = np.array([[0.6, -0.2, 0.1], [0.0, 0.5, -0.4]])  # -> input weights
+t1_b = np.array([0.05, -0.1])  # -> bias
+t1_hidden_part = t1_w_hh @ t1_h_prev  # -> [0.18, -0.19]
+t1_input_part = t1_w_xh @ t1_x  # -> [0.5, 0.4]
+t1_pre = t1_hidden_part + t1_input_part  # -> [0.68, 0.21]
+t1_pre = t1_pre + t1_b  # -> [0.73, 0.11]
+t1_h = np.tanh(t1_pre)  # -> [0.623, 0.11]
+
+print("t1 x_t:", t1_x)  # -> [ 1.  0. -1.]
+print("t1 h_prev:", t1_h_prev)  # -> [ 0.5 -0.2]
+print("t1 recurrent contribution:", np.round(t1_hidden_part, 3))  # -> [ 0.18 -0.19]
+print("t1 input contribution:", np.round(t1_input_part, 3))  # -> [0.5 0.4]
+print("t1 pre-activation:", np.round(t1_pre, 3))  # -> [0.73 0.11]
+print("t1 h_t:", np.round(t1_h, 3))  # -> [0.623 0.11]
+assert np.allclose(np.round(t1_h, 3), [0.623, 0.110])
+
+t1_idx = np.arange(len(t1_h))  # -> [0 1]
+plt.figure(figsize=(6, 3.2))
+plt.bar(t1_idx - 0.22, t1_hidden_part, width=0.22, label="W_hh h_prev")
+plt.bar(t1_idx, t1_input_part, width=0.22, label="W_xh x_t")
+plt.bar(t1_idx + 0.22, t1_h, width=0.22, label="tanh result")
+plt.axhline(0.0, color="black", linewidth=0.8)
+plt.xlabel("hidden coordinate")
+plt.ylabel("value")
+plt.title("One vanilla RNN hidden-state update")
+plt.legend()
+plt.tight_layout()
+plt.show()
+```
+▶ What you'll see: the old hidden state and current input add into a pre-activation, then `tanh` squashes it into the new hidden state.
+
+### ✍️ Toy 2 · BPTT shared-weight gradient
+
+Backpropagation through time adds gradient contributions from every unrolled copy of the same shared parameter.
+
+```python
+import numpy as np
+import matplotlib.pyplot as plt
+
+t2_rng = np.random.default_rng(0)  # -> reproducible generator
+
+t2_x = np.array([0.5, -0.3, 0.8, 0.1])  # -> four scalar inputs
+t2_target = np.array([0.2, -0.1, 0.4, 0.0])  # -> four scalar targets
+t2_w_rec = 0.6  # -> shared recurrent weight
+t2_w_in = 0.9  # -> input weight
+t2_h_prev = 0.0  # -> h_0
+t2_s_prev = 0.0  # -> dh_0 / dw_rec
+t2_contribs = []  # -> gradient pieces
+t2_h_values = []  # -> hidden states
+
+for t2_step, (t2_x_t, t2_y_t) in enumerate(zip(t2_x, t2_target), start=1):
+    t2_pre = t2_w_rec * t2_h_prev  # -> recurrent term
+    t2_pre = t2_pre + t2_w_in * t2_x_t  # -> add input term
+    t2_h = float(np.tanh(t2_pre))  # -> h_t
+    t2_s = (1.0 - t2_h ** 2) * (t2_h_prev + t2_w_rec * t2_s_prev)  # -> dh_t/dw_rec
+    t2_dloss_dh = t2_h - t2_y_t  # -> d 0.5(h-y)^2 / dh
+    t2_contrib = t2_dloss_dh * t2_s  # -> contribution to dL/dw_rec
+    t2_h_values.append(t2_h)  # -> save h_t
+    t2_contribs.append(t2_contrib)  # -> save gradient contribution
+    print(f"t2 step {t2_step} h:", round(t2_h, 5))  # -> hidden state
+    print(f"t2 step {t2_step} dh/dw:", round(float(t2_s), 5))  # -> sensitivity
+    print(f"t2 step {t2_step} gradient contribution:", round(float(t2_contrib), 5))  # -> contribution
+    t2_h_prev = t2_h  # -> carry h_t forward
+    t2_s_prev = t2_s  # -> carry sensitivity forward
+
+t2_contribs = np.array(t2_contribs)  # -> gradient contribution array
+t2_running = np.cumsum(t2_contribs)  # -> running BPTT sum
+t2_total_grad = float(t2_contribs.sum())  # -> total shared-weight gradient
+print("t2 hidden values:", np.round(t2_h_values, 5).tolist())  # -> all h_t
+print("t2 contributions:", np.round(t2_contribs, 5).tolist())  # -> all pieces
+print("t2 total gradient:", round(t2_total_grad, 5))  # -> shared dL/dw_rec
+assert np.isclose(t2_total_grad, t2_running[-1])
+assert len(t2_contribs) == 4
+
+plt.figure(figsize=(6, 3.2))
+plt.bar(np.arange(1, 5), t2_contribs, color="steelblue", label="per-step contribution")
+plt.plot(np.arange(1, 5), t2_running, marker="o", color="black", label="running sum")
+plt.axhline(0.0, color="gray", linewidth=0.8)
+plt.xlabel("timestep")
+plt.ylabel("gradient wrt shared weight")
+plt.title("BPTT adds unrolled gradient contributions")
+plt.legend()
+plt.tight_layout()
+plt.show()
+```
+▶ What you'll see: each timestep contributes a signed amount, and the running sum is the final gradient for the one shared recurrent weight.
+
+### ✍️ Toy 3 · vanishing gradient product
+
+A long vanilla-RNN gradient multiplies many factors. If each factor is below 1, the product quickly shrinks.
+
+```python
+import numpy as np
+import matplotlib.pyplot as plt
+
+t3_rng = np.random.default_rng(0)  # -> reproducible generator
+
+t3_factors = np.array([0.70, 0.75, 0.80, 0.70, 0.75, 0.80, 0.70, 0.75])  # -> eight sub-unit factors
+t3_products = np.cumprod(t3_factors)  # -> shrinking gradient products
+t3_final = float(t3_products[-1])  # -> 0.09261
+
+print("t3 factors:", t3_factors.tolist())  # -> [0.7, 0.75, 0.8, 0.7, 0.75, 0.8, 0.7, 0.75]
+for t3_step, t3_product in enumerate(t3_products, start=1):
+    print(f"t3 product through step {t3_step}:", round(float(t3_product), 6))  # -> shrinking product
+print("t3 final product:", round(t3_final, 6))  # -> 0.09261
+assert t3_final < 0.13
+
+plt.figure(figsize=(5.5, 3.2))
+plt.plot(np.arange(1, len(t3_products) + 1), t3_products, marker="o", color="crimson")
+plt.xlabel("number of multiplied factors")
+plt.ylabel("gradient scale")
+plt.title("Sub-unit recurrent factors make gradients vanish")
+plt.ylim(0.0, 1.0)
+plt.tight_layout()
+plt.show()
+```
+▶ What you'll see: multiplying eight factors below 1 leaves only a small fraction of the original gradient.
+
+### ✍️ Toy 4 · LSTM gates and additive cell update
+
+An LSTM keeps old memory through a forget gate, writes candidate memory through an update gate, and reveals memory through an output gate.
+
+```python
+import numpy as np
+import matplotlib.pyplot as plt
+
+t4_rng = np.random.default_rng(0)  # -> reproducible generator
+
+def t4_sigmoid(t4_z):
+    return 1.0 / (1.0 + np.exp(-np.clip(t4_z, -40.0, 40.0)))  # -> stable sigmoid
+
+t4_x = np.array([0.6, -0.2])  # -> current input
+t4_h_prev = np.array([0.3, -0.4])  # -> previous exposed hidden state
+t4_c_prev = np.array([0.8, -0.5])  # -> previous cell memory
+t4_combo = np.concatenate([t4_x, t4_h_prev])  # -> [0.6, -0.2, 0.3, -0.4]
+t4_w_f = np.array([[0.5, -0.1, 0.2, 0.0], [-0.2, 0.4, 0.1, 0.3]])  # -> forget weights
+t4_w_u = np.array([[0.1, 0.3, -0.2, 0.2], [0.4, -0.1, 0.2, -0.3]])  # -> update weights
+t4_w_r = np.array([[0.2, 0.2, 0.1, -0.1], [-0.1, 0.3, 0.2, 0.2]])  # -> reset/relevance weights
+t4_w_o = np.array([[0.3, -0.4, 0.1, 0.2], [0.2, 0.1, -0.3, 0.4]])  # -> output weights
+t4_w_c = np.array([[0.4, 0.1, -0.2, 0.3], [-0.3, 0.2, 0.4, 0.1]])  # -> candidate weights
+t4_b_f = np.array([0.5, 0.2])  # -> forget bias
+t4_b_u = np.array([-0.1, 0.0])  # -> update bias
+t4_b_r = np.array([0.0, 0.1])  # -> relevance bias
+t4_b_o = np.array([0.1, -0.1])  # -> output bias
+t4_b_c = np.array([0.0, 0.05])  # -> candidate bias
+t4_f = t4_sigmoid(t4_w_f @ t4_combo + t4_b_f)  # -> forget gate
+t4_u = t4_sigmoid(t4_w_u @ t4_combo + t4_b_u)  # -> update gate
+t4_r = t4_sigmoid(t4_w_r @ t4_combo + t4_b_r)  # -> relevance gate
+t4_o = t4_sigmoid(t4_w_o @ t4_combo + t4_b_o)  # -> output gate
+t4_candidate_input = np.concatenate([t4_x, t4_r * t4_h_prev])  # -> gated candidate input
+t4_c_tilde = np.tanh(t4_w_c @ t4_candidate_input + t4_b_c)  # -> candidate memory
+t4_keep = t4_f * t4_c_prev  # -> retained old memory
+t4_write = t4_u * t4_c_tilde  # -> written new memory
+t4_c = t4_keep + t4_write  # -> new cell memory
+t4_h = t4_o * np.tanh(t4_c)  # -> exposed hidden state
+
+print("t4 combo:", np.round(t4_combo, 3))  # -> concatenated inputs
+print("t4 forget gate:", np.round(t4_f, 3))  # -> gate values
+print("t4 update gate:", np.round(t4_u, 3))  # -> gate values
+print("t4 relevance gate:", np.round(t4_r, 3))  # -> gate values
+print("t4 output gate:", np.round(t4_o, 3))  # -> gate values
+print("t4 candidate input:", np.round(t4_candidate_input, 3))  # -> candidate input
+print("t4 candidate memory:", np.round(t4_c_tilde, 3))  # -> candidate c_tilde
+print("t4 kept memory:", np.round(t4_keep, 3))  # -> forget path
+print("t4 written memory:", np.round(t4_write, 3))  # -> update path
+print("t4 new cell:", np.round(t4_c, 3))  # -> c_t
+print("t4 new hidden:", np.round(t4_h, 3))  # -> h_t
+assert t4_c.shape == (2,)
+assert np.all((t4_f > 0.0) & (t4_f < 1.0))
+
+t4_gate_means = np.array([t4_f.mean(), t4_u.mean(), t4_r.mean(), t4_o.mean()])  # -> mean gate openness
+plt.figure(figsize=(6.5, 3.2))
+plt.bar(["forget", "update", "relevance", "output"], t4_gate_means, color=["steelblue", "orange", "green", "purple"])
+plt.ylim(0.0, 1.0)
+plt.ylabel("mean gate value")
+plt.title("LSTM gates control keep, write, use, and reveal")
+plt.tight_layout()
+plt.show()
+```
+▶ What you'll see: four sigmoid gates, a candidate memory vector, and an additive cell update from kept old memory plus written new memory.
+
+### ✍️ Toy 5 · GRU update blend
+
+A GRU uses reset to prepare a candidate and update to blend old state with the candidate state.
+
+```python
+import numpy as np
+import matplotlib.pyplot as plt
+
+t5_rng = np.random.default_rng(0)  # -> reproducible generator
+
+def t5_sigmoid(t5_z):
+    return 1.0 / (1.0 + np.exp(-np.clip(t5_z, -40.0, 40.0)))  # -> stable sigmoid
+
+t5_x = np.array([0.4, -0.6])  # -> current input
+t5_h_prev = np.array([0.7, -0.2])  # -> previous GRU state
+t5_combo = np.concatenate([t5_x, t5_h_prev])  # -> [0.4, -0.6, 0.7, -0.2]
+t5_w_z = np.array([[0.5, -0.1, 0.3, 0.2], [-0.4, 0.6, 0.1, -0.2]])  # -> update weights
+t5_w_r = np.array([[0.2, 0.4, -0.3, 0.5], [0.6, -0.2, 0.2, 0.1]])  # -> reset weights
+t5_b_z = np.array([0.0, 0.1])  # -> update bias
+t5_b_r = np.array([0.1, -0.1])  # -> reset bias
+t5_z = t5_sigmoid(t5_w_z @ t5_combo + t5_b_z)  # -> update gate
+t5_r = t5_sigmoid(t5_w_r @ t5_combo + t5_b_r)  # -> reset gate
+t5_reset_state = t5_r * t5_h_prev  # -> reset-filtered old state
+t5_candidate_input = np.concatenate([t5_reset_state, t5_x])  # -> candidate input
+t5_w_c = np.array([[0.7, 0.1, 0.3, -0.2], [0.2, 0.6, -0.5, 0.4]])  # -> candidate weights
+t5_b_c = np.array([0.0, 0.05])  # -> candidate bias
+t5_candidate = np.tanh(t5_w_c @ t5_candidate_input + t5_b_c)  # -> candidate state
+t5_old_part = (1.0 - t5_z) * t5_h_prev  # -> retained old state
+t5_new_part = t5_z * t5_candidate  # -> admitted candidate
+t5_h = t5_old_part + t5_new_part  # -> new GRU state
+
+print("t5 combo:", np.round(t5_combo, 3))  # -> concatenated input/state
+print("t5 update gate:", np.round(t5_z, 3))  # -> Γ_z
+print("t5 reset gate:", np.round(t5_r, 3))  # -> Γ_r
+print("t5 reset state:", np.round(t5_reset_state, 3))  # -> Γ_r * h_prev
+print("t5 candidate input:", np.round(t5_candidate_input, 3))  # -> candidate input
+print("t5 candidate:", np.round(t5_candidate, 3))  # -> h_tilde
+print("t5 old part:", np.round(t5_old_part, 3))  # -> (1-z)h_prev
+print("t5 new part:", np.round(t5_new_part, 3))  # -> z*h_tilde
+print("t5 new hidden:", np.round(t5_h, 3))  # -> h_t
+assert t5_h.shape == (2,)
+assert np.all((t5_z > 0.0) & (t5_z < 1.0))
+
+t5_idx = np.arange(len(t5_h))  # -> [0 1]
+plt.figure(figsize=(6, 3.2))
+plt.bar(t5_idx - 0.18, t5_old_part, width=0.36, label="old contribution")
+plt.bar(t5_idx + 0.18, t5_new_part, width=0.36, label="candidate contribution")
+plt.plot(t5_idx, t5_h, "ko", label="new state")
+plt.axhline(0.0, color="gray", linewidth=0.8)
+plt.xlabel("state coordinate")
+plt.ylabel("value")
+plt.title("GRU update gate blends old and new memory")
+plt.legend()
+plt.tight_layout()
+plt.show()
+```
+▶ What you'll see: reset filters the old state before forming a candidate, and update controls how much old versus new state remains.
+
 ## 0. Step-by-Step Worked Example — Start Here (Beginner Friendly)
 
 > 🧑‍🎓 **New to this topic? Start here.** This is a gentle, fully runnable walkthrough that

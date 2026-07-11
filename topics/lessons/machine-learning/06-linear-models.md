@@ -2,6 +2,245 @@
 > **Source:** CS 229 · **Category:** Model · **Type:** ⚖️ Both · [↑ Full reference](../../ai-ml-cheatsheets.md)
 > 📓 The coded examples form a runnable notebook section; an .ipynb will be generated.
 
+## ✍️ Toy Examples
+
+These tiny examples isolate the computational mechanics from the full lesson. Each toy uses a handful of numbers, prints the intermediate values, and draws one picture so you can trace the math by hand before the larger notebook section.
+
+### ✍️ Toy 1 · normal equations for linear regression
+
+The normal equation turns least squares into one linear solve: build an intercept column, compute $X^TX$ and $X^Ty$, then solve for the intercept and feature weights.
+
+```python
+import numpy as np, matplotlib.pyplot as plt
+
+t1_rng = np.random.default_rng(0)  # -> fixed seed for reproducibility
+t1_X_raw = np.array([[0, 0], [1, 0], [0, 1], [1, 1], [2, 1], [1, 2]], dtype=float)  # -> 6 items, 2 features
+t1_y = np.array([1, 3, 0, 2, 4, 1], dtype=float)  # -> exact line: 1 + 2*x1 - x2
+t1_ones = np.ones((t1_X_raw.shape[0], 1))  # -> column of six 1s
+t1_X = np.column_stack([t1_ones, t1_X_raw])  # -> design matrix with intercept, x1, x2
+t1_Xt = t1_X.T  # -> shape (3, 6)
+t1_XtX = t1_Xt @ t1_X  # -> [[6,5,5],[5,7,5],[5,5,7]]
+t1_Xty = t1_Xt @ t1_y  # -> [11,14,8]
+t1_theta = np.linalg.solve(t1_XtX, t1_Xty)  # -> [1,2,-1]
+t1_yhat = t1_X @ t1_theta  # -> [1,3,0,2,4,1]
+t1_residuals = t1_y - t1_yhat  # -> all zeros
+t1_sse = np.sum(t1_residuals ** 2)  # -> 0
+print("rng seed fixed:", 0)
+print("raw features:\n", t1_X_raw)
+print("targets:", t1_y)
+print("design matrix X:\n", t1_X)
+print("X^T X:\n", t1_XtX)
+print("X^T y:", t1_Xty)
+print("theta [intercept, x1, x2]:", np.round(t1_theta, 3))
+print("predictions:", np.round(t1_yhat, 3))
+print("residuals:", np.round(t1_residuals, 3))
+print("sum squared error:", round(float(t1_sse), 6))
+assert np.allclose(t1_theta, np.array([1.0, 2.0, -1.0]))
+
+plt.figure(figsize=(4.6, 3.6))
+plt.scatter(t1_y, t1_yhat, s=80, color="tab:blue", edgecolor="black")
+plt.plot([0, 4], [0, 4], color="gray", linestyle="--", label="perfect prediction")
+plt.xlabel("actual y")
+plt.ylabel("predicted y")
+plt.title("Normal equation fit lands on the exact targets")
+plt.legend()
+plt.tight_layout()
+plt.show()
+plt.close()
+```
+▶ What you'll see: the $X^TX$ system, the solved weights `[1, 2, -1]`, zero residuals, and predictions on the 45° perfect-fit line.
+
+### ✍️ Toy 2 · one squared-loss gradient step
+
+Gradient descent does not solve the whole system at once. It starts with a guess, computes prediction errors, forms the gradient $X^T(X\theta-y)/m$, and takes one downhill step.
+
+```python
+import numpy as np, matplotlib.pyplot as plt
+
+t2_rng = np.random.default_rng(0)  # -> fixed seed for reproducibility
+t2_X_raw = np.array([[0, 0], [1, 0], [0, 1], [1, 1], [2, 1], [1, 2]], dtype=float)  # -> 6 items, 2 features
+t2_y = np.array([1, 3, 0, 2, 4, 1], dtype=float)  # -> regression targets
+t2_X = np.column_stack([np.ones(t2_X_raw.shape[0]), t2_X_raw])  # -> intercept + features
+t2_theta = np.array([0.0, 0.0, 0.0])  # -> deliberately bad starting weights
+t2_alpha = 0.1  # -> learning rate
+t2_pred = t2_X @ t2_theta  # -> [0,0,0,0,0,0]
+t2_error = t2_pred - t2_y  # -> [-1,-3,0,-2,-4,-1]
+t2_loss = 0.5 * np.mean(t2_error ** 2)  # -> 2.5833
+t2_grad = (t2_X.T @ t2_error) / len(t2_y)  # -> [-1.833,-2.333,-1.333]
+t2_theta_next = t2_theta - t2_alpha * t2_grad  # -> [0.183,0.233,0.133]
+t2_pred_next = t2_X @ t2_theta_next  # -> first downhill predictions
+t2_error_next = t2_pred_next - t2_y  # -> smaller errors overall
+t2_loss_next = 0.5 * np.mean(t2_error_next ** 2)  # -> 1.6659
+print("rng seed fixed:", 0)
+print("design matrix X:\n", t2_X)
+print("starting theta:", t2_theta)
+print("starting predictions:", np.round(t2_pred, 3))
+print("starting error:", np.round(t2_error, 3))
+print("starting loss:", round(float(t2_loss), 4))
+print("gradient:", np.round(t2_grad, 4))
+print("next theta:", np.round(t2_theta_next, 4))
+print("next predictions:", np.round(t2_pred_next, 3))
+print("next error:", np.round(t2_error_next, 3))
+print("next loss:", round(float(t2_loss_next), 4))
+assert t2_loss_next < t2_loss
+
+plt.figure(figsize=(4.8, 3.6))
+plt.plot([0, 1], [t2_loss, t2_loss_next], marker="o", color="crimson")
+plt.xticks([0, 1], ["before", "after one step"])
+plt.ylabel("half mean squared error")
+plt.title("One gradient step lowers squared loss")
+plt.tight_layout()
+plt.show()
+plt.close()
+```
+▶ What you'll see: the first gradient, the updated weights, and a two-point loss plot dropping after one step.
+
+### ✍️ Toy 3 · logistic sigmoid, log loss, and gradient
+
+Logistic regression maps a linear score through the sigmoid, measures Bernoulli negative log-likelihood, then uses the gradient $X^T(p-y)/m$ to improve the probabilities.
+
+```python
+import numpy as np, matplotlib.pyplot as plt
+
+t3_rng = np.random.default_rng(0)  # -> fixed seed for reproducibility
+t3_X_raw = np.array([[-2, -1], [-1, -2], [-1, 0], [0, 1], [1, 1], [2, 1]], dtype=float)  # -> 6 items, 2 features
+t3_y = np.array([0, 0, 0, 1, 1, 1], dtype=float)  # -> binary labels
+t3_X = np.column_stack([np.ones(t3_X_raw.shape[0]), t3_X_raw])  # -> intercept + features
+t3_theta = np.array([0.0, 1.0, 0.5])  # -> hand-picked logistic weights
+t3_logits = t3_X @ t3_theta  # -> [-2.5,-2,-1,0.5,1.5,2.5]
+t3_probs = 1.0 / (1.0 + np.exp(-t3_logits))  # -> [0.076,0.119,0.269,0.622,0.818,0.924]
+t3_eps = 1e-12  # -> log safety
+t3_loss_terms = -(t3_y * np.log(t3_probs + t3_eps) + (1.0 - t3_y) * np.log(1.0 - t3_probs + t3_eps))  # -> per-example losses
+t3_loss = np.mean(t3_loss_terms)  # -> 0.2122
+t3_grad = (t3_X.T @ (t3_probs - t3_y)) / len(t3_y)  # -> [-0.029,-0.146,-0.158]
+t3_alpha = 0.3  # -> learning rate
+t3_theta_next = t3_theta - t3_alpha * t3_grad  # -> [0.009,1.044,0.548]
+t3_logits_next = t3_X @ t3_theta_next  # -> updated logits
+t3_probs_next = 1.0 / (1.0 + np.exp(-t3_logits_next))  # -> updated probabilities
+t3_loss_next = -np.mean(t3_y * np.log(t3_probs_next + t3_eps) + (1.0 - t3_y) * np.log(1.0 - t3_probs_next + t3_eps))  # -> 0.1987
+print("rng seed fixed:", 0)
+print("design matrix X:\n", t3_X)
+print("labels:", t3_y)
+print("theta:", t3_theta)
+print("logits:", np.round(t3_logits, 3))
+print("sigmoid probabilities:", np.round(t3_probs, 3))
+print("per-example log losses:", np.round(t3_loss_terms, 4))
+print("average log loss:", round(float(t3_loss), 4))
+print("gradient:", np.round(t3_grad, 4))
+print("theta after one step:", np.round(t3_theta_next, 4))
+print("loss after one step:", round(float(t3_loss_next), 4))
+assert t3_loss_next < t3_loss
+
+plt.figure(figsize=(4.8, 3.6))
+t3_z_grid = np.linspace(-4.0, 4.0, 200)  # -> smooth logit grid
+t3_p_grid = 1.0 / (1.0 + np.exp(-t3_z_grid))  # -> sigmoid curve
+plt.plot(t3_z_grid, t3_p_grid, color="tab:blue", label="sigmoid")
+plt.scatter(t3_logits, t3_probs, c=t3_y, cmap="coolwarm", edgecolor="black", s=80, label="toy points")
+plt.axhline(0.5, color="gray", linestyle="--")
+plt.axvline(0.0, color="gray", linestyle=":")
+plt.xlabel("logit z")
+plt.ylabel("P(y=1|x)")
+plt.title("Sigmoid turns linear scores into probabilities")
+plt.legend()
+plt.tight_layout()
+plt.show()
+plt.close()
+```
+▶ What you'll see: logits, probabilities, log-loss terms, a downhill gradient step, and the toy points sitting on the sigmoid curve.
+
+### ✍️ Toy 4 · GLM link functions
+
+A GLM starts with the same natural parameter $\eta=\theta^Tx$ but uses a response function suited to the target: identity for Gaussian data, sigmoid for Bernoulli data, and exponential for counts.
+
+```python
+import numpy as np, matplotlib.pyplot as plt
+
+t4_rng = np.random.default_rng(0)  # -> fixed seed for reproducibility
+t4_X_raw = np.array([[-2, -1], [-1, 0], [0, 1], [1, -1], [1, 1], [2, 0]], dtype=float)  # -> 6 items, 2 features
+t4_X = np.column_stack([np.ones(t4_X_raw.shape[0]), t4_X_raw])  # -> intercept + features
+t4_theta = np.array([0.2, 0.5, -0.3])  # -> shared linear weights
+t4_eta = t4_X @ t4_theta  # -> [-0.5,-0.3,-0.1,1.0,0.4,1.2]
+t4_gaussian_mean = t4_eta  # -> identity link response
+t4_bernoulli_mean = 1.0 / (1.0 + np.exp(-t4_eta))  # -> sigmoid response in (0,1)
+t4_poisson_mean = np.exp(t4_eta)  # -> positive count mean
+t4_response_table = np.column_stack([t4_gaussian_mean, t4_bernoulli_mean, t4_poisson_mean])  # -> compare three GLM means
+print("rng seed fixed:", 0)
+print("raw features:\n", t4_X_raw)
+print("design matrix X:\n", t4_X)
+print("theta:", t4_theta)
+print("natural parameter eta:", np.round(t4_eta, 3))
+print("Gaussian identity means:", np.round(t4_gaussian_mean, 3))
+print("Bernoulli sigmoid means:", np.round(t4_bernoulli_mean, 3))
+print("Poisson exp means:", np.round(t4_poisson_mean, 3))
+print("response table [Gaussian, Bernoulli, Poisson]:\n", np.round(t4_response_table, 3))
+assert np.all((t4_bernoulli_mean > 0.0) & (t4_bernoulli_mean < 1.0))
+assert np.all(t4_poisson_mean > 0.0)
+
+plt.figure(figsize=(5.0, 3.6))
+t4_order = np.argsort(t4_eta)  # -> sort by eta for readable curves
+plt.plot(t4_eta[t4_order], t4_gaussian_mean[t4_order], "o-", label="Gaussian identity")
+plt.plot(t4_eta[t4_order], t4_bernoulli_mean[t4_order], "s-", label="Bernoulli sigmoid")
+plt.plot(t4_eta[t4_order], t4_poisson_mean[t4_order], "^-", label="Poisson exp")
+plt.xlabel("natural parameter eta")
+plt.ylabel("mean response")
+plt.title("Same linear eta, different GLM response functions")
+plt.legend()
+plt.tight_layout()
+plt.show()
+plt.close()
+```
+▶ What you'll see: one vector of natural parameters transformed three ways, with Bernoulli means bounded and Poisson means always positive.
+
+### ✍️ Toy 5 · L2 regularization shrinks feature weights
+
+L2 regularization adds a penalty to the normal equations. Here the intercept is left unpenalized while the two feature weights are shrunk by solving $(X^TX+\lambda R)\theta=X^Ty$.
+
+```python
+import numpy as np, matplotlib.pyplot as plt
+
+t5_rng = np.random.default_rng(0)  # -> fixed seed for reproducibility
+t5_X_raw = np.array([[0, 0], [1, 0], [0, 1], [1, 1], [2, 1], [1, 2]], dtype=float)  # -> 6 items, 2 features
+t5_y = np.array([1, 3, 0, 2, 4, 1], dtype=float)  # -> same regression targets
+t5_X = np.column_stack([np.ones(t5_X_raw.shape[0]), t5_X_raw])  # -> intercept + features
+t5_XtX = t5_X.T @ t5_X  # -> unregularized normal matrix
+t5_Xty = t5_X.T @ t5_y  # -> target side
+t5_lambda = 2.0  # -> L2 strength
+t5_R = np.diag([0.0, 1.0, 1.0])  # -> do not penalize intercept
+t5_theta_ols = np.linalg.solve(t5_XtX, t5_Xty)  # -> [1,2,-1]
+t5_theta_l2 = np.linalg.solve(t5_XtX + t5_lambda * t5_R, t5_Xty)  # -> [1.294,1.074,-0.426]
+t5_norm_ols = np.linalg.norm(t5_theta_ols[1:])  # -> 2.236
+t5_norm_l2 = np.linalg.norm(t5_theta_l2[1:])  # -> 1.155
+t5_pred_ols = t5_X @ t5_theta_ols  # -> exact-fit predictions
+t5_pred_l2 = t5_X @ t5_theta_l2  # -> shrunken predictions
+t5_penalty = t5_lambda * np.sum(t5_theta_l2[1:] ** 2)  # -> L2 penalty contribution
+print("rng seed fixed:", 0)
+print("X^T X:\n", t5_XtX)
+print("X^T y:", t5_Xty)
+print("lambda:", t5_lambda)
+print("penalty matrix R:\n", t5_R)
+print("OLS theta:", np.round(t5_theta_ols, 3))
+print("L2 theta:", np.round(t5_theta_l2, 3))
+print("OLS feature norm:", round(float(t5_norm_ols), 3))
+print("L2 feature norm:", round(float(t5_norm_l2), 3))
+print("OLS predictions:", np.round(t5_pred_ols, 3))
+print("L2 predictions:", np.round(t5_pred_l2, 3))
+print("lambda * ||theta_features||^2:", round(float(t5_penalty), 3))
+assert t5_norm_l2 < t5_norm_ols
+
+plt.figure(figsize=(4.8, 3.6))
+t5_positions = np.arange(3)  # -> intercept, x1, x2 positions
+plt.bar(t5_positions - 0.18, t5_theta_ols, width=0.36, label="OLS")
+plt.bar(t5_positions + 0.18, t5_theta_l2, width=0.36, label="L2")
+plt.xticks(t5_positions, ["intercept", "x1", "x2"])
+plt.ylabel("weight value")
+plt.title("L2 regularization shrinks feature weights")
+plt.legend()
+plt.tight_layout()
+plt.show()
+plt.close()
+```
+▶ What you'll see: the ridge system, smaller feature-weight norm after L2, and side-by-side bars showing shrinkage.
+
 ## 0. Step-by-Step Worked Example — Start Here (Beginner Friendly)
 
 > 🧑‍🎓 **New to this topic? Start here.** This is a gentle, fully runnable walkthrough that

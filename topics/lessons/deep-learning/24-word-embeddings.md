@@ -2,6 +2,229 @@
 > **Source:** CS 230 · **Category:** Method · **Type:** 💻 Colab · [↑ Full reference](../../ai-ml-cheatsheets.md)
 > 📓 Runnable notebook section; an `.ipynb` will be generated.
 
+
+## ✍️ Toy Examples
+
+Before the full worked example, these small toys trace the embedding mechanics by hand: local co-occurrence counts, skip-gram softmax, negative sampling, cosine similarity, and analogy vector arithmetic. Each block is self-contained, prints the intermediate numbers, checks itself with an assert, and draws exactly one picture.
+
+### ✍️ Toy 1 · co-occurrence window count
+
+GloVe starts from counts: for each target word, look inside a small context window and increment target-context cells.
+
+```python
+import numpy as np
+import matplotlib.pyplot as plt
+
+t1_rng = np.random.default_rng(0)  # -> reproducible generator
+
+t1_tokens = np.array(["king", "queen", "crown", "king", "palace", "queen"])  # -> six tokens
+t1_vocab = np.array(["king", "queen", "crown", "palace"])  # -> vocabulary order
+t1_word_to_idx = {t1_word: t1_i for t1_i, t1_word in enumerate(t1_vocab)}  # -> word lookup
+t1_window = 1  # -> one token left/right
+t1_counts = np.zeros((len(t1_vocab), len(t1_vocab)), dtype=float)  # -> 4×4 count matrix
+
+for t1_pos, t1_center in enumerate(t1_tokens):
+    t1_left = max(0, t1_pos - t1_window)  # -> left edge
+    t1_right = min(len(t1_tokens), t1_pos + t1_window + 1)  # -> right edge
+    for t1_ctx_pos in range(t1_left, t1_right):
+        if t1_ctx_pos != t1_pos:
+            t1_context = t1_tokens[t1_ctx_pos]  # -> neighboring token
+            t1_counts[t1_word_to_idx[t1_center], t1_word_to_idx[t1_context]] += 1.0  # -> increment one cell
+            print("t1 add count:", (t1_center, t1_context))  # -> target/context pair
+
+print("t1 tokens:", t1_tokens.tolist())  # -> token sequence
+print("t1 vocabulary:", t1_vocab.tolist())  # -> vocab order
+print("t1 co-occurrence matrix:\n", t1_counts)  # -> count table
+print("t1 X[king, queen]:", t1_counts[t1_word_to_idx["king"], t1_word_to_idx["queen"]])  # -> 1.0
+assert t1_counts[t1_word_to_idx["king"], t1_word_to_idx["queen"]] == 1.0
+assert t1_counts.sum() == 10.0
+
+plt.figure(figsize=(4.6, 3.8))
+plt.imshow(t1_counts, cmap="Greens")
+plt.xticks(np.arange(len(t1_vocab)), t1_vocab, rotation=30, ha="right")
+plt.yticks(np.arange(len(t1_vocab)), t1_vocab)
+plt.colorbar(label="count")
+plt.title("Tiny co-occurrence matrix")
+plt.tight_layout()
+plt.show()
+```
+▶ What you'll see: each neighboring target-context pair increments one matrix cell, producing a tiny GloVe-style count table.
+
+### ✍️ Toy 2 · skip-gram softmax probabilities
+
+Skip-gram scores every possible context word with a dot product, exponentiates the scores, and normalizes them into probabilities.
+
+```python
+import numpy as np
+import matplotlib.pyplot as plt
+
+t2_rng = np.random.default_rng(0)  # -> reproducible generator
+
+t2_vocab = np.array(["queen", "crown", "dog", "loan"])  # -> candidate contexts
+t2_center = np.array([1.0, 0.5, -0.5])  # -> center embedding e_c
+t2_contexts = np.array([[0.9, 0.4, -0.4], [0.7, 0.5, -0.2], [-0.4, 0.2, 0.8], [0.1, -0.6, 0.7]])  # -> context vectors
+t2_scores = t2_contexts @ t2_center  # -> [1.3, 1.05, -0.7, -0.55]
+t2_shifted = t2_scores - np.max(t2_scores)  # -> stable logits
+t2_exp = np.exp(t2_shifted)  # -> positive weights
+t2_probs = t2_exp / np.sum(t2_exp)  # -> softmax probabilities
+t2_top = t2_vocab[int(np.argmax(t2_probs))]  # -> queen
+
+print("t2 center vector:", t2_center)  # -> [1.0, 0.5, -0.5]
+print("t2 context matrix:\n", t2_contexts)  # -> four candidate vectors
+print("t2 dot-product scores:", np.round(t2_scores, 3))  # -> [ 1.3   1.05 -0.7  -0.55]
+print("t2 shifted scores:", np.round(t2_shifted, 3))  # -> [ 0.   -0.25 -2.   -1.85]
+print("t2 exponentials:", np.round(t2_exp, 3))  # -> [1.    0.779 0.135 0.157]
+print("t2 probabilities:", np.round(t2_probs, 3))  # -> probabilities sum to 1
+print("t2 top context:", t2_top)  # -> queen
+assert np.isclose(t2_probs.sum(), 1.0)
+assert t2_top == "queen"
+
+plt.figure(figsize=(5.5, 3.2))
+plt.bar(t2_vocab, t2_probs, color="purple")
+plt.ylim(0.0, 1.0)
+plt.ylabel("P(context | center)")
+plt.title("Skip-gram softmax over context words")
+plt.tight_layout()
+plt.show()
+```
+▶ What you'll see: the largest dot product becomes the largest probability, but every candidate gets some probability mass.
+
+### ✍️ Toy 3 · negative-sampling binary scores
+
+Negative sampling replaces the full softmax with tiny binary classifiers: observed pairs get label 1 and sampled noise pairs get label 0.
+
+```python
+import numpy as np
+import matplotlib.pyplot as plt
+
+t3_rng = np.random.default_rng(0)  # -> reproducible generator
+
+def t3_sigmoid(t3_z):
+    return 1.0 / (1.0 + np.exp(-np.clip(t3_z, -40.0, 40.0)))  # -> stable sigmoid
+
+t3_center = np.array([1.0, 0.5, -0.5])  # -> center embedding
+t3_positive = np.array([0.9, 0.4, -0.4])  # -> true context vector
+t3_negative = np.array([-0.4, 0.2, 0.8])  # -> sampled noise vector
+t3_pos_logit = float(t3_positive @ t3_center)  # -> 1.3
+t3_neg_logit = float(t3_negative @ t3_center)  # -> -0.7
+t3_pos_prob = float(t3_sigmoid(t3_pos_logit))  # -> 0.786
+t3_neg_prob = float(t3_sigmoid(t3_neg_logit))  # -> 0.332
+t3_pos_loss = -np.log(t3_pos_prob)  # -> positive-pair loss
+t3_neg_loss = -np.log(1.0 - t3_neg_prob)  # -> negative-pair loss
+t3_total_loss = t3_pos_loss + t3_neg_loss  # -> combined binary loss
+
+print("t3 center vector:", t3_center)  # -> [1.0, 0.5, -0.5]
+print("t3 positive vector:", t3_positive)  # -> observed context
+print("t3 negative vector:", t3_negative)  # -> noise context
+print("t3 positive logit/prob:", (round(t3_pos_logit, 3), round(t3_pos_prob, 3)))  # -> (1.3, 0.786)
+print("t3 negative logit/prob:", (round(t3_neg_logit, 3), round(t3_neg_prob, 3)))  # -> (-0.7, 0.332)
+print("t3 losses:", (round(float(t3_pos_loss), 3), round(float(t3_neg_loss), 3), round(float(t3_total_loss), 3)))  # -> losses
+assert t3_pos_prob > t3_neg_prob
+assert t3_total_loss > 0.0
+
+plt.figure(figsize=(5.2, 3.2))
+plt.bar(["observed\npair", "negative\npair"], [t3_pos_prob, t3_neg_prob], color=["seagreen", "salmon"])
+plt.ylim(0.0, 1.0)
+plt.ylabel("P(y=1 | pair)")
+plt.title("Negative sampling scores two word pairs")
+plt.tight_layout()
+plt.show()
+```
+▶ What you'll see: the observed pair receives a higher sigmoid score, while the sampled negative pair is pushed toward zero.
+
+### ✍️ Toy 4 · cosine similarity
+
+Cosine similarity divides a dot product by both vector lengths, so it measures direction rather than raw magnitude.
+
+```python
+import numpy as np
+import matplotlib.pyplot as plt
+
+t4_rng = np.random.default_rng(0)  # -> reproducible generator
+
+t4_words = np.array(["cat", "dog", "loan"])  # -> three words
+t4_vectors = np.array([[1.0, 0.2], [0.9, 0.3], [-0.2, 1.0]])  # -> simple 2-D embeddings
+t4_query = t4_vectors[0]  # -> cat vector
+t4_dots = t4_vectors @ t4_query  # -> raw dot products
+t4_norms = np.linalg.norm(t4_vectors, axis=1)  # -> candidate lengths
+t4_query_norm = np.linalg.norm(t4_query)  # -> cat length
+t4_cosines = t4_dots / (t4_norms * t4_query_norm)  # -> cosine similarities
+t4_best_other = t4_words[1 + int(np.argmax(t4_cosines[1:]))]  # -> dog
+
+print("t4 words:", t4_words.tolist())  # -> ['cat', 'dog', 'loan']
+print("t4 vectors:\n", t4_vectors)  # -> embeddings
+print("t4 dot products:", np.round(t4_dots, 3))  # -> raw similarities
+print("t4 vector norms:", np.round(t4_norms, 3))  # -> lengths
+print("t4 query norm:", round(float(t4_query_norm), 3))  # -> cat length
+print("t4 cosine scores:", np.round(t4_cosines, 3))  # -> normalized similarities
+print("t4 nearest other word:", t4_best_other)  # -> dog
+assert t4_best_other == "dog"
+assert t4_cosines[1] > t4_cosines[2]
+
+plt.figure(figsize=(5.2, 4.0))
+for t4_word, t4_vec in zip(t4_words, t4_vectors):
+    plt.arrow(0, 0, t4_vec[0], t4_vec[1], head_width=0.035, length_includes_head=True, label=t4_word)
+    plt.text(t4_vec[0] + 0.03, t4_vec[1] + 0.03, t4_word)
+plt.xlim(-0.4, 1.2)
+plt.ylim(0.0, 1.2)
+plt.xlabel("dimension 1")
+plt.ylabel("dimension 2")
+plt.title("Cosine compares embedding directions")
+plt.tight_layout()
+plt.show()
+```
+▶ What you'll see: `cat` and `dog` point in nearly the same direction, so their cosine is much larger than `cat` versus `loan`.
+
+### ✍️ Toy 5 · analogy vector arithmetic
+
+Analogy queries add and subtract relationship vectors, then choose the candidate with the highest cosine to the query.
+
+```python
+import numpy as np
+import matplotlib.pyplot as plt
+
+t5_rng = np.random.default_rng(0)  # -> reproducible generator
+
+t5_words = np.array(["man", "woman", "king", "queen", "prince", "dog"])  # -> six candidates
+t5_vectors = np.array([[-1.0, 0.0, 0.0], [1.0, 0.0, 0.0], [-1.0, 1.0, 0.0], [1.0, 1.0, 0.0], [-1.0, 0.8, 0.0], [0.0, 0.0, 1.0]])  # -> gender, royalty, animal axes
+t5_word_to_idx = {t5_word: t5_i for t5_i, t5_word in enumerate(t5_words)}  # -> word lookup
+t5_query = t5_vectors[t5_word_to_idx["king"]]  # -> king vector
+t5_query = t5_query - t5_vectors[t5_word_to_idx["man"]]  # -> king - man
+t5_query = t5_query + t5_vectors[t5_word_to_idx["woman"]]  # -> king - man + woman
+t5_dots = t5_vectors @ t5_query  # -> dot scores
+t5_norms = np.linalg.norm(t5_vectors, axis=1)  # -> candidate lengths
+t5_query_norm = np.linalg.norm(t5_query)  # -> query length
+t5_scores = t5_dots / (t5_norms * t5_query_norm + 1e-12)  # -> cosine scores
+t5_mask = np.isin(t5_words, ["king", "man", "woman"])  # -> input words to exclude
+t5_scores_masked = t5_scores.copy()  # -> score copy
+t5_scores_masked[t5_mask] = -np.inf  # -> exclude query inputs
+t5_answer = t5_words[int(np.argmax(t5_scores_masked))]  # -> queen
+
+print("t5 words:", t5_words.tolist())  # -> vocabulary
+print("t5 query vector:", t5_query)  # -> [1. 1. 0.]
+print("t5 raw dots:", np.round(t5_dots, 3))  # -> dot scores
+print("t5 cosine scores:", np.round(t5_scores, 3))  # -> cosine scores
+print("t5 masked scores:", np.round(t5_scores_masked, 3))  # -> inputs excluded
+print("t5 analogy answer:", t5_answer)  # -> queen
+assert t5_answer == "queen"
+assert np.allclose(t5_query, [1.0, 1.0, 0.0])
+
+plt.figure(figsize=(5.4, 4.2))
+for t5_word in ["man", "woman", "king", "queen", "prince"]:
+    t5_xy = t5_vectors[t5_word_to_idx[t5_word], :2]
+    plt.scatter(t5_xy[0], t5_xy[1], s=90)
+    plt.text(t5_xy[0] + 0.04, t5_xy[1] + 0.03, t5_word)
+plt.arrow(-1.0, 0.0, 2.0, 0.0, head_width=0.04, length_includes_head=True, color="gray")
+plt.arrow(-1.0, 1.0, 2.0, 0.0, head_width=0.04, length_includes_head=True, color="crimson")
+plt.xlabel("gender-like axis")
+plt.ylabel("royalty-like axis")
+plt.title("king - man + woman points to queen")
+plt.axis("equal")
+plt.tight_layout()
+plt.show()
+```
+▶ What you'll see: the man→woman direction is parallel to king→queen, so `queen` is the nearest valid analogy answer.
+
 ## 0. Step-by-Step Worked Example — Start Here (Beginner Friendly)
 
 > 🧑‍🎓 **New to this topic? Start here.** This is a gentle, fully runnable walkthrough that

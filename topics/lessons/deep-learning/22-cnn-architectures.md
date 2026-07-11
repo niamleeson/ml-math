@@ -2,6 +2,254 @@
 > **Source:** CS 230 · **Category:** Model · **Type:** 💻 Colab · [↑ Full reference](../../ai-ml-cheatsheets.md)
 > 📓 Runnable notebook section; an `.ipynb` will be generated.
 
+
+## ✍️ Toy Examples
+
+Before the full worked example, these tiny, hand-checkable toys isolate each CNN architecture mechanic: output shape arithmetic, receptive-field growth, parameter counting, $1\times1$ channel mixing, residual addition, and pooling. Each block is self-contained, prints the intermediate numbers, checks itself with an assert, and draws exactly one picture.
+
+### ✍️ Toy 1 · conv output size formula
+
+A convolution output length is the integer grid of kernel placements:
+$\left\lfloor\frac{n+2p-k}{s}\right\rfloor+1$. Here we compute height and width separately.
+
+```python
+import numpy as np
+import matplotlib.pyplot as plt
+
+t1_rng = np.random.default_rng(0)  # -> reproducible generator
+
+t1_image = np.arange(24).reshape(6, 4)  # -> shape (6, 4)
+t1_kernel = 3  # -> 3
+t1_padding = 1  # -> 1
+t1_stride = 2  # -> 2
+t1_padded_h = t1_image.shape[0] + 2 * t1_padding  # -> 8
+t1_padded_w = t1_image.shape[1] + 2 * t1_padding  # -> 6
+t1_h_numerator = t1_padded_h - t1_kernel  # -> 5
+t1_w_numerator = t1_padded_w - t1_kernel  # -> 3
+t1_out_h = t1_h_numerator // t1_stride + 1  # -> 3
+t1_out_w = t1_w_numerator // t1_stride + 1  # -> 2
+t1_output_shape = (t1_out_h, t1_out_w)  # -> (3, 2)
+
+print("t1 image shape:", t1_image.shape)  # -> (6, 4)
+print("t1 kernel/padding/stride:", (t1_kernel, t1_padding, t1_stride))  # -> (3, 1, 2)
+print("t1 padded height/width:", (t1_padded_h, t1_padded_w))  # -> (8, 6)
+print("t1 numerators:", (t1_h_numerator, t1_w_numerator))  # -> (5, 3)
+print("t1 output shape:", t1_output_shape)  # -> (3, 2)
+assert t1_output_shape == (3, 2)
+
+t1_fig, t1_axes = plt.subplots(1, 2, figsize=(7, 3))
+t1_axes[0].imshow(t1_image, cmap="Blues")
+t1_axes[0].set_title("6×4 input")
+t1_axes[0].set_xticks(np.arange(t1_image.shape[1]))
+t1_axes[0].set_yticks(np.arange(t1_image.shape[0]))
+t1_axes[1].imshow(np.ones(t1_output_shape), cmap="Greens", vmin=0, vmax=1)
+t1_axes[1].set_title("3×2 output grid")
+t1_axes[1].set_xticks(np.arange(t1_out_w))
+t1_axes[1].set_yticks(np.arange(t1_out_h))
+plt.tight_layout()
+plt.show()
+```
+▶ What you'll see: a $6\times4$ input maps to a $3\times2$ output when `k=3`, `p=1`, and `s=2`.
+
+### ✍️ Toy 2 · receptive field growth
+
+Each layer grows the receptive field by `(kernel - 1) * previous_jump`; strides increase the jump between adjacent output positions.
+
+```python
+import numpy as np
+import matplotlib.pyplot as plt
+
+t2_rng = np.random.default_rng(0)  # -> reproducible generator
+
+t2_kernels = np.array([3, 3, 3])  # -> [3, 3, 3]
+t2_strides = np.array([1, 2, 1])  # -> [1, 2, 1]
+t2_receptive = 1  # -> 1
+t2_jump = 1  # -> 1
+t2_rf_history = []  # -> []
+t2_jump_history = []  # -> []
+
+for t2_layer, (t2_kernel, t2_stride) in enumerate(zip(t2_kernels, t2_strides), start=1):
+    t2_growth = (t2_kernel - 1) * t2_jump  # -> layer growth
+    t2_receptive = t2_receptive + t2_growth  # -> updated receptive field
+    t2_jump = t2_jump * t2_stride  # -> updated output jump
+    t2_rf_history.append(t2_receptive)  # -> [3], then [3, 5], then [3, 5, 9]
+    t2_jump_history.append(t2_jump)  # -> [1], then [1, 2], then [1, 2, 2]
+    print(f"t2 layer {t2_layer} growth:", t2_growth)  # -> 2, 2, 4
+    print(f"t2 layer {t2_layer} receptive field:", t2_receptive)  # -> 3, 5, 9
+    print(f"t2 layer {t2_layer} jump:", t2_jump)  # -> 1, 2, 2
+
+t2_rf_history = np.array(t2_rf_history)  # -> [3 5 9]
+t2_jump_history = np.array(t2_jump_history)  # -> [1 2 2]
+print("t2 receptive-field history:", t2_rf_history.tolist())  # -> [3, 5, 9]
+print("t2 jump history:", t2_jump_history.tolist())  # -> [1, 2, 2]
+assert t2_rf_history.tolist() == [3, 5, 9]
+
+t2_layers = np.arange(1, len(t2_rf_history) + 1)  # -> [1 2 3]
+plt.figure(figsize=(5.5, 3.2))
+plt.bar(t2_layers, t2_rf_history, color="steelblue")
+plt.plot(t2_layers, t2_jump_history, marker="o", color="orange", label="jump")
+plt.xlabel("layer")
+plt.ylabel("pixels")
+plt.title("Receptive field grows across layers")
+plt.xticks(t2_layers)
+plt.legend()
+plt.tight_layout()
+plt.show()
+```
+▶ What you'll see: three $3\times3$ layers with strides `[1,2,1]` grow one output unit's view from 1 pixel to 9 pixels.
+
+### ✍️ Toy 3 · convolution parameter counts
+
+A dense convolution owns one kernel weight for every `(kernel row, kernel column, input channel, output channel)` plus optional output-channel biases.
+
+```python
+import numpy as np
+import matplotlib.pyplot as plt
+
+t3_rng = np.random.default_rng(0)  # -> reproducible generator
+
+t3_kernel = 3  # -> 3
+t3_in_channels = 4  # -> 4
+t3_out_channels = 6  # -> 6
+t3_weight_params = t3_kernel * t3_kernel * t3_in_channels * t3_out_channels  # -> 216
+t3_bias_params = t3_out_channels  # -> 6
+t3_total_params = t3_weight_params + t3_bias_params  # -> 222
+
+t3_formula = f"{t3_kernel}×{t3_kernel}×{t3_in_channels}×{t3_out_channels}+{t3_out_channels}"  # -> formula text
+print("t3 formula:", t3_formula)  # -> 3×3×4×6+6
+print("t3 weight params:", t3_weight_params)  # -> 216
+print("t3 bias params:", t3_bias_params)  # -> 6
+print("t3 total params:", t3_total_params)  # -> 222
+assert t3_total_params == 222
+
+plt.figure(figsize=(5, 3.2))
+plt.bar(["weights", "biases"], [t3_weight_params, t3_bias_params], color=["slateblue", "goldenrod"])
+plt.ylabel("parameters")
+plt.title("3×3 conv parameter count")
+plt.tight_layout()
+plt.show()
+```
+▶ What you'll see: almost all parameters come from spatial kernel weights; biases are tiny by comparison.
+
+### ✍️ Toy 4 · $1\times1$ convolution channel mixing
+
+A $1\times1$ convolution does not look at neighboring pixels; it applies the same channel-mixing matrix at every spatial location.
+
+```python
+import numpy as np
+import matplotlib.pyplot as plt
+
+t4_rng = np.random.default_rng(0)  # -> reproducible generator
+
+t4_x = np.array([[[1., 0., 2.], [0., 1., 1.]], [[2., 1., 0.], [1., 2., 1.]]])  # -> shape (2, 2, 3)
+t4_w = np.array([[1., -1.], [0.5, 0.5], [-0.5, 1.]])  # -> shape (3, 2)
+t4_b = np.array([0., 0.25])  # -> [0.0, 0.25]
+t4_flat = t4_x.reshape(-1, t4_x.shape[-1])  # -> shape (4, 3)
+t4_mixed = t4_flat @ t4_w  # -> shape (4, 2)
+t4_shifted = t4_mixed + t4_b  # -> adds bias to both channels
+t4_y = t4_shifted.reshape(2, 2, 2)  # -> shape (2, 2, 2)
+t4_top_left = t4_x[0, 0] @ t4_w + t4_b  # -> [0.0, 1.25]
+
+print("t4 input shape:", t4_x.shape)  # -> (2, 2, 3)
+print("t4 weights:\n", t4_w)  # -> channel mixer
+print("t4 bias:", t4_b)  # -> [0.0, 0.25]
+print("t4 flat input:\n", t4_flat)  # -> four pixel vectors
+print("t4 mixed before bias:\n", t4_mixed)  # -> weighted channel sums
+print("t4 top-left after bias:", t4_top_left)  # -> [0.0, 1.25]
+print("t4 output shape:", t4_y.shape)  # -> (2, 2, 2)
+assert t4_y.shape == (2, 2, 2)
+assert np.allclose(t4_top_left, [0.0, 1.25])
+
+t4_fig, t4_axes = plt.subplots(1, 2, figsize=(6, 3))
+for t4_c, t4_ax in enumerate(t4_axes):
+    t4_im = t4_ax.imshow(t4_y[:, :, t4_c], cmap="magma")
+    t4_ax.set_title(f"output channel {t4_c}")
+    t4_ax.set_xticks([0, 1])
+    t4_ax.set_yticks([0, 1])
+t4_fig.colorbar(t4_im, ax=t4_axes.ravel().tolist(), shrink=0.8)
+plt.tight_layout()
+plt.show()
+```
+▶ What you'll see: the spatial grid stays $2\times2$, while three input channels become two mixed channels.
+
+### ✍️ Toy 5 · residual add and activation
+
+A residual block adds the shortcut signal to the learned correction before the output activation: `ReLU(x + F(x))`.
+
+```python
+import numpy as np
+import matplotlib.pyplot as plt
+
+t5_rng = np.random.default_rng(0)  # -> reproducible generator
+
+t5_x = np.array([0.2, -0.4, 1.0, 0.5, -0.1, 0.8])  # -> shortcut activation
+t5_residual = np.array([0.1, 0.6, -0.2, 0.3, -0.2, -0.5])  # -> learned correction
+t5_sum = t5_x + t5_residual  # -> [0.3, 0.2, 0.8, 0.8, -0.3, 0.3]
+t5_output = np.maximum(t5_sum, 0.0)  # -> [0.3, 0.2, 0.8, 0.8, 0.0, 0.3]
+
+print("t5 shortcut x:", t5_x)  # -> [ 0.2 -0.4  1.   0.5 -0.1  0.8]
+print("t5 residual F(x):", t5_residual)  # -> [ 0.1  0.6 -0.2  0.3 -0.2 -0.5]
+print("t5 x + F(x):", t5_sum)  # -> [ 0.3  0.2  0.8  0.8 -0.3  0.3]
+print("t5 ReLU output:", t5_output)  # -> [0.3 0.2 0.8 0.8 0.  0.3]
+assert np.allclose(t5_output, [0.3, 0.2, 0.8, 0.8, 0.0, 0.3])
+
+t5_idx = np.arange(len(t5_x))  # -> [0 1 2 3 4 5]
+plt.figure(figsize=(7, 3.2))
+plt.bar(t5_idx - 0.22, t5_x, width=0.22, label="x")
+plt.bar(t5_idx, t5_residual, width=0.22, label="F(x)")
+plt.bar(t5_idx + 0.22, t5_output, width=0.22, label="ReLU(x+F)")
+plt.axhline(0.0, color="black", linewidth=0.8)
+plt.xlabel("coordinate")
+plt.ylabel("activation")
+plt.title("Residual add keeps shortcut signal plus correction")
+plt.legend()
+plt.tight_layout()
+plt.show()
+```
+▶ What you'll see: most coordinates preserve the shortcut and only adjust by the residual correction; the negative sum is clipped to zero.
+
+### ✍️ Toy 6 · max pooling and global average pooling
+
+Pooling summarizes spatial neighborhoods. Max pooling keeps the strongest local response; global average pooling collapses each feature map to one number.
+
+```python
+import numpy as np
+import matplotlib.pyplot as plt
+
+t6_rng = np.random.default_rng(0)  # -> reproducible generator
+
+t6_feature = np.array([[1., 3., 2., 0.], [4., 6., 1., 2.], [0., 2., 8., 3.], [1., 5., 7., 4.]])  # -> shape (4, 4)
+t6_pool = np.zeros((2, 2))  # -> shape (2, 2)
+t6_stride = 2  # -> 2
+t6_window = 2  # -> 2
+
+for t6_i in range(2):
+    for t6_j in range(2):
+        t6_patch = t6_feature[t6_i * t6_stride:t6_i * t6_stride + t6_window, t6_j * t6_stride:t6_j * t6_stride + t6_window]  # -> one 2×2 patch
+        t6_pool[t6_i, t6_j] = np.max(t6_patch)  # -> local max
+        print(f"t6 patch ({t6_i},{t6_j}):\n", t6_patch)  # -> patch values
+        print(f"t6 max ({t6_i},{t6_j}):", t6_pool[t6_i, t6_j])  # -> 6, 2, 5, 8
+
+t6_global_average = np.mean(t6_feature)  # -> 3.0625
+print("t6 feature map:\n", t6_feature)  # -> original map
+print("t6 max-pooled map:\n", t6_pool)  # -> [[6. 2.] [5. 8.]]
+print("t6 global average:", t6_global_average)  # -> 3.0625
+assert np.allclose(t6_pool, [[6.0, 2.0], [5.0, 8.0]])
+assert np.isclose(t6_global_average, 3.0625)
+
+t6_fig, t6_axes = plt.subplots(1, 2, figsize=(6.5, 3))
+t6_axes[0].imshow(t6_feature, cmap="viridis")
+t6_axes[0].set_title("4×4 feature map")
+t6_axes[1].imshow(t6_pool, cmap="viridis")
+t6_axes[1].set_title("2×2 max pool")
+for t6_ax in t6_axes:
+    t6_ax.set_xticks([])
+    t6_ax.set_yticks([])
+plt.tight_layout()
+plt.show()
+```
+▶ What you'll see: each $2\times2$ block contributes one max value, while the global average is a single summary scalar.
+
 ## 0. Step-by-Step Worked Example — Start Here (Beginner Friendly)
 
 > 🧑‍🎓 **New to this topic? Start here.** This is a gentle, fully runnable walkthrough that

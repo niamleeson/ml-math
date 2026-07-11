@@ -2,6 +2,233 @@
 > **Source:** CS 229 · **Category:** Method · **Type:** 💻 Colab · [↑ Full reference](../../ai-ml-cheatsheets.md)
 > 📓 This section is written as a runnable notebook; an `.ipynb` will be generated from it. [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](#)
 
+## ✍️ Toy Examples
+
+Before the full worked notebook, here are tiny, hand-traceable examples for the clustering mechanics used in this lesson. Each toy prints the intermediate distances or scores, checks one result, and draws a small diagnostic plot.
+
+### ✍️ Toy 1 · k-means assign/update by hand
+
+k-means alternates two moves: assign each point to the nearest centroid, then replace each centroid with the mean of its assigned points.
+
+```python
+import numpy as np
+import matplotlib.pyplot as plt
+
+t1_rng = np.random.default_rng(0)  # -> seeded generator for reproducibility
+t1_X = np.array([[1.0, 1.0], [1.0, 2.0], [2.0, 1.0], [8.0, 8.0], [9.0, 8.0], [8.0, 9.0]])  # -> 6 items, 2 dims
+t1_centers = np.array([[0.0, 0.0], [10.0, 10.0]])  # -> initial centroids
+t1_diffs = t1_X[:, None, :] - t1_centers[None, :, :]  # -> point-center differences
+t1_sqdist = np.sum(t1_diffs ** 2, axis=2)  # -> [[2, 162], [5, 145], [5, 145], [128, 8], [145, 5], [145, 5]]
+t1_labels = np.argmin(t1_sqdist, axis=1)  # -> [0, 0, 0, 1, 1, 1]
+t1_new_center0 = t1_X[t1_labels == 0].mean(axis=0)  # -> [1.333, 1.333]
+t1_new_center1 = t1_X[t1_labels == 1].mean(axis=0)  # -> [8.333, 8.333]
+t1_new_centers = np.vstack([t1_new_center0, t1_new_center1])  # -> [[1.333, 1.333], [8.333, 8.333]]
+print("seed:", 0)  # -> 0
+print("X:", t1_X.tolist())  # -> 6 two-dimensional rows
+print("old centers:", t1_centers.tolist())  # -> [[0,0], [10,10]]
+print("squared distances:", t1_sqdist.astype(int).tolist())  # -> [[2,162], [5,145], [5,145], [128,8], [145,5], [145,5]]
+print("assignments:", t1_labels.tolist())  # -> [0, 0, 0, 1, 1, 1]
+print("new center 0:", np.round(t1_new_center0, 3).tolist())  # -> [1.333, 1.333]
+print("new center 1:", np.round(t1_new_center1, 3).tolist())  # -> [8.333, 8.333]
+print("new centers:", np.round(t1_new_centers, 3).tolist())  # -> [[1.333, 1.333], [8.333, 8.333]]
+assert np.allclose(t1_new_centers, [[4 / 3, 4 / 3], [25 / 3, 25 / 3]])
+
+plt.figure(figsize=(5, 4))
+plt.scatter(t1_X[:, 0], t1_X[:, 1], c=t1_labels, cmap="coolwarm", s=90)
+plt.scatter(t1_centers[:, 0], t1_centers[:, 1], marker="x", color="gray", s=160, label="old centers")
+plt.scatter(t1_new_centers[:, 0], t1_new_centers[:, 1], marker="X", color="black", s=180, label="updated means")
+plt.xlabel("feature 0")
+plt.ylabel("feature 1")
+plt.title("Toy 1: assign to nearest center, then average")
+plt.legend()
+plt.show()
+```
+▶ What you'll see: three low points assign to cluster `0`, three high points assign to cluster `1`, and centroids move to the clump averages.
+
+### ✍️ Toy 2 · Inertia as within-cluster squared distance
+
+Inertia is the k-means objective: add the squared distance from every point to its assigned centroid.
+
+```python
+import numpy as np
+import matplotlib.pyplot as plt
+
+t2_rng = np.random.default_rng(0)  # -> seeded generator for reproducibility
+t2_X = np.array([[1.0, 1.0], [1.0, 2.0], [2.0, 1.0], [8.0, 8.0], [9.0, 8.0], [8.0, 9.0]])  # -> 6 items, 2 dims
+t2_labels = np.array([0, 0, 0, 1, 1, 1])  # -> fixed cluster labels
+t2_centers = np.array([[4 / 3, 4 / 3], [25 / 3, 25 / 3]])  # -> updated centroids
+t2_assigned_centers = t2_centers[t2_labels]  # -> center for each point
+t2_residuals = t2_X - t2_assigned_centers  # -> point minus its assigned center
+t2_sq_errors = np.sum(t2_residuals ** 2, axis=1)  # -> [0.222, 0.556, 0.556, 0.222, 0.556, 0.556]
+t2_inertia = np.sum(t2_sq_errors)  # -> 2.667
+t2_mean_sq_error = t2_inertia / len(t2_X)  # -> 0.444
+print("seed:", 0)  # -> 0
+print("X:", t2_X.tolist())  # -> 6 two-dimensional rows
+print("labels:", t2_labels.tolist())  # -> [0, 0, 0, 1, 1, 1]
+print("centers:", np.round(t2_centers, 3).tolist())  # -> [[1.333, 1.333], [8.333, 8.333]]
+print("assigned centers:", np.round(t2_assigned_centers, 3).tolist())  # -> one center per row
+print("residuals:", np.round(t2_residuals, 3).tolist())  # -> centered errors
+print("squared errors:", np.round(t2_sq_errors, 3).tolist())  # -> [0.222, 0.556, 0.556, 0.222, 0.556, 0.556]
+print("inertia:", round(float(t2_inertia), 3))  # -> 2.667
+print("mean squared error:", round(float(t2_mean_sq_error), 3))  # -> 0.444
+assert np.isclose(t2_inertia, 8 / 3)
+
+plt.figure(figsize=(5, 3))
+plt.bar(np.arange(len(t2_X)), t2_sq_errors, color="steelblue")
+plt.xlabel("point index")
+plt.ylabel("squared distance to centroid")
+plt.title("Toy 2: inertia sums the bars")
+plt.show()
+```
+▶ What you'll see: six squared-error bars sum to inertia `2.667`.
+
+### ✍️ Toy 3 · Silhouette from own-cluster and nearest-other distances
+
+Silhouette compares each point's average distance to its own cluster (`a`) with its average distance to the nearest other cluster (`b`).
+
+```python
+import numpy as np
+import matplotlib.pyplot as plt
+
+t3_rng = np.random.default_rng(0)  # -> seeded generator for reproducibility
+t3_X = np.array([[0.0, 0.0], [0.4, 0.2], [0.1, 0.5], [4.0, 4.0], [4.3, 3.8], [3.8, 4.2]])  # -> 6 items, 2 dims
+t3_labels = np.array([0, 0, 0, 1, 1, 1])  # -> two cluster assignments
+t3_pairwise = np.linalg.norm(t3_X[:, None, :] - t3_X[None, :, :], axis=2)  # -> 6x6 distance matrix
+t3_scores = []  # -> silhouette values per point
+t3_a_values = []  # -> own-cluster averages
+t3_b_values = []  # -> nearest-other averages
+print("seed:", 0)  # -> 0
+print("X:", t3_X.tolist())  # -> 6 two-dimensional rows
+print("labels:", t3_labels.tolist())  # -> [0, 0, 0, 1, 1, 1]
+print("pairwise distances:", np.round(t3_pairwise, 3).tolist())  # -> symmetric distance matrix
+for t3_i in range(len(t3_X)):
+    t3_same = t3_labels == t3_labels[t3_i]  # -> mask for same cluster
+    t3_other = t3_labels != t3_labels[t3_i]  # -> mask for other cluster
+    t3_same[t3_i] = False  # -> exclude self from a
+    t3_a = t3_pairwise[t3_i, t3_same].mean()  # -> average own-cluster distance
+    t3_b = t3_pairwise[t3_i, t3_other].mean()  # -> average other-cluster distance
+    t3_s = (t3_b - t3_a) / max(t3_a, t3_b)  # -> silhouette score
+    t3_a_values.append(t3_a)  # -> save a
+    t3_b_values.append(t3_b)  # -> save b
+    t3_scores.append(t3_s)  # -> save s
+    print("point:", t3_i)  # -> point index
+    print("a:", round(float(t3_a), 3))  # -> own-cluster compactness
+    print("b:", round(float(t3_b), 3))  # -> other-cluster separation
+    print("s:", round(float(t3_s), 3))  # -> silhouette score
+t3_scores = np.array(t3_scores)  # -> six scores
+t3_mean_score = t3_scores.mean()  # -> about 0.918
+print("all silhouettes:", np.round(t3_scores, 3).tolist())  # -> high positive values
+print("mean silhouette:", round(float(t3_mean_score), 3))  # -> 0.918
+assert t3_mean_score > 0.85
+
+plt.figure(figsize=(5, 3))
+plt.bar(np.arange(len(t3_scores)), t3_scores, color="seagreen")
+plt.axhline(t3_mean_score, color="black", linestyle="--", label="mean")
+plt.ylim(0, 1)
+plt.xlabel("point index")
+plt.ylabel("silhouette")
+plt.title("Toy 3: high scores mean compact and separated")
+plt.legend()
+plt.show()
+```
+▶ What you'll see: `a` is small, `b` is large, so each silhouette score is close to `1`.
+
+### ✍️ Toy 4 · Hierarchical linkage distance between clusters
+
+Agglomerative clustering merges whichever pair of clusters is closest. Linkage defines cluster-to-cluster distance, such as single, complete, or average linkage.
+
+```python
+import numpy as np
+import matplotlib.pyplot as plt
+
+t4_rng = np.random.default_rng(0)  # -> seeded generator for reproducibility
+t4_X = np.array([[0.0, 0.0], [0.3, 0.1], [3.0, 3.0], [3.2, 2.8], [6.0, 0.0], [6.2, 0.2]])  # -> 6 items, 2 dims
+t4_cluster_a = np.array([0, 1])  # -> first small cluster
+t4_cluster_b = np.array([2, 3])  # -> second small cluster
+t4_cluster_c = np.array([4, 5])  # -> third small cluster
+t4_cross_ab = np.linalg.norm(t4_X[t4_cluster_a][:, None, :] - t4_X[t4_cluster_b][None, :, :], axis=2)  # -> A-B pairwise distances
+t4_cross_ac = np.linalg.norm(t4_X[t4_cluster_a][:, None, :] - t4_X[t4_cluster_c][None, :, :], axis=2)  # -> A-C pairwise distances
+t4_cross_bc = np.linalg.norm(t4_X[t4_cluster_b][:, None, :] - t4_X[t4_cluster_c][None, :, :], axis=2)  # -> B-C pairwise distances
+t4_single_ab = t4_cross_ab.min()  # -> 3.962
+t4_complete_ab = t4_cross_ab.max()  # -> 4.252
+t4_average_ab = t4_cross_ab.mean()  # -> 4.105
+t4_average_distances = np.array([t4_cross_ab.mean(), t4_cross_ac.mean(), t4_cross_bc.mean()])  # -> [4.105, 5.951, 4.106]
+t4_pair_names = np.array(["A-B", "A-C", "B-C"])  # -> linkage pair names
+t4_best_pair = t4_pair_names[np.argmin(t4_average_distances)]  # -> A-B
+print("seed:", 0)  # -> 0
+print("X:", t4_X.tolist())  # -> 6 two-dimensional rows
+print("cluster A indices:", t4_cluster_a.tolist())  # -> [0, 1]
+print("cluster B indices:", t4_cluster_b.tolist())  # -> [2, 3]
+print("cluster C indices:", t4_cluster_c.tolist())  # -> [4, 5]
+print("A-B cross distances:", np.round(t4_cross_ab, 3).tolist())  # -> [[4.243, 4.252], [3.962, 3.962]]
+print("single A-B:", round(float(t4_single_ab), 3))  # -> 3.962
+print("complete A-B:", round(float(t4_complete_ab), 3))  # -> 4.252
+print("average A-B:", round(float(t4_average_ab), 3))  # -> 4.105
+print("average distances A-B/A-C/B-C:", np.round(t4_average_distances, 3).tolist())  # -> [4.105, 5.951, 4.106]
+print("best average-link pair:", str(t4_best_pair))  # -> A-B
+assert str(t4_best_pair) == "A-B"
+
+plt.figure(figsize=(5, 4))
+plt.scatter(t4_X[:, 0], t4_X[:, 1], s=90)
+for t4_i, t4_point in enumerate(t4_X):
+    plt.text(t4_point[0] + 0.08, t4_point[1] + 0.08, f"p{t4_i}")
+plt.plot(t4_X[t4_cluster_a, 0], t4_X[t4_cluster_a, 1], color="steelblue", linewidth=3, label="A")
+plt.plot(t4_X[t4_cluster_b, 0], t4_X[t4_cluster_b, 1], color="seagreen", linewidth=3, label="B")
+plt.plot(t4_X[t4_cluster_c, 0], t4_X[t4_cluster_c, 1], color="orange", linewidth=3, label="C")
+plt.xlabel("feature 0")
+plt.ylabel("feature 1")
+plt.title("Toy 4: linkage compares cluster pairs")
+plt.legend()
+plt.show()
+```
+▶ What you'll see: average linkage is smallest for `A-B`, so those clusters would merge first under average linkage.
+
+### ✍️ Toy 5 · DBSCAN core, border, and noise points
+
+DBSCAN labels a point as core if enough neighbors lie within `eps`. Non-core points near a core point are border points; the rest are noise.
+
+```python
+import numpy as np
+import matplotlib.pyplot as plt
+
+t5_rng = np.random.default_rng(0)  # -> seeded generator for reproducibility
+t5_X = np.array([[0.0, 0.0], [0.2, 0.0], [0.0, 0.2], [0.2, 0.2], [0.55, 0.2], [2.0, 2.0], [3.0, 3.0], [2.0, 3.0]])  # -> 8 items, 2 dims
+t5_eps = 0.36  # -> neighborhood radius
+t5_min_samples = 4  # -> core threshold, counting the point itself
+t5_distances = np.linalg.norm(t5_X[:, None, :] - t5_X[None, :, :], axis=2)  # -> pairwise distances
+t5_neighbors = t5_distances <= t5_eps  # -> eps-neighborhood matrix
+t5_neighbor_counts = t5_neighbors.sum(axis=1)  # -> [4, 4, 4, 5, 2, 1, 1, 1]
+t5_core = t5_neighbor_counts >= t5_min_samples  # -> [True, True, True, True, False, False, False, False]
+t5_border = np.array([not t5_core[t5_i] and np.any(t5_core & t5_neighbors[t5_i]) for t5_i in range(len(t5_X))])  # -> [False, False, False, False, True, False, False, False]
+t5_noise = ~t5_core & ~t5_border  # -> [False, False, False, False, False, True, True, True]
+t5_status = np.where(t5_core, "core", np.where(t5_border, "border", "noise"))  # -> labels by DBSCAN role
+print("seed:", 0)  # -> 0
+print("X:", t5_X.tolist())  # -> 8 two-dimensional rows
+print("eps:", t5_eps)  # -> 0.36
+print("min_samples:", t5_min_samples)  # -> 4
+print("distance matrix:", np.round(t5_distances, 2).tolist())  # -> pairwise distances
+print("neighbor matrix:", t5_neighbors.astype(int).tolist())  # -> 1 if within eps
+print("neighbor counts:", t5_neighbor_counts.tolist())  # -> [4, 4, 4, 5, 2, 1, 1, 1]
+print("core mask:", t5_core.tolist())  # -> [True, True, True, True, False, False, False, False]
+print("border mask:", t5_border.tolist())  # -> [False, False, False, False, True, False, False, False]
+print("noise mask:", t5_noise.tolist())  # -> [False, False, False, False, False, True, True, True]
+print("status:", t5_status.tolist())  # -> ['core', 'core', 'core', 'core', 'border', 'noise', 'noise', 'noise']
+assert t5_status.tolist() == ["core", "core", "core", "core", "border", "noise", "noise", "noise"]
+
+plt.figure(figsize=(5, 4))
+for t5_role, t5_marker, t5_color in [("core", "o", "seagreen"), ("border", "s", "gold"), ("noise", "x", "crimson")]:
+    t5_mask = t5_status == t5_role
+    plt.scatter(t5_X[t5_mask, 0], t5_X[t5_mask, 1], marker=t5_marker, color=t5_color, s=110, label=t5_role)
+for t5_i, t5_point in enumerate(t5_X):
+    plt.text(t5_point[0] + 0.04, t5_point[1] + 0.04, str(t5_i))
+plt.xlabel("feature 0")
+plt.ylabel("feature 1")
+plt.title("Toy 5: DBSCAN roles from eps-neighbor counts")
+plt.legend()
+plt.show()
+```
+▶ What you'll see: points `0–3` are core, point `4` is border because it touches a core point, and points `5–7` are noise.
+
 ## 0. Step-by-Step Worked Example — Start Here (Beginner Friendly)
 
 > 🧑‍🎓 **New to this topic? Start here.** This is a gentle, fully runnable walkthrough that

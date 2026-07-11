@@ -2,6 +2,264 @@
 > **Source:** CS 229 · **Category:** Model · **Type:** ⚖️ Both · [↑ Full reference](../../ai-ml-cheatsheets.md)
 > 📓 The coded examples form a runnable notebook section; an .ipynb will be generated.
 
+## ✍️ Toy Examples
+
+These tiny examples isolate the computational mechanics from the full lesson. Each toy uses small arrays, prints the intermediate values, and draws one picture so priors, likelihoods, posteriors, and boundaries are traceable by hand.
+
+### ✍️ Toy 1 · class priors from label counts
+
+A generative classifier starts with $P(y)$. The maximum-likelihood prior is just the class count divided by the number of training examples.
+
+```python
+import numpy as np, matplotlib.pyplot as plt
+
+t1_rng = np.random.default_rng(0)  # -> fixed seed for reproducibility
+t1_X = np.array([[-2, -1], [-1, -1], [-1, 0], [-2, 0], [0, 0], [1, 0], [2, 1], [1, 1]], dtype=float)  # -> 8 items, 2 features
+t1_y = np.array([0, 0, 0, 0, 0, 1, 1, 1])  # -> 5 class-0, 3 class-1 labels
+t1_classes = np.array([0, 1])  # -> class order
+t1_masks = t1_y[None, :] == t1_classes[:, None]  # -> class-by-example membership table
+t1_counts = np.sum(t1_masks, axis=1)  # -> [5,3]
+t1_total = len(t1_y)  # -> 8
+t1_priors = t1_counts / t1_total  # -> [0.625,0.375]
+t1_prior_sum = np.sum(t1_priors)  # -> 1.0
+print("rng seed fixed:", 0)
+print("points:\n", t1_X)
+print("labels:", t1_y)
+print("membership masks:\n", t1_masks.astype(int))
+print("class counts:", t1_counts)
+print("total examples:", t1_total)
+print("class priors P(y):", np.round(t1_priors, 3))
+print("prior sum:", round(float(t1_prior_sum), 3))
+assert np.allclose(t1_priors, np.array([5 / 8, 3 / 8]))
+assert np.isclose(t1_prior_sum, 1.0)
+
+plt.figure(figsize=(4.8, 3.6))
+plt.bar(["class 0", "class 1"], t1_priors, color=["tab:blue", "tab:orange"])
+plt.ylim(0.0, 1.0)
+plt.ylabel("prior probability")
+plt.title("Class priors are normalized label counts")
+plt.tight_layout()
+plt.show()
+plt.close()
+```
+▶ What you'll see: the class membership table, counts `[5, 3]`, priors `[0.625, 0.375]`, and a prior-probability bar chart.
+
+### ✍️ Toy 2 · Gaussian discriminant analysis estimates
+
+GDA estimates a mean for each class plus one shared covariance. A new point is scored by each Gaussian likelihood and then normalized into a posterior.
+
+```python
+import numpy as np, matplotlib.pyplot as plt
+
+t2_rng = np.random.default_rng(0)  # -> fixed seed for reproducibility
+t2_X = np.array([[-2, -1], [-1, -1], [-1, -2], [-2, -2], [1, 1], [2, 1], [1, 2], [2, 2]], dtype=float)  # -> 8 items, 2 features
+t2_y = np.array([0, 0, 0, 0, 1, 1, 1, 1])  # -> balanced classes
+t2_priors = np.array([np.mean(t2_y == 0), np.mean(t2_y == 1)])  # -> [0.5,0.5]
+t2_mu0 = np.mean(t2_X[t2_y == 0], axis=0)  # -> [-1.5,-1.5]
+t2_mu1 = np.mean(t2_X[t2_y == 1], axis=0)  # -> [1.5,1.5]
+t2_means = np.vstack([t2_mu0, t2_mu1])  # -> class means
+t2_residuals = t2_X - t2_means[t2_y]  # -> centered by own class mean
+t2_sigma = (t2_residuals.T @ t2_residuals) / len(t2_y)  # -> [[0.25,0],[0,0.25]]
+t2_inv_sigma = np.linalg.inv(t2_sigma)  # -> [[4,0],[0,4]]
+t2_sign = np.linalg.slogdet(t2_sigma)[0]  # -> 1
+t2_logdet = np.linalg.slogdet(t2_sigma)[1]  # -> -2.773
+t2_x_new = np.array([0.5, 0.2])  # -> point to classify
+t2_diff = t2_x_new - t2_means  # -> difference to each class mean
+t2_quad = np.sum((t2_diff @ t2_inv_sigma) * t2_diff, axis=1)  # -> [27.56,10.76]
+t2_loglik = -0.5 * (2.0 * np.log(2.0 * np.pi) + t2_logdet + t2_quad)  # -> Gaussian log likelihoods
+t2_logscores = t2_loglik + np.log(t2_priors)  # -> add log priors
+t2_weights = np.exp(t2_logscores - np.max(t2_logscores))  # -> stable unnormalized posterior weights
+t2_posterior = t2_weights / np.sum(t2_weights)  # -> [0.0002,0.9998]
+print("rng seed fixed:", 0)
+print("points:\n", t2_X)
+print("labels:", t2_y)
+print("priors:", t2_priors)
+print("class means:\n", t2_means)
+print("residuals:\n", t2_residuals)
+print("shared covariance:\n", np.round(t2_sigma, 3))
+print("inverse covariance:\n", np.round(t2_inv_sigma, 3))
+print("log determinant sign:", t2_sign)
+print("log determinant:", round(float(t2_logdet), 3))
+print("new point:", t2_x_new)
+print("Mahalanobis quadratics:", np.round(t2_quad, 3))
+print("log likelihoods:", np.round(t2_loglik, 3))
+print("posterior:", np.round(t2_posterior, 4))
+assert t2_posterior[1] > 0.99
+
+plt.figure(figsize=(4.8, 4.0))
+plt.scatter(t2_X[t2_y == 0, 0], t2_X[t2_y == 0, 1], color="tab:blue", edgecolor="black", s=80, label="class 0")
+plt.scatter(t2_X[t2_y == 1, 0], t2_X[t2_y == 1, 1], color="tab:orange", edgecolor="black", s=80, label="class 1")
+plt.scatter(t2_means[:, 0], t2_means[:, 1], color="black", marker="X", s=150, label="means")
+plt.scatter(t2_x_new[0], t2_x_new[1], color="lime", edgecolor="black", s=100, label="new point")
+plt.xlabel("feature 1")
+plt.ylabel("feature 2")
+plt.title("GDA estimates class means and shared covariance")
+plt.legend()
+plt.tight_layout()
+plt.show()
+plt.close()
+```
+▶ What you'll see: fitted class means, the pooled covariance matrix, Gaussian log-likelihoods for a new point, and a posterior near class 1.
+
+### ✍️ Toy 3 · Naive Bayes likelihood product
+
+Naive Bayes multiplies independent feature likelihoods. Laplace smoothing adds one count so an unseen word does not make the whole product zero.
+
+```python
+import numpy as np, matplotlib.pyplot as plt
+
+t3_rng = np.random.default_rng(0)  # -> fixed seed for reproducibility
+t3_docs = np.array([[0, 0, 2, 1], [0, 1, 1, 1], [0, 0, 1, 2], [2, 1, 0, 0], [1, 2, 0, 1], [1, 0, 0, 1]], dtype=float)  # -> 6 documents, 4 word-count features
+t3_y = np.array([0, 0, 0, 1, 1, 1])  # -> class 0 then class 1
+t3_query = np.array([1, 1, 1, 0], dtype=float)  # -> query has words 0,1,2 once
+t3_class_counts = np.vstack([np.sum(t3_docs[t3_y == 0], axis=0), np.sum(t3_docs[t3_y == 1], axis=0)])  # -> word totals per class
+t3_class_totals = np.sum(t3_class_counts, axis=1, keepdims=True)  # -> [[9],[9]]
+t3_raw_probs = t3_class_counts / t3_class_totals  # -> unsmoothed word likelihoods with zeros
+t3_raw_products = np.prod(t3_raw_probs ** t3_query, axis=1)  # -> [0,0]
+t3_vocab_size = t3_docs.shape[1]  # -> 4
+t3_smooth_probs = (t3_class_counts + 1.0) / (t3_class_totals + t3_vocab_size)  # -> Laplace likelihoods
+t3_smooth_products = np.prod(t3_smooth_probs ** t3_query, axis=1)  # -> [0.00455,0.00910]
+t3_priors = np.array([np.mean(t3_y == 0), np.mean(t3_y == 1)])  # -> [0.5,0.5]
+t3_scores = t3_priors * t3_smooth_products  # -> prior-weighted likelihood products
+t3_prediction = int(np.argmax(t3_scores))  # -> 1
+print("rng seed fixed:", 0)
+print("document count matrix:\n", t3_docs)
+print("labels:", t3_y)
+print("query counts:", t3_query)
+print("class word counts:\n", t3_class_counts)
+print("class word totals:", t3_class_totals.ravel())
+print("raw P(word|class):\n", np.round(t3_raw_probs, 3))
+print("raw likelihood products:", np.round(t3_raw_products, 6))
+print("Laplace P(word|class):\n", np.round(t3_smooth_probs, 3))
+print("smoothed likelihood products:", np.round(t3_smooth_products, 6))
+print("class priors:", t3_priors)
+print("prior-weighted scores:", np.round(t3_scores, 6))
+print("predicted class:", t3_prediction)
+assert np.all(t3_smooth_products > 0.0)
+assert t3_prediction == 1
+
+plt.figure(figsize=(5.0, 3.6))
+t3_positions = np.arange(t3_vocab_size)  # -> word positions
+plt.bar(t3_positions - 0.18, t3_smooth_probs[0], width=0.36, label="class 0")
+plt.bar(t3_positions + 0.18, t3_smooth_probs[1], width=0.36, label="class 1")
+plt.xticks(t3_positions, ["w0", "w1", "w2", "w3"])
+plt.ylabel("Laplace P(word|class)")
+plt.title("Naive Bayes multiplies smoothed word likelihoods")
+plt.legend()
+plt.tight_layout()
+plt.show()
+plt.close()
+```
+▶ What you'll see: raw products collapse to zero, Laplace-smoothed products stay positive, and the larger product predicts class 1.
+
+### ✍️ Toy 4 · posterior via Bayes normalization
+
+Bayes' rule converts prior-weighted likelihoods into probabilities that sum to one. The denominator is just the evidence: the sum of all class scores.
+
+```python
+import numpy as np, matplotlib.pyplot as plt
+
+t4_rng = np.random.default_rng(0)  # -> fixed seed for reproducibility
+t4_X = np.array([[-2, -1], [-1, -1], [-1, 0], [0, 0], [1, 0], [2, 1], [1, 1], [2, 0]], dtype=float)  # -> 8 items, 2 features
+t4_y = np.array([0, 0, 0, 0, 1, 1, 1, 1])  # -> balanced labels
+t4_counts = np.array([np.sum(t4_y == 0), np.sum(t4_y == 1)])  # -> [4,4]
+t4_priors = t4_counts / len(t4_y)  # -> [0.5,0.5]
+t4_likelihoods = np.array([0.08, 0.24])  # -> P(x_new|class 0), P(x_new|class 1)
+t4_scores = t4_priors * t4_likelihoods  # -> [0.04,0.12]
+t4_evidence = np.sum(t4_scores)  # -> 0.16
+t4_posterior = t4_scores / t4_evidence  # -> [0.25,0.75]
+t4_prediction = int(np.argmax(t4_posterior))  # -> 1
+print("rng seed fixed:", 0)
+print("points:\n", t4_X)
+print("labels:", t4_y)
+print("class counts:", t4_counts)
+print("priors:", t4_priors)
+print("likelihoods P(x|y):", t4_likelihoods)
+print("scores P(x|y)P(y):", t4_scores)
+print("evidence sum:", round(float(t4_evidence), 3))
+print("posterior P(y|x):", t4_posterior)
+print("predicted class:", t4_prediction)
+assert np.allclose(t4_posterior, np.array([0.25, 0.75]))
+assert np.isclose(np.sum(t4_posterior), 1.0)
+
+plt.figure(figsize=(5.0, 3.6))
+t4_positions = np.arange(2)  # -> class positions
+plt.bar(t4_positions - 0.18, t4_likelihoods, width=0.36, label="likelihood")
+plt.bar(t4_positions + 0.18, t4_posterior, width=0.36, label="posterior")
+plt.xticks(t4_positions, ["class 0", "class 1"])
+plt.ylim(0.0, 1.0)
+plt.ylabel("probability")
+plt.title("Bayes normalization turns scores into posteriors")
+plt.legend()
+plt.tight_layout()
+plt.show()
+plt.close()
+```
+▶ What you'll see: likelihoods multiplied by priors, evidence `0.16`, posterior `[0.25, 0.75]`, and class 1 winning after normalization.
+
+### ✍️ Toy 5 · decision boundary from equal posterior scores
+
+For shared-covariance GDA, the log posterior ratio is linear in $x$. The decision boundary is where that log ratio equals zero.
+
+```python
+import numpy as np, matplotlib.pyplot as plt
+
+t5_rng = np.random.default_rng(0)  # -> fixed seed for reproducibility
+t5_X = np.array([[-2, -1], [-1, -1], [-1, 0], [-2, 0], [1, 0], [2, 0], [1, 1], [2, 1]], dtype=float)  # -> 8 items, 2 features
+t5_y = np.array([0, 0, 0, 0, 1, 1, 1, 1])  # -> two Gaussian-like classes
+t5_priors = np.array([np.mean(t5_y == 0), np.mean(t5_y == 1)])  # -> [0.5,0.5]
+t5_means = np.vstack([np.mean(t5_X[t5_y == 0], axis=0), np.mean(t5_X[t5_y == 1], axis=0)])  # -> class means
+t5_residuals = t5_X - t5_means[t5_y]  # -> centered points
+t5_sigma = (t5_residuals.T @ t5_residuals) / len(t5_y)  # -> shared covariance
+t5_sigma = t5_sigma + 1e-6 * np.eye(2)  # -> tiny jitter for inversion
+t5_inv_sigma = np.linalg.inv(t5_sigma)  # -> inverse covariance
+t5_theta = t5_inv_sigma @ (t5_means[1] - t5_means[0])  # -> linear log-odds weights
+t5_intercept = -0.5 * t5_means[1] @ t5_inv_sigma @ t5_means[1]  # -> class-1 quadratic constant
+t5_intercept = t5_intercept + 0.5 * t5_means[0] @ t5_inv_sigma @ t5_means[0]  # -> add class-0 constant
+t5_intercept = t5_intercept + np.log(t5_priors[1] / t5_priors[0])  # -> add log prior ratio
+t5_scores = t5_X @ t5_theta + t5_intercept  # -> linear log posterior ratios
+t5_predictions = (t5_scores >= 0.0).astype(int)  # -> boundary classifier
+t5_boundary_x_when_y0 = -t5_intercept / t5_theta[0]  # -> 0.0 for y-axis crossing
+t5_grid_x = np.linspace(-3.0, 3.0, 160)  # -> contour grid x
+t5_grid_y = np.linspace(-2.0, 2.0, 160)  # -> contour grid y
+t5_xx, t5_yy = np.meshgrid(t5_grid_x, t5_grid_y)  # -> mesh for boundary plot
+t5_grid = np.column_stack([t5_xx.ravel(), t5_yy.ravel()])  # -> grid rows
+t5_grid_scores = (t5_grid @ t5_theta + t5_intercept).reshape(t5_xx.shape)  # -> log-ratio surface
+print("rng seed fixed:", 0)
+print("points:\n", t5_X)
+print("labels:", t5_y)
+print("priors:", t5_priors)
+print("means:\n", t5_means)
+print("shared covariance:\n", np.round(t5_sigma, 3))
+print("linear log-odds theta:", np.round(t5_theta, 3))
+print("intercept:", round(float(t5_intercept), 3))
+print("training log-odds scores:", np.round(t5_scores, 3))
+print("predictions:", t5_predictions)
+print("boundary x-coordinate when y=0:", round(float(t5_boundary_x_when_y0), 3))
+assert np.array_equal(t5_predictions, t5_y)
+assert abs(float(t5_boundary_x_when_y0)) < 1e-6
+
+plt.figure(figsize=(4.8, 4.0))
+plt.scatter(t5_X[t5_y == 0, 0], t5_X[t5_y == 0, 1], color="tab:blue", edgecolor="black", s=80, label="class 0")
+plt.scatter(t5_X[t5_y == 1, 0], t5_X[t5_y == 1, 1], color="tab:orange", edgecolor="black", s=80, label="class 1")
+plt.contour(t5_xx, t5_yy, t5_grid_scores, levels=[0.0], colors="black", linewidths=2)
+plt.xlabel("feature 1")
+plt.ylabel("feature 2")
+plt.title("GDA boundary: log posterior ratio = 0")
+plt.legend()
+plt.tight_layout()
+plt.show()
+plt.close()
+t5_original_show = plt.show  # -> remember the current Matplotlib show function
+def t5_show_and_close(*t5_args, **t5_kwargs):
+    t5_result = t5_original_show(*t5_args, **t5_kwargs)  # -> display the figure normally
+    plt.close("all")  # -> prevent the next lesson cell from inheriting categorical axes
+    return t5_result  # -> same return value as plt.show
+plt.show = t5_show_and_close  # -> later cells get a fresh figure after each show
+print("Matplotlib show wrapper:", "closes figures after display")
+```
+▶ What you'll see: the linear log-odds weights, correctly classified training points, and a straight contour where the posterior scores tie.
+
 ## 0. Step-by-Step Worked Example — Start Here (Beginner Friendly)
 
 > 🧑‍🎓 **New to this topic? Start here.** This is a gentle, fully runnable walkthrough that

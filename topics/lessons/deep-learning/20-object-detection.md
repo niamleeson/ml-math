@@ -2,6 +2,413 @@
 > **Source:** CS 230 · **Category:** Method/Model · **Type:** 💻 Colab · [↑ Full reference](../../ai-ml-cheatsheets.md)
 > 📓 Runnable notebook section; an `.ipynb` will be generated.
 
+## ✍️ Toy Examples
+
+These object-detection toys trace the geometry and post-processing mechanics with tiny boxes. Each block prints the intermediate coordinates, areas, scores, decisions, and one visualization before the larger worked example begins.
+
+### ✍️ Toy 1 · Bounding-box conversion, area, and clipping
+
+Corner boxes are convenient for drawing and overlap; center-size boxes are convenient for model outputs. Clipping keeps predicted boxes inside image bounds.
+
+```python
+import numpy as np
+import matplotlib.pyplot as plt
+from matplotlib.patches import Rectangle
+
+t1_rng = np.random.default_rng(0)  # -> reproducible generator seeded with 0
+t1_box_xyxy = np.array([1.0, 2.0, 5.0, 6.0])  # -> [x1, y1, x2, y2]
+t1_center_x = (t1_box_xyxy[0] + t1_box_xyxy[2]) / 2.0  # -> 3.0
+t1_center_y = (t1_box_xyxy[1] + t1_box_xyxy[3]) / 2.0  # -> 4.0
+t1_width = t1_box_xyxy[2] - t1_box_xyxy[0]  # -> 4.0
+t1_height = t1_box_xyxy[3] - t1_box_xyxy[1]  # -> 4.0
+t1_box_center = np.array([t1_center_x, t1_center_y, t1_width, t1_height])  # -> [3.0, 4.0, 4.0, 4.0]
+t1_box_back = np.array([t1_center_x - t1_width / 2.0, t1_center_y - t1_height / 2.0, t1_center_x + t1_width / 2.0, t1_center_y + t1_height / 2.0])  # -> [1.0, 2.0, 5.0, 6.0]
+t1_area = t1_width * t1_height  # -> 16.0
+t1_raw_box = np.array([-1.0, 1.0, 7.0, 5.0])  # -> box spills outside a 6x6 image
+t1_bounds = np.array([0.0, 0.0, 6.0, 6.0])  # -> image bounds
+t1_clipped = np.array([max(t1_bounds[0], t1_raw_box[0]), max(t1_bounds[1], t1_raw_box[1]), min(t1_bounds[2], t1_raw_box[2]), min(t1_bounds[3], t1_raw_box[3])])  # -> [0.0, 1.0, 6.0, 5.0]
+t1_clipped_width = t1_clipped[2] - t1_clipped[0]  # -> 6.0
+t1_clipped_height = t1_clipped[3] - t1_clipped[1]  # -> 4.0
+t1_clipped_area = t1_clipped_width * t1_clipped_height  # -> 24.0
+print("rng seed:", 0)
+print("corner box:", t1_box_xyxy.tolist())
+print("center x, y:", [t1_center_x, t1_center_y])
+print("width, height:", [t1_width, t1_height])
+print("center-size box:", t1_box_center.tolist())
+print("round trip back to corners:", t1_box_back.tolist())
+print("area:", float(t1_area))
+print("raw spilling box:", t1_raw_box.tolist())
+print("image bounds:", t1_bounds.tolist())
+print("clipped box:", t1_clipped.tolist())
+print("clipped area:", float(t1_clipped_area))
+assert np.allclose(t1_box_back, t1_box_xyxy)
+assert t1_area == 16.0 and t1_clipped_area == 24.0
+
+t1_fig, t1_ax = plt.subplots(figsize=(5, 4))
+t1_ax.set_xlim(0, 7)
+t1_ax.set_ylim(7, 0)
+t1_ax.grid(True, alpha=0.3)
+t1_ax.add_patch(Rectangle((t1_box_xyxy[0], t1_box_xyxy[1]), t1_width, t1_height, fill=False, edgecolor="tab:blue", linewidth=2, label="original"))
+t1_ax.add_patch(Rectangle((t1_clipped[0], t1_clipped[1]), t1_clipped_width, t1_clipped_height, fill=False, edgecolor="tab:orange", linewidth=2, label="clipped"))
+t1_ax.scatter([t1_center_x], [t1_center_y], color="tab:red", label="center")
+t1_ax.set_title("Box formats and clipping")
+t1_ax.legend()
+plt.show()
+```
+▶ What you'll see: the original box round-trips through center-size form, and the orange clipped box stays inside the 6×6 image bounds.
+
+### ✍️ Toy 2 · IoU from intersection and union
+
+Intersection over Union is the overlap area divided by the total area covered by either box.
+
+```python
+import numpy as np
+import matplotlib.pyplot as plt
+from matplotlib.patches import Rectangle
+
+t2_rng = np.random.default_rng(0)  # -> reproducible generator seeded with 0
+t2_box_a = np.array([1.0, 1.0, 5.0, 4.0])  # -> target-like box
+t2_box_b = np.array([3.0, 2.0, 6.0, 5.0])  # -> predicted-like box
+t2_left = max(t2_box_a[0], t2_box_b[0])  # -> 3.0
+t2_top = max(t2_box_a[1], t2_box_b[1])  # -> 2.0
+t2_right = min(t2_box_a[2], t2_box_b[2])  # -> 5.0
+t2_bottom = min(t2_box_a[3], t2_box_b[3])  # -> 4.0
+t2_intersection = np.array([t2_left, t2_top, t2_right, t2_bottom])  # -> [3.0, 2.0, 5.0, 4.0]
+t2_inter_width = max(0.0, t2_right - t2_left)  # -> 2.0
+t2_inter_height = max(0.0, t2_bottom - t2_top)  # -> 2.0
+t2_inter_area = t2_inter_width * t2_inter_height  # -> 4.0
+t2_area_a = (t2_box_a[2] - t2_box_a[0]) * (t2_box_a[3] - t2_box_a[1])  # -> 12.0
+t2_area_b = (t2_box_b[2] - t2_box_b[0]) * (t2_box_b[3] - t2_box_b[1])  # -> 9.0
+t2_union_area = t2_area_a + t2_area_b - t2_inter_area  # -> 17.0
+t2_iou = t2_inter_area / t2_union_area  # -> 0.23529411764705882
+print("rng seed:", 0)
+print("box A:", t2_box_a.tolist())
+print("box B:", t2_box_b.tolist())
+print("intersection box:", t2_intersection.tolist())
+print("intersection width, height:", [t2_inter_width, t2_inter_height])
+print("intersection area:", float(t2_inter_area))
+print("area A:", float(t2_area_a))
+print("area B:", float(t2_area_b))
+print("union area:", float(t2_union_area))
+print("IoU:", round(float(t2_iou), 3))
+assert t2_inter_area == 4.0 and t2_union_area == 17.0
+assert np.isclose(t2_iou, 4.0 / 17.0)
+
+t2_fig, t2_ax = plt.subplots(figsize=(5, 4))
+t2_ax.set_xlim(0, 7)
+t2_ax.set_ylim(6, 0)
+t2_ax.grid(True, alpha=0.3)
+t2_ax.add_patch(Rectangle((t2_box_a[0], t2_box_a[1]), t2_box_a[2] - t2_box_a[0], t2_box_a[3] - t2_box_a[1], fill=False, edgecolor="tab:blue", linewidth=2, label="A"))
+t2_ax.add_patch(Rectangle((t2_box_b[0], t2_box_b[1]), t2_box_b[2] - t2_box_b[0], t2_box_b[3] - t2_box_b[1], fill=False, edgecolor="tab:orange", linewidth=2, label="B"))
+t2_ax.add_patch(Rectangle((t2_intersection[0], t2_intersection[1]), t2_inter_width, t2_inter_height, facecolor="limegreen", alpha=0.35, label="intersection"))
+t2_ax.set_title(f"IoU = {t2_iou:.3f}")
+t2_ax.legend()
+plt.show()
+```
+▶ What you'll see: two boxes with a green 2×2 overlap; the printed ratio is 4 / 17 = 0.235.
+
+### ✍️ Toy 3 · Anchor-box matching by IoU
+
+Anchors are preset shapes at a grid cell. Matching chooses the anchor with the largest IoU to the target object.
+
+```python
+import numpy as np
+import matplotlib.pyplot as plt
+from matplotlib.patches import Rectangle
+
+t3_rng = np.random.default_rng(0)  # -> reproducible generator seeded with 0
+t3_cell_center = np.array([4.0, 4.0])  # -> one grid-cell center
+t3_anchor_sizes = np.array([[2.0, 2.0], [4.0, 2.0], [2.0, 4.0]])  # -> square, wide, tall anchors
+t3_anchor_names = np.array(["square", "wide", "tall"])  # -> names for printing
+t3_anchor_boxes = np.array([[t3_cell_center[0] - t3_size[0] / 2.0, t3_cell_center[1] - t3_size[1] / 2.0, t3_cell_center[0] + t3_size[0] / 2.0, t3_cell_center[1] + t3_size[1] / 2.0] for t3_size in t3_anchor_sizes])  # -> [[3,3,5,5], [2,3,6,5], [3,2,5,6]]
+t3_target = np.array([3.0, 2.0, 5.0, 6.0])  # -> tall target object
+t3_inter_left = np.maximum(t3_anchor_boxes[:, 0], t3_target[0])  # -> [3.0, 3.0, 3.0]
+t3_inter_top = np.maximum(t3_anchor_boxes[:, 1], t3_target[1])  # -> [3.0, 3.0, 2.0]
+t3_inter_right = np.minimum(t3_anchor_boxes[:, 2], t3_target[2])  # -> [5.0, 5.0, 5.0]
+t3_inter_bottom = np.minimum(t3_anchor_boxes[:, 3], t3_target[3])  # -> [5.0, 5.0, 6.0]
+t3_inter_area = np.maximum(0.0, t3_inter_right - t3_inter_left) * np.maximum(0.0, t3_inter_bottom - t3_inter_top)  # -> [4.0, 4.0, 8.0]
+t3_anchor_area = t3_anchor_sizes[:, 0] * t3_anchor_sizes[:, 1]  # -> [4.0, 8.0, 8.0]
+t3_target_area = (t3_target[2] - t3_target[0]) * (t3_target[3] - t3_target[1])  # -> 8.0
+t3_union_area = t3_anchor_area + t3_target_area - t3_inter_area  # -> [8.0, 12.0, 8.0]
+t3_ious = t3_inter_area / t3_union_area  # -> [0.5, 0.3333333333, 1.0]
+t3_best = int(np.argmax(t3_ious))  # -> 2
+print("rng seed:", 0)
+print("cell center:", t3_cell_center.tolist())
+print("anchor boxes:", t3_anchor_boxes.tolist())
+print("target box:", t3_target.tolist())
+print("intersection areas:", t3_inter_area.tolist())
+print("anchor areas:", t3_anchor_area.tolist())
+print("union areas:", t3_union_area.tolist())
+print("anchor IoUs:", dict(zip(t3_anchor_names.tolist(), np.round(t3_ious, 3).tolist())))
+print("best anchor:", str(t3_anchor_names[t3_best]))
+assert np.allclose(t3_ious, [0.5, 1.0 / 3.0, 1.0])
+assert t3_best == 2
+
+t3_fig, t3_ax = plt.subplots(figsize=(5, 4))
+t3_ax.set_xlim(1, 7)
+t3_ax.set_ylim(7, 1)
+t3_ax.grid(True, alpha=0.3)
+t3_colors = ["tab:blue", "tab:orange", "tab:green"]
+for t3_i, t3_box in enumerate(t3_anchor_boxes):
+    t3_ax.add_patch(Rectangle((t3_box[0], t3_box[1]), t3_box[2] - t3_box[0], t3_box[3] - t3_box[1], fill=False, edgecolor=t3_colors[t3_i], linewidth=2, label=t3_anchor_names[t3_i]))
+t3_ax.add_patch(Rectangle((t3_target[0], t3_target[1]), t3_target[2] - t3_target[0], t3_target[3] - t3_target[1], fill=False, edgecolor="black", linestyle="--", linewidth=2, label="target"))
+t3_ax.scatter([t3_cell_center[0]], [t3_cell_center[1]], color="black", zorder=3)
+t3_ax.set_title("Tall anchor wins by IoU")
+t3_ax.legend()
+plt.show()
+```
+▶ What you'll see: square, wide, and tall anchors share a center; the tall anchor exactly matches the target with IoU 1.0.
+
+### ✍️ Toy 4 · Bounding-box regression targets
+
+Box regression predicts offsets from an anchor, then decodes those offsets back into a target box.
+
+```python
+import numpy as np
+import matplotlib.pyplot as plt
+from matplotlib.patches import Rectangle
+
+t4_rng = np.random.default_rng(0)  # -> reproducible generator seeded with 0
+t4_anchor_center = np.array([4.0, 4.0])  # -> anchor center (cx, cy)
+t4_anchor_size = np.array([2.0, 4.0])  # -> anchor width and height
+t4_anchor_box = np.array([3.0, 2.0, 5.0, 6.0])  # -> anchor corners
+t4_target_box = np.array([3.5, 1.5, 6.5, 5.5])  # -> desired target corners
+t4_target_center = np.array([(t4_target_box[0] + t4_target_box[2]) / 2.0, (t4_target_box[1] + t4_target_box[3]) / 2.0])  # -> [5.0, 3.5]
+t4_target_size = np.array([t4_target_box[2] - t4_target_box[0], t4_target_box[3] - t4_target_box[1]])  # -> [3.0, 4.0]
+t4_tx = (t4_target_center[0] - t4_anchor_center[0]) / t4_anchor_size[0]  # -> 0.5
+t4_ty = (t4_target_center[1] - t4_anchor_center[1]) / t4_anchor_size[1]  # -> -0.125
+t4_tw = np.log(t4_target_size[0] / t4_anchor_size[0])  # -> 0.4054651081081644
+t4_th = np.log(t4_target_size[1] / t4_anchor_size[1])  # -> 0.0
+t4_targets = np.array([t4_tx, t4_ty, t4_tw, t4_th])  # -> [0.5, -0.125, 0.4055, 0.0]
+t4_decoded_center = np.array([t4_tx * t4_anchor_size[0] + t4_anchor_center[0], t4_ty * t4_anchor_size[1] + t4_anchor_center[1]])  # -> [5.0, 3.5]
+t4_decoded_size = np.exp(np.array([t4_tw, t4_th])) * t4_anchor_size  # -> [3.0, 4.0]
+t4_decoded_box = np.array([t4_decoded_center[0] - t4_decoded_size[0] / 2.0, t4_decoded_center[1] - t4_decoded_size[1] / 2.0, t4_decoded_center[0] + t4_decoded_size[0] / 2.0, t4_decoded_center[1] + t4_decoded_size[1] / 2.0])  # -> [3.5, 1.5, 6.5, 5.5]
+print("rng seed:", 0)
+print("anchor center:", t4_anchor_center.tolist())
+print("anchor size:", t4_anchor_size.tolist())
+print("target center:", t4_target_center.tolist())
+print("target size:", t4_target_size.tolist())
+print("regression targets [tx, ty, tw, th]:", np.round(t4_targets, 4).tolist())
+print("decoded center:", t4_decoded_center.tolist())
+print("decoded size:", np.round(t4_decoded_size, 4).tolist())
+print("decoded box:", np.round(t4_decoded_box, 4).tolist())
+assert np.allclose(np.round(t4_targets, 4), [0.5, -0.125, 0.4055, 0.0])
+assert np.allclose(t4_decoded_box, t4_target_box)
+
+t4_fig, t4_ax = plt.subplots(figsize=(5, 4))
+t4_ax.set_xlim(2, 8)
+t4_ax.set_ylim(7, 1)
+t4_ax.grid(True, alpha=0.3)
+t4_ax.add_patch(Rectangle((t4_anchor_box[0], t4_anchor_box[1]), t4_anchor_size[0], t4_anchor_size[1], fill=False, edgecolor="tab:blue", linewidth=2, label="anchor"))
+t4_ax.add_patch(Rectangle((t4_target_box[0], t4_target_box[1]), t4_target_size[0], t4_target_size[1], fill=False, edgecolor="tab:orange", linewidth=2, label="target / decoded"))
+t4_ax.arrow(t4_anchor_center[0], t4_anchor_center[1], t4_target_center[0] - t4_anchor_center[0], t4_target_center[1] - t4_anchor_center[1], head_width=0.12, color="black", length_includes_head=True)
+t4_ax.set_title("Regression targets move and resize an anchor")
+t4_ax.legend()
+plt.show()
+```
+▶ What you'll see: the printed offsets decode exactly back to the orange target box.
+
+### ✍️ Toy 5 · YOLO decode, confidence, and filtering
+
+A YOLO-style prediction decodes grid-relative centers, multiplies objectness by class probability, and drops low-confidence boxes.
+
+```python
+import numpy as np
+import matplotlib.pyplot as plt
+from matplotlib.patches import Rectangle
+
+t5_rng = np.random.default_rng(0)  # -> reproducible generator seeded with 0
+t5_grid_shape = np.array([2, 2])  # -> 2 rows by 2 columns
+t5_cell_size = np.array([4.0, 4.0])  # -> each cell is 4 by 4 units
+t5_cell_row_col = np.array([0, 1])  # -> row 0, column 1
+t5_cell_origin = np.array([t5_cell_row_col[1] * t5_cell_size[0], t5_cell_row_col[0] * t5_cell_size[1]])  # -> [4.0, 0.0]
+t5_local_centers = np.array([[0.25, 0.50], [0.30, 0.55]])  # -> centers as fractions inside the cell
+t5_centers = t5_cell_origin + t5_local_centers * t5_cell_size  # -> [[5.0, 2.0], [5.2, 2.2]]
+t5_sizes = np.array([[2.0, 2.0], [2.4, 2.0]])  # -> predicted widths and heights
+t5_boxes = np.array([[t5_center[0] - t5_size[0] / 2.0, t5_center[1] - t5_size[1] / 2.0, t5_center[0] + t5_size[0] / 2.0, t5_center[1] + t5_size[1] / 2.0] for t5_center, t5_size in zip(t5_centers, t5_sizes)])  # -> decoded boxes
+t5_objectness = np.array([0.90, 0.40])  # -> objectness scores
+t5_classes = np.array(["cat", "dog"])  # -> class vocabulary
+t5_class_probs = np.array([[0.20, 0.80], [0.30, 0.70]])  # -> class probabilities per anchor
+t5_best_class = np.argmax(t5_class_probs, axis=1)  # -> [1, 1]
+t5_best_prob = t5_class_probs[np.arange(len(t5_objectness)), t5_best_class]  # -> [0.8, 0.7]
+t5_confidence = t5_objectness * t5_best_prob  # -> [0.72, 0.28]
+t5_threshold = 0.50  # -> confidence cutoff
+t5_keep_mask = t5_confidence >= t5_threshold  # -> [True, False]
+t5_kept_boxes = t5_boxes[t5_keep_mask]  # -> one kept box
+t5_kept_labels = t5_classes[t5_best_class[t5_keep_mask]]  # -> ['dog']
+t5_kept_scores = t5_confidence[t5_keep_mask]  # -> [0.72]
+print("rng seed:", 0)
+print("cell origin:", t5_cell_origin.tolist())
+print("local centers:", t5_local_centers.tolist())
+print("decoded centers:", np.round(t5_centers, 2).tolist())
+print("decoded boxes:", np.round(t5_boxes, 2).tolist())
+print("objectness:", t5_objectness.tolist())
+print("best class probs:", t5_best_prob.tolist())
+print("confidence = objectness * class prob:", t5_confidence.tolist())
+print("keep mask:", t5_keep_mask.tolist())
+print("kept labels and scores:", list(zip(t5_kept_labels.tolist(), np.round(t5_kept_scores, 2).tolist())))
+assert np.allclose(t5_confidence, [0.72, 0.28])
+assert t5_keep_mask.tolist() == [True, False]
+
+t5_fig, t5_ax = plt.subplots(figsize=(5, 4))
+t5_ax.set_xlim(0, t5_grid_shape[1] * t5_cell_size[0])
+t5_ax.set_ylim(t5_grid_shape[0] * t5_cell_size[1], 0)
+t5_ax.grid(True, alpha=0.3)
+for t5_x in np.arange(0, t5_grid_shape[1] * t5_cell_size[0] + 0.1, t5_cell_size[0]):
+    t5_ax.axvline(t5_x, color="black", linewidth=0.8, alpha=0.4)
+for t5_y in np.arange(0, t5_grid_shape[0] * t5_cell_size[1] + 0.1, t5_cell_size[1]):
+    t5_ax.axhline(t5_y, color="black", linewidth=0.8, alpha=0.4)
+for t5_i, t5_box in enumerate(t5_boxes):
+    t5_color = "tab:green" if t5_keep_mask[t5_i] else "gray"
+    t5_ax.add_patch(Rectangle((t5_box[0], t5_box[1]), t5_box[2] - t5_box[0], t5_box[3] - t5_box[1], fill=False, edgecolor=t5_color, linewidth=2))
+    t5_ax.text(t5_box[0], t5_box[1] - 0.1, f"{t5_classes[t5_best_class[t5_i]]} {t5_confidence[t5_i]:.2f}", color=t5_color)
+t5_ax.scatter(t5_centers[:, 0], t5_centers[:, 1], color="tab:orange", zorder=3)
+t5_ax.set_title("YOLO decode and confidence filtering")
+plt.show()
+```
+▶ What you'll see: two decoded anchor boxes in one grid cell, but only the dog box with confidence 0.72 survives the 0.50 cutoff.
+
+### ✍️ Toy 6 · Class-aware non-max suppression
+
+NMS keeps high-scoring boxes and suppresses lower-scoring same-class duplicates; overlapping boxes of different classes can remain.
+
+```python
+import numpy as np
+import matplotlib.pyplot as plt
+from matplotlib.patches import Rectangle
+
+t6_rng = np.random.default_rng(0)  # -> reproducible generator seeded with 0
+t6_boxes = np.array([[1.0, 1.0, 4.0, 4.0], [1.5, 1.5, 4.5, 4.5], [6.0, 1.0, 8.0, 3.0], [1.2, 1.2, 4.2, 4.2]])  # -> four candidate boxes
+t6_scores = np.array([0.90, 0.80, 0.70, 0.85])  # -> confidence scores
+t6_labels = np.array(["dog", "dog", "dog", "cat"])  # -> class labels
+t6_threshold = 0.50  # -> suppress same-class IoU above this value
+t6_label_order = np.array(["dog", "cat"])  # -> deterministic class order
+t6_keep = []  # -> selected indices will be appended here
+t6_suppressed = []  # -> suppressed indices will be appended here
+print("rng seed:", 0)
+print("boxes:", t6_boxes.tolist())
+print("scores:", t6_scores.tolist())
+print("labels:", t6_labels.tolist())
+for t6_label in t6_label_order:
+    t6_class_indices = np.where(t6_labels == t6_label)[0]  # -> candidate indices for this class
+    t6_order = t6_class_indices[np.argsort(t6_scores[t6_class_indices])[::-1]]  # -> descending-score order
+    print("class", str(t6_label), "score order", t6_order.tolist())
+    while len(t6_order) > 0:
+        t6_current = int(t6_order[0])  # -> highest-score remaining box
+        t6_keep.append(t6_current)
+        t6_rest = t6_order[1:]  # -> lower-score boxes to compare
+        t6_survivors = []
+        for t6_candidate in t6_rest:
+            t6_left = max(t6_boxes[t6_current, 0], t6_boxes[t6_candidate, 0])  # -> intersection left
+            t6_top = max(t6_boxes[t6_current, 1], t6_boxes[t6_candidate, 1])  # -> intersection top
+            t6_right = min(t6_boxes[t6_current, 2], t6_boxes[t6_candidate, 2])  # -> intersection right
+            t6_bottom = min(t6_boxes[t6_current, 3], t6_boxes[t6_candidate, 3])  # -> intersection bottom
+            t6_inter_area = max(0.0, t6_right - t6_left) * max(0.0, t6_bottom - t6_top)  # -> overlap area
+            t6_area_current = (t6_boxes[t6_current, 2] - t6_boxes[t6_current, 0]) * (t6_boxes[t6_current, 3] - t6_boxes[t6_current, 1])  # -> current area
+            t6_area_candidate = (t6_boxes[t6_candidate, 2] - t6_boxes[t6_candidate, 0]) * (t6_boxes[t6_candidate, 3] - t6_boxes[t6_candidate, 1])  # -> candidate area
+            t6_iou = t6_inter_area / (t6_area_current + t6_area_candidate - t6_inter_area)  # -> IoU for NMS decision
+            print("compare", t6_current, "vs", int(t6_candidate), "IoU", round(float(t6_iou), 3))
+            if t6_iou > t6_threshold:
+                t6_suppressed.append(int(t6_candidate))
+            else:
+                t6_survivors.append(int(t6_candidate))
+        t6_order = np.array(t6_survivors, dtype=int)
+t6_keep = np.array(t6_keep, dtype=int)  # -> [0, 2, 3]
+t6_suppressed = np.array(t6_suppressed, dtype=int)  # -> [1]
+print("kept indices:", t6_keep.tolist())
+print("suppressed indices:", t6_suppressed.tolist())
+assert set(t6_keep.tolist()) == {0, 2, 3}
+assert t6_suppressed.tolist() == [1]
+
+t6_fig, t6_axes = plt.subplots(1, 2, figsize=(8, 3.8), sharex=True, sharey=True)
+for t6_ax, t6_title, t6_indices in zip(t6_axes, ["before NMS", "after NMS"], [np.arange(len(t6_boxes)), t6_keep]):
+    t6_ax.set_xlim(0, 9)
+    t6_ax.set_ylim(5, 0)
+    t6_ax.grid(True, alpha=0.3)
+    t6_ax.set_title(t6_title)
+    for t6_i in t6_indices:
+        t6_box = t6_boxes[t6_i]
+        t6_color = "tab:orange" if t6_labels[t6_i] == "dog" else "tab:purple"
+        t6_ax.add_patch(Rectangle((t6_box[0], t6_box[1]), t6_box[2] - t6_box[0], t6_box[3] - t6_box[1], fill=False, edgecolor=t6_color, linewidth=2))
+        t6_ax.text(t6_box[0], t6_box[1] - 0.1, f"{t6_i}:{t6_labels[t6_i]} {t6_scores[t6_i]:.2f}", color=t6_color)
+t6_fig.tight_layout()
+plt.show()
+```
+▶ What you'll see: dog box 1 is suppressed as a duplicate of dog box 0, but the overlapping cat box remains because NMS is class-aware.
+
+### ✍️ Toy 7 · Precision and recall at an IoU threshold
+
+Detector evaluation sorts predictions by confidence, matches each to an unused ground-truth box of the same class, and counts TP/FP/FN.
+
+```python
+import numpy as np
+import matplotlib.pyplot as plt
+from matplotlib.patches import Rectangle
+
+t7_rng = np.random.default_rng(0)  # -> reproducible generator seeded with 0
+t7_gt_boxes = np.array([[1.0, 1.0, 3.0, 3.0], [5.0, 1.0, 7.0, 3.0], [1.0, 5.0, 3.0, 7.0]])  # -> three ground-truth boxes
+t7_gt_labels = np.array(["dog", "cat", "dog"])  # -> ground-truth classes
+t7_pred_boxes = np.array([[1.0, 1.0, 3.0, 3.0], [1.2, 5.2, 3.2, 7.2], [5.5, 1.0, 7.5, 3.0], [8.0, 8.0, 9.0, 9.0]])  # -> four predictions
+t7_pred_labels = np.array(["dog", "dog", "cat", "dog"])  # -> predicted classes
+t7_pred_scores = np.array([0.90, 0.80, 0.70, 0.60])  # -> confidence scores
+t7_iou_threshold = 0.50  # -> match threshold
+t7_iou_matrix = np.zeros((len(t7_pred_boxes), len(t7_gt_boxes)))  # -> pairwise IoU table
+for t7_i in range(len(t7_pred_boxes)):
+    for t7_j in range(len(t7_gt_boxes)):
+        t7_left = max(t7_pred_boxes[t7_i, 0], t7_gt_boxes[t7_j, 0])  # -> intersection left
+        t7_top = max(t7_pred_boxes[t7_i, 1], t7_gt_boxes[t7_j, 1])  # -> intersection top
+        t7_right = min(t7_pred_boxes[t7_i, 2], t7_gt_boxes[t7_j, 2])  # -> intersection right
+        t7_bottom = min(t7_pred_boxes[t7_i, 3], t7_gt_boxes[t7_j, 3])  # -> intersection bottom
+        t7_inter_area = max(0.0, t7_right - t7_left) * max(0.0, t7_bottom - t7_top)  # -> overlap area
+        t7_pred_area = (t7_pred_boxes[t7_i, 2] - t7_pred_boxes[t7_i, 0]) * (t7_pred_boxes[t7_i, 3] - t7_pred_boxes[t7_i, 1])  # -> prediction area
+        t7_gt_area = (t7_gt_boxes[t7_j, 2] - t7_gt_boxes[t7_j, 0]) * (t7_gt_boxes[t7_j, 3] - t7_gt_boxes[t7_j, 1])  # -> ground-truth area
+        t7_union_area = t7_pred_area + t7_gt_area - t7_inter_area  # -> union area
+        t7_iou_matrix[t7_i, t7_j] = 0.0 if t7_union_area == 0.0 else t7_inter_area / t7_union_area  # -> pairwise IoU
+print("rng seed:", 0)
+print("IoU matrix pred x gt:", np.round(t7_iou_matrix, 3).tolist())
+t7_order = np.argsort(t7_pred_scores)[::-1]  # -> [0, 1, 2, 3]
+t7_matched_gt = set()  # -> matched ground-truth indices
+t7_tp = 0  # -> true positives
+t7_fp = 0  # -> false positives
+for t7_pred_idx in t7_order:
+    t7_same_class = t7_gt_labels == t7_pred_labels[t7_pred_idx]  # -> same-class ground truths
+    t7_available = np.array([t7_gt_idx not in t7_matched_gt for t7_gt_idx in range(len(t7_gt_boxes))])  # -> unused ground truths
+    t7_candidate_mask = t7_same_class & t7_available  # -> valid match candidates
+    t7_candidate_ious = np.where(t7_candidate_mask, t7_iou_matrix[t7_pred_idx], -1.0)  # -> invalid matches get -1
+    t7_best_gt = int(np.argmax(t7_candidate_ious))  # -> best available same-class gt
+    t7_best_iou = t7_candidate_ious[t7_best_gt]  # -> best IoU for this prediction
+    if t7_best_iou >= t7_iou_threshold:
+        t7_tp += 1
+        t7_matched_gt.add(t7_best_gt)
+        print("prediction", int(t7_pred_idx), "matched gt", t7_best_gt, "IoU", round(float(t7_best_iou), 3))
+    else:
+        t7_fp += 1
+        print("prediction", int(t7_pred_idx), "is FP with best IoU", round(float(t7_best_iou), 3))
+t7_fn = len(t7_gt_boxes) - len(t7_matched_gt)  # -> 0
+t7_precision = t7_tp / (t7_tp + t7_fp)  # -> 0.75
+t7_recall = t7_tp / (t7_tp + t7_fn)  # -> 1.0
+print("TP, FP, FN:", [t7_tp, t7_fp, t7_fn])
+print("precision:", round(float(t7_precision), 3))
+print("recall:", round(float(t7_recall), 3))
+assert (t7_tp, t7_fp, t7_fn) == (3, 1, 0)
+assert np.isclose(t7_precision, 0.75) and np.isclose(t7_recall, 1.0)
+
+t7_fig, t7_axes = plt.subplots(1, 2, figsize=(8, 3.8), sharex=True, sharey=True)
+for t7_ax, t7_title, t7_boxes, t7_labels in zip(t7_axes, ["ground truth", "predictions"], [t7_gt_boxes, t7_pred_boxes], [t7_gt_labels, t7_pred_labels]):
+    t7_ax.set_xlim(0, 10)
+    t7_ax.set_ylim(10, 0)
+    t7_ax.grid(True, alpha=0.3)
+    t7_ax.set_title(t7_title)
+    for t7_i, t7_box in enumerate(t7_boxes):
+        t7_color = "tab:orange" if t7_labels[t7_i] == "dog" else "tab:purple"
+        t7_ax.add_patch(Rectangle((t7_box[0], t7_box[1]), t7_box[2] - t7_box[0], t7_box[3] - t7_box[1], fill=False, edgecolor=t7_color, linewidth=2))
+        t7_ax.text(t7_box[0], t7_box[1] - 0.1, str(t7_labels[t7_i]), color=t7_color)
+t7_fig.suptitle(f"precision={t7_precision:.2f}, recall={t7_recall:.2f}")
+t7_fig.tight_layout()
+plt.show()
+```
+▶ What you'll see: three predictions match ground truth at IoU ≥ 0.50, one prediction is a false positive, so precision is 0.75 and recall is 1.0.
+
 ## 0. Step-by-Step Worked Example — Start Here (Beginner Friendly)
 
 > 🧑‍🎓 **New to this topic? Start here.** This is a gentle, fully runnable walkthrough that

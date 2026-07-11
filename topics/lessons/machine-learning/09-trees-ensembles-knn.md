@@ -2,6 +2,343 @@
 > **Source:** CS 229 · **Category:** Model · **Type:** 💻 Colab · [↑ Full reference](../../ai-ml-cheatsheets.md)
 > 📓 This section is written as a runnable notebook; an `.ipynb` will be generated from it.
 
+## ✍️ Toy Examples
+
+Before the full worked notebook, here are tiny, hand-traceable examples for the core mechanics in this lesson. Each toy uses just a few numbers, prints the intermediate values, checks one invariant with an assert, and draws a small picture.
+
+### ✍️ Toy 1 · Gini and entropy for one candidate split
+
+A tree split first counts labels on the left and right. Gini and entropy then turn those counts into impurity scores: lower child impurity means cleaner leaves.
+
+```python
+import numpy as np
+import matplotlib.pyplot as plt
+
+t1_rng = np.random.default_rng(0)  # -> seeded generator for reproducibility
+t1_X = np.array([[1.0, 0.0], [1.5, 0.0], [2.0, 0.0], [2.5, 0.0], [3.0, 0.0], [3.5, 0.0], [4.0, 0.0], [4.5, 0.0]])  # -> 8 items, 2 dims
+t1_y = np.array([0, 0, 0, 1, 1, 1, 0, 1])  # -> mixed binary labels
+t1_threshold = 2.75  # -> candidate split x0 <= 2.75
+t1_left = t1_X[:, 0] <= t1_threshold  # -> [True, True, True, True, False, False, False, False]
+t1_right = ~t1_left  # -> [False, False, False, False, True, True, True, True]
+t1_parent_counts = np.bincount(t1_y, minlength=2)  # -> [4, 4]
+t1_left_counts = np.bincount(t1_y[t1_left], minlength=2)  # -> [3, 1]
+t1_right_counts = np.bincount(t1_y[t1_right], minlength=2)  # -> [1, 3]
+t1_parent_probs = t1_parent_counts / t1_parent_counts.sum()  # -> [0.5, 0.5]
+t1_left_probs = t1_left_counts / t1_left_counts.sum()  # -> [0.75, 0.25]
+t1_right_probs = t1_right_counts / t1_right_counts.sum()  # -> [0.25, 0.75]
+t1_parent_gini = 1.0 - np.sum(t1_parent_probs ** 2)  # -> 0.5
+t1_left_gini = 1.0 - np.sum(t1_left_probs ** 2)  # -> 0.375
+t1_right_gini = 1.0 - np.sum(t1_right_probs ** 2)  # -> 0.375
+t1_parent_entropy = -np.sum(t1_parent_probs * np.log(t1_parent_probs))  # -> 0.693
+t1_left_entropy = -np.sum(t1_left_probs * np.log(t1_left_probs))  # -> 0.562
+t1_right_entropy = -np.sum(t1_right_probs * np.log(t1_right_probs))  # -> 0.562
+print("seed:", 0)  # -> 0
+print("X:", t1_X.tolist())  # -> 8 two-dimensional rows
+print("y:", t1_y.tolist())  # -> [0, 0, 0, 1, 1, 1, 0, 1]
+print("threshold:", t1_threshold)  # -> 2.75
+print("left mask:", t1_left.tolist())  # -> [True, True, True, True, False, False, False, False]
+print("right mask:", t1_right.tolist())  # -> [False, False, False, False, True, True, True, True]
+print("parent counts:", t1_parent_counts.tolist())  # -> [4, 4]
+print("left counts:", t1_left_counts.tolist())  # -> [3, 1]
+print("right counts:", t1_right_counts.tolist())  # -> [1, 3]
+print("parent probabilities:", t1_parent_probs.tolist())  # -> [0.5, 0.5]
+print("left probabilities:", t1_left_probs.tolist())  # -> [0.75, 0.25]
+print("right probabilities:", t1_right_probs.tolist())  # -> [0.25, 0.75]
+print("Gini parent/left/right:", round(t1_parent_gini, 3), round(t1_left_gini, 3), round(t1_right_gini, 3))  # -> 0.5 0.375 0.375
+print("entropy parent/left/right:", round(t1_parent_entropy, 3), round(t1_left_entropy, 3), round(t1_right_entropy, 3))  # -> 0.693 0.562 0.562
+assert np.allclose([t1_parent_gini, t1_left_gini, t1_right_gini], [0.5, 0.375, 0.375])
+
+plt.figure(figsize=(5, 3))
+plt.scatter(t1_X[:, 0], np.zeros(len(t1_X)), c=t1_y, cmap="coolwarm", s=90)
+plt.axvline(t1_threshold, color="black", linestyle="--", label="split")
+plt.yticks([])
+plt.xlabel("feature 0")
+plt.title("Toy 1: split creates two less-impure children")
+plt.legend()
+plt.show()
+```
+▶ What you'll see: parent counts `[4, 4]`, child counts `[3, 1]` and `[1, 3]`, and lower child impurity than the parent.
+
+### ✍️ Toy 2 · Information gain ranks candidate thresholds
+
+Information gain is the parent impurity minus the weighted child impurity. Trying several thresholds shows how a tree chooses the split that removes the most impurity.
+
+```python
+import numpy as np
+import matplotlib.pyplot as plt
+
+t2_rng = np.random.default_rng(0)  # -> seeded generator for reproducibility
+t2_X = np.array([[1.0, 0.0], [1.5, 0.0], [2.0, 0.0], [2.5, 0.0], [3.0, 0.0], [3.5, 0.0], [4.0, 0.0], [4.5, 0.0]])  # -> 8 items, 2 dims
+t2_y = np.array([0, 0, 0, 1, 1, 1, 0, 1])  # -> labels to split
+t2_thresholds = np.array([1.75, 2.25, 2.75, 3.75])  # -> candidate split points
+t2_parent_counts = np.bincount(t2_y, minlength=2)  # -> [4, 4]
+t2_parent_probs = t2_parent_counts / t2_parent_counts.sum()  # -> [0.5, 0.5]
+t2_parent_gini = 1.0 - np.sum(t2_parent_probs ** 2)  # -> 0.5
+t2_weighted_ginis = []  # -> will hold [0.333, 0.2, 0.375, 0.5]
+t2_gains = []  # -> will hold [0.167, 0.3, 0.125, 0.0]
+print("seed:", 0)  # -> 0
+print("X:", t2_X.tolist())  # -> 8 two-dimensional rows
+print("y:", t2_y.tolist())  # -> [0, 0, 0, 1, 1, 1, 0, 1]
+print("parent counts:", t2_parent_counts.tolist())  # -> [4, 4]
+print("parent Gini:", round(t2_parent_gini, 3))  # -> 0.5
+for t2_threshold in t2_thresholds:
+    t2_left = t2_X[:, 0] <= t2_threshold  # -> candidate left mask
+    t2_right = ~t2_left  # -> candidate right mask
+    t2_left_counts = np.bincount(t2_y[t2_left], minlength=2)  # -> counts for this left child
+    t2_right_counts = np.bincount(t2_y[t2_right], minlength=2)  # -> counts for this right child
+    t2_left_probs = t2_left_counts / t2_left_counts.sum()  # -> left proportions
+    t2_right_probs = t2_right_counts / t2_right_counts.sum()  # -> right proportions
+    t2_left_gini = 1.0 - np.sum(t2_left_probs ** 2)  # -> left impurity
+    t2_right_gini = 1.0 - np.sum(t2_right_probs ** 2)  # -> right impurity
+    t2_weighted_gini = t2_left.mean() * t2_left_gini + t2_right.mean() * t2_right_gini  # -> weighted child impurity
+    t2_gain = t2_parent_gini - t2_weighted_gini  # -> information gain
+    t2_weighted_ginis.append(t2_weighted_gini)  # -> save weighted impurity
+    t2_gains.append(t2_gain)  # -> save gain
+    print("threshold:", float(t2_threshold))  # -> one of [1.75, 2.25, 2.75, 3.75]
+    print("left counts:", t2_left_counts.tolist())  # -> candidate class counts
+    print("right counts:", t2_right_counts.tolist())  # -> candidate class counts
+    print("weighted Gini:", round(float(t2_weighted_gini), 3))  # -> 0.333, 0.2, 0.375, or 0.5
+    print("information gain:", round(float(t2_gain), 3))  # -> 0.167, 0.3, 0.125, or 0.0
+t2_weighted_ginis = np.array(t2_weighted_ginis)  # -> [0.333, 0.2, 0.375, 0.5]
+t2_gains = np.array(t2_gains)  # -> [0.167, 0.3, 0.125, 0.0]
+t2_best_index = int(np.argmax(t2_gains))  # -> 1
+t2_best_threshold = float(t2_thresholds[t2_best_index])  # -> 2.25
+print("all weighted Ginis:", np.round(t2_weighted_ginis, 3).tolist())  # -> [0.333, 0.2, 0.375, 0.5]
+print("all gains:", np.round(t2_gains, 3).tolist())  # -> [0.167, 0.3, 0.125, 0.0]
+print("best threshold:", t2_best_threshold)  # -> 2.25
+assert t2_best_threshold == 2.25
+
+plt.figure(figsize=(5, 3))
+plt.bar(t2_thresholds.astype(str), t2_gains, color="seagreen")
+plt.xlabel("threshold")
+plt.ylabel("Gini information gain")
+plt.title("Toy 2: choose the largest gain")
+plt.show()
+```
+▶ What you'll see: threshold `2.25` has the largest information gain, so it is the split this stump would choose.
+
+### ✍️ Toy 3 · Decision stump prediction from two leaf majorities
+
+A decision stump is a one-split tree. After choosing a threshold, each leaf predicts the majority class among training points that fall into that leaf.
+
+```python
+import numpy as np
+import matplotlib.pyplot as plt
+
+t3_rng = np.random.default_rng(0)  # -> seeded generator for reproducibility
+t3_X = np.array([[1.0, 0.0], [1.5, 0.0], [2.0, 0.0], [2.5, 0.0], [3.0, 0.0], [3.5, 0.0], [4.0, 0.0], [4.5, 0.0]])  # -> 8 items, 2 dims
+t3_y = np.array([0, 0, 0, 1, 1, 1, 0, 1])  # -> labels
+t3_threshold = 2.25  # -> chosen split from Toy 2
+t3_left = t3_X[:, 0] <= t3_threshold  # -> [True, True, True, False, False, False, False, False]
+t3_right = ~t3_left  # -> [False, False, False, True, True, True, True, True]
+t3_left_counts = np.bincount(t3_y[t3_left], minlength=2)  # -> [3, 0]
+t3_right_counts = np.bincount(t3_y[t3_right], minlength=2)  # -> [1, 4]
+t3_left_class = int(np.argmax(t3_left_counts))  # -> 0
+t3_right_class = int(np.argmax(t3_right_counts))  # -> 1
+t3_query = np.array([[1.2, 0.0], [3.2, 0.0], [4.2, 0.0]])  # -> 3 new rows
+t3_query_left = t3_query[:, 0] <= t3_threshold  # -> [True, False, False]
+t3_prediction = np.where(t3_query_left, t3_left_class, t3_right_class)  # -> [0, 1, 1]
+print("seed:", 0)  # -> 0
+print("X:", t3_X.tolist())  # -> 8 two-dimensional rows
+print("y:", t3_y.tolist())  # -> [0, 0, 0, 1, 1, 1, 0, 1]
+print("threshold:", t3_threshold)  # -> 2.25
+print("left counts:", t3_left_counts.tolist())  # -> [3, 0]
+print("right counts:", t3_right_counts.tolist())  # -> [1, 4]
+print("left leaf class:", t3_left_class)  # -> 0
+print("right leaf class:", t3_right_class)  # -> 1
+print("query rows:", t3_query.tolist())  # -> [[1.2, 0.0], [3.2, 0.0], [4.2, 0.0]]
+print("query left mask:", t3_query_left.tolist())  # -> [True, False, False]
+print("stump predictions:", t3_prediction.tolist())  # -> [0, 1, 1]
+assert t3_prediction.tolist() == [0, 1, 1]
+
+plt.figure(figsize=(5, 3))
+plt.scatter(t3_X[:, 0], t3_y, c=t3_y, cmap="coolwarm", s=90, label="training labels")
+plt.scatter(t3_query[:, 0], t3_prediction, marker="*", color="gold", edgecolor="black", s=180, label="queries")
+plt.axvline(t3_threshold, color="black", linestyle="--", label="stump split")
+plt.yticks([0, 1])
+plt.xlabel("feature 0")
+plt.ylabel("predicted class")
+plt.title("Toy 3: a stump predicts one majority per side")
+plt.legend()
+plt.show()
+```
+▶ What you'll see: the left leaf predicts class `0`, the right leaf predicts class `1`, and each query follows the one if/else rule.
+
+### ✍️ Toy 4 · Bagging vote from several noisy trees
+
+Bagging trains several trees and lets them vote. The final class is the majority vote across tree predictions for each example.
+
+```python
+import numpy as np
+import matplotlib.pyplot as plt
+
+t4_rng = np.random.default_rng(0)  # -> seeded generator for reproducibility
+t4_X = np.array([[0.0, 0.0], [0.5, 0.2], [1.0, 0.8], [2.0, 2.0], [2.5, 2.2], [3.0, 2.8]])  # -> 6 items, 2 dims
+t4_tree_votes = np.array([[0, 0, 0, 1, 1, 1], [0, 1, 0, 1, 1, 1], [0, 0, 1, 1, 0, 1], [1, 0, 0, 1, 1, 0], [0, 0, 0, 0, 1, 1]])  # -> 5 trees x 6 items
+t4_class1_votes = t4_tree_votes.sum(axis=0)  # -> [1, 1, 1, 4, 4, 4]
+t4_class0_votes = t4_tree_votes.shape[0] - t4_class1_votes  # -> [4, 4, 4, 1, 1, 1]
+t4_vote_table = np.vstack([t4_class0_votes, t4_class1_votes]).T  # -> per-item class vote counts
+t4_bagged_pred = (t4_class1_votes > t4_class0_votes).astype(int)  # -> [0, 0, 0, 1, 1, 1]
+print("seed:", 0)  # -> 0
+print("X:", t4_X.tolist())  # -> 6 two-dimensional rows
+print("tree votes:", t4_tree_votes.tolist())  # -> 5 rows of tree predictions
+print("class 0 votes:", t4_class0_votes.tolist())  # -> [4, 4, 4, 1, 1, 1]
+print("class 1 votes:", t4_class1_votes.tolist())  # -> [1, 1, 1, 4, 4, 4]
+print("vote table [class0, class1]:", t4_vote_table.tolist())  # -> [[4,1], [4,1], [4,1], [1,4], [1,4], [1,4]]
+print("bagged prediction:", t4_bagged_pred.tolist())  # -> [0, 0, 0, 1, 1, 1]
+assert t4_bagged_pred.tolist() == [0, 0, 0, 1, 1, 1]
+
+plt.figure(figsize=(5, 3))
+plt.imshow(t4_tree_votes, aspect="auto", cmap="coolwarm", vmin=0, vmax=1)
+plt.colorbar(label="tree vote")
+plt.xlabel("item index")
+plt.ylabel("tree index")
+plt.title("Toy 4: bagging = majority vote over trees")
+plt.show()
+```
+▶ What you'll see: individual trees sometimes disagree, but the vote totals produce stable ensemble predictions.
+
+### ✍️ Toy 5 · Boosting residual correction with one stump
+
+Gradient boosting starts from a simple prediction, computes residuals, fits a small learner to those residuals, and adds a shrunken correction.
+
+```python
+import numpy as np
+import matplotlib.pyplot as plt
+
+t5_rng = np.random.default_rng(0)  # -> seeded generator for reproducibility
+t5_X = np.array([[0.0, 1.0], [0.5, 1.0], [1.0, 1.0], [1.5, 1.0], [2.0, 1.0], [2.5, 1.0]])  # -> 6 items, 2 dims
+t5_y = np.array([1.0, 1.2, 1.1, 2.8, 3.0, 3.2])  # -> regression targets
+t5_start = np.full_like(t5_y, t5_y.mean())  # -> [2.05, 2.05, 2.05, 2.05, 2.05, 2.05]
+t5_residual = t5_y - t5_start  # -> [-1.05, -0.85, -0.95, 0.75, 0.95, 1.15]
+t5_threshold = 1.25  # -> stump split
+t5_left = t5_X[:, 0] <= t5_threshold  # -> [True, True, True, False, False, False]
+t5_right = ~t5_left  # -> [False, False, False, True, True, True]
+t5_left_value = t5_residual[t5_left].mean()  # -> -0.95
+t5_right_value = t5_residual[t5_right].mean()  # -> 0.95
+t5_correction = np.where(t5_left, t5_left_value, t5_right_value)  # -> [-0.95, -0.95, -0.95, 0.95, 0.95, 0.95]
+t5_learning_rate = 0.8  # -> shrinkage
+t5_updated = t5_start + t5_learning_rate * t5_correction  # -> [1.29, 1.29, 1.29, 2.81, 2.81, 2.81]
+t5_start_mse = np.mean((t5_y - t5_start) ** 2)  # -> 0.919
+t5_updated_mse = np.mean((t5_y - t5_updated) ** 2)  # -> 0.053
+print("seed:", 0)  # -> 0
+print("X:", t5_X.tolist())  # -> 6 two-dimensional rows
+print("y:", t5_y.tolist())  # -> [1.0, 1.2, 1.1, 2.8, 3.0, 3.2]
+print("start prediction:", np.round(t5_start, 2).tolist())  # -> [2.05, 2.05, 2.05, 2.05, 2.05, 2.05]
+print("residuals:", np.round(t5_residual, 2).tolist())  # -> [-1.05, -0.85, -0.95, 0.75, 0.95, 1.15]
+print("threshold:", t5_threshold)  # -> 1.25
+print("left residual mean:", round(float(t5_left_value), 2))  # -> -0.95
+print("right residual mean:", round(float(t5_right_value), 2))  # -> 0.95
+print("correction:", np.round(t5_correction, 2).tolist())  # -> [-0.95, -0.95, -0.95, 0.95, 0.95, 0.95]
+print("updated prediction:", np.round(t5_updated, 2).tolist())  # -> [1.29, 1.29, 1.29, 2.81, 2.81, 2.81]
+print("MSE start/update:", round(float(t5_start_mse), 3), round(float(t5_updated_mse), 3))  # -> 0.919 0.053
+assert t5_updated_mse < t5_start_mse
+
+plt.figure(figsize=(5, 3))
+plt.scatter(t5_X[:, 0], t5_y, color="black", s=80, label="targets")
+plt.step(t5_X[:, 0], t5_start, where="mid", label="start")
+plt.step(t5_X[:, 0], t5_updated, where="mid", label="after residual stump")
+plt.xlabel("feature 0")
+plt.ylabel("prediction")
+plt.title("Toy 5: boosting adds a residual correction")
+plt.legend()
+plt.show()
+```
+▶ What you'll see: the residual stump shifts low points down and high points up, sharply reducing mean squared error.
+
+### ✍️ Toy 6 · kNN majority vote from nearest distances
+
+kNN stores the training data, computes distances from the query, sorts neighbors, and lets the nearest labels vote.
+
+```python
+import numpy as np
+import matplotlib.pyplot as plt
+
+t6_rng = np.random.default_rng(0)  # -> seeded generator for reproducibility
+t6_X = np.array([[0.0, 0.0], [0.4, 0.2], [0.2, 0.8], [2.0, 2.0], [2.4, 2.1], [2.1, 2.6], [1.2, 1.5]])  # -> 7 items, 2 dims
+t6_y = np.array([0, 0, 0, 1, 1, 1, 0])  # -> labels
+t6_query = np.array([1.45, 1.55])  # -> point to classify
+t6_distances = np.linalg.norm(t6_X - t6_query, axis=1)  # -> [2.122, 1.71, 1.458, 0.711, 1.098, 1.235, 0.255]
+t6_order = np.argsort(t6_distances)  # -> [6, 3, 4, 5, 2, 1, 0]
+t6_k = 3  # -> nearest neighbors to vote
+t6_neighbors = t6_order[:t6_k]  # -> [6, 3, 4]
+t6_neighbor_labels = t6_y[t6_neighbors]  # -> [0, 1, 1]
+t6_votes = np.bincount(t6_neighbor_labels, minlength=2)  # -> [1, 2]
+t6_prediction = int(np.argmax(t6_votes))  # -> 1
+print("seed:", 0)  # -> 0
+print("X:", t6_X.tolist())  # -> 7 two-dimensional rows
+print("y:", t6_y.tolist())  # -> [0, 0, 0, 1, 1, 1, 0]
+print("query:", t6_query.tolist())  # -> [1.45, 1.55]
+print("distances:", np.round(t6_distances, 3).tolist())  # -> [2.122, 1.71, 1.458, 0.711, 1.098, 1.235, 0.255]
+print("nearest order:", t6_order.tolist())  # -> [6, 3, 4, 5, 2, 1, 0]
+print("k neighbors:", t6_neighbors.tolist())  # -> [6, 3, 4]
+print("neighbor labels:", t6_neighbor_labels.tolist())  # -> [0, 1, 1]
+print("votes:", t6_votes.tolist())  # -> [1, 2]
+print("prediction:", t6_prediction)  # -> 1
+assert t6_prediction == 1
+
+plt.figure(figsize=(5, 4))
+plt.scatter(t6_X[:, 0], t6_X[:, 1], c=t6_y, cmap="coolwarm", s=90)
+plt.scatter(t6_query[0], t6_query[1], marker="*", color="gold", edgecolor="black", s=220, label="query")
+plt.scatter(t6_X[t6_neighbors, 0], t6_X[t6_neighbors, 1], facecolors="none", edgecolors="black", s=240, linewidths=2, label="k=3 neighbors")
+plt.xlabel("feature 0")
+plt.ylabel("feature 1")
+plt.title("Toy 6: nearest labels vote")
+plt.legend()
+plt.show()
+```
+▶ What you'll see: the three circled neighbors have labels `[0, 1, 1]`, so class `1` wins by majority.
+
+### ✍️ Toy 7 · kNN inverse-distance weighting
+
+Distance weighting gives closer neighbors more influence. A very close minority of neighbors can outweigh a farther majority.
+
+```python
+import numpy as np
+import matplotlib.pyplot as plt
+
+t7_rng = np.random.default_rng(0)  # -> seeded generator for reproducibility
+t7_X = np.array([[1.1, 1.0], [1.2, 1.1], [1.4, 1.2], [1.5, 1.1], [1.6, 1.0], [3.0, 3.0], [0.0, 3.0]])  # -> 7 items, 2 dims
+t7_y = np.array([1, 1, 0, 0, 0, 0, 1])  # -> labels
+t7_query = np.array([1.0, 1.0])  # -> point to classify
+t7_distances = np.linalg.norm(t7_X - t7_query, axis=1)  # -> distances to all points
+t7_order = np.argsort(t7_distances)  # -> [0, 1, 2, 3, 4, 6, 5]
+t7_k = 5  # -> compare five neighbors
+t7_neighbors = t7_order[:t7_k]  # -> [0, 1, 2, 3, 4]
+t7_neighbor_labels = t7_y[t7_neighbors]  # -> [1, 1, 0, 0, 0]
+t7_neighbor_distances = t7_distances[t7_neighbors]  # -> [0.1, 0.224, 0.447, 0.51, 0.6]
+t7_majority_votes = np.bincount(t7_neighbor_labels, minlength=2)  # -> [3, 2]
+t7_weights = 1.0 / (t7_neighbor_distances + 1e-9)  # -> [10.0, 4.472, 2.236, 1.961, 1.667]
+t7_weighted_votes = np.array([t7_weights[t7_neighbor_labels == 0].sum(), t7_weights[t7_neighbor_labels == 1].sum()])  # -> [5.864, 14.472]
+t7_majority_pred = int(np.argmax(t7_majority_votes))  # -> 0
+t7_weighted_pred = int(np.argmax(t7_weighted_votes))  # -> 1
+print("seed:", 0)  # -> 0
+print("X:", t7_X.tolist())  # -> 7 two-dimensional rows
+print("y:", t7_y.tolist())  # -> [1, 1, 0, 0, 0, 0, 1]
+print("query:", t7_query.tolist())  # -> [1.0, 1.0]
+print("distances:", np.round(t7_distances, 3).tolist())  # -> [0.1, 0.224, 0.447, 0.51, 0.6, 2.828, 2.236]
+print("nearest order:", t7_order.tolist())  # -> [0, 1, 2, 3, 4, 6, 5]
+print("k neighbor labels:", t7_neighbor_labels.tolist())  # -> [1, 1, 0, 0, 0]
+print("k neighbor distances:", np.round(t7_neighbor_distances, 3).tolist())  # -> [0.1, 0.224, 0.447, 0.51, 0.6]
+print("majority votes:", t7_majority_votes.tolist())  # -> [3, 2]
+print("inverse weights:", np.round(t7_weights, 3).tolist())  # -> [10.0, 4.472, 2.236, 1.961, 1.667]
+print("weighted votes [class0, class1]:", np.round(t7_weighted_votes, 3).tolist())  # -> [5.864, 14.472]
+print("majority prediction:", t7_majority_pred)  # -> 0
+print("weighted prediction:", t7_weighted_pred)  # -> 1
+assert t7_majority_pred == 0 and t7_weighted_pred == 1
+
+plt.figure(figsize=(5, 4))
+plt.scatter(t7_X[:, 0], t7_X[:, 1], c=t7_y, cmap="coolwarm", s=90)
+plt.scatter(t7_query[0], t7_query[1], marker="*", color="gold", edgecolor="black", s=220, label="query")
+plt.scatter(t7_X[t7_neighbors, 0], t7_X[t7_neighbors, 1], facecolors="none", edgecolors="black", s=t7_weights * 35, linewidths=2, label="weighted neighbors")
+plt.xlabel("feature 0")
+plt.ylabel("feature 1")
+plt.title("Toy 7: closer neighbors get bigger votes")
+plt.legend()
+plt.show()
+```
+▶ What you'll see: unweighted majority picks class `0`, but inverse-distance weights pick class `1` because its two neighbors are much closer.
+
 ## 0. Step-by-Step Worked Example — Start Here (Beginner Friendly)
 
 > 🧑‍🎓 **New to this topic? Start here.** This is a gentle, fully runnable walkthrough that

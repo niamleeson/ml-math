@@ -2,6 +2,229 @@
 > **Source:** CS 229 · **Category:** Method · **Type:** ⚖️ Both · [↑ Full reference](../../ai-ml-cheatsheets.md)
 > 📓 The coded examples form a runnable notebook section; an .ipynb will be generated.
 
+## ✍️ Toy Examples
+
+Before the full worked notebook, here are tiny, hand-traceable PCA toys for the computational mechanics in this lesson. Each toy prints the values it computes, checks one invariant, and draws a compact picture.
+
+### ✍️ Toy 1 · Mean-centering a data cloud
+
+PCA studies variation around the data's own center, so the first move is subtracting the feature-wise mean from every row.
+
+```python
+import numpy as np
+import matplotlib.pyplot as plt
+
+t1_rng = np.random.default_rng(0)  # -> seeded generator for reproducibility
+t1_X = np.array([[1.0, 2.0], [2.0, 1.0], [3.0, 3.0], [4.0, 3.0], [5.0, 5.0], [6.0, 4.0]])  # -> 6 items, 2 dims
+t1_mean = t1_X.mean(axis=0)  # -> [3.5, 3.0]
+t1_centered = t1_X - t1_mean  # -> rows shifted around zero
+t1_centered_mean = t1_centered.mean(axis=0)  # -> [0.0, 0.0]
+print("seed:", 0)  # -> 0
+print("X:", t1_X.tolist())  # -> 6 two-dimensional rows
+print("feature mean:", t1_mean.tolist())  # -> [3.5, 3.0]
+print("centered X:", t1_centered.tolist())  # -> shifted rows
+print("centered feature mean:", np.round(t1_centered_mean, 10).tolist())  # -> [0.0, 0.0]
+assert np.allclose(t1_centered_mean, [0.0, 0.0])
+
+fig, t1_axes = plt.subplots(1, 2, figsize=(8, 3.5))
+t1_axes[0].scatter(t1_X[:, 0], t1_X[:, 1], s=90, color="slateblue")
+t1_axes[0].scatter(t1_mean[0], t1_mean[1], marker="X", s=160, color="black", label="mean")
+t1_axes[0].set_title("raw data")
+t1_axes[0].set_xlabel("feature 0")
+t1_axes[0].set_ylabel("feature 1")
+t1_axes[0].legend()
+t1_axes[1].scatter(t1_centered[:, 0], t1_centered[:, 1], s=90, color="seagreen")
+t1_axes[1].axhline(0, color="gray", linestyle="--")
+t1_axes[1].axvline(0, color="gray", linestyle="--")
+t1_axes[1].set_title("mean-centered data")
+t1_axes[1].set_xlabel("centered feature 0")
+t1_axes[1].set_ylabel("centered feature 1")
+plt.tight_layout()
+plt.show()
+```
+▶ What you'll see: subtracting `[3.5, 3.0]` moves the cloud so each centered feature has mean zero.
+
+### ✍️ Toy 2 · Covariance matrix from centered dot products
+
+The covariance matrix records each feature's variance on the diagonal and pairwise co-movement off the diagonal.
+
+```python
+import numpy as np
+import matplotlib.pyplot as plt
+
+t2_rng = np.random.default_rng(0)  # -> seeded generator for reproducibility
+t2_X = np.array([[1.0, 2.0], [2.0, 1.0], [3.0, 3.0], [4.0, 3.0], [5.0, 5.0], [6.0, 4.0]])  # -> 6 items, 2 dims
+t2_mean = t2_X.mean(axis=0)  # -> [3.5, 3.0]
+t2_centered = t2_X - t2_mean  # -> centered data
+t2_cross_products = t2_centered.T @ t2_centered  # -> [[17.5, 11.0], [11.0, 10.0]]
+t2_m = t2_X.shape[0]  # -> 6
+t2_cov = t2_cross_products / t2_m  # -> [[2.917, 1.833], [1.833, 1.667]]
+t2_feature_vars = np.diag(t2_cov)  # -> [2.917, 1.667]
+t2_feature_cov = t2_cov[0, 1]  # -> 1.833
+print("seed:", 0)  # -> 0
+print("X:", t2_X.tolist())  # -> 6 two-dimensional rows
+print("mean:", t2_mean.tolist())  # -> [3.5, 3.0]
+print("centered X:", t2_centered.tolist())  # -> shifted rows
+print("X_centered.T @ X_centered:", t2_cross_products.tolist())  # -> [[17.5, 11.0], [11.0, 10.0]]
+print("m:", t2_m)  # -> 6
+print("covariance matrix:", np.round(t2_cov, 3).tolist())  # -> [[2.917, 1.833], [1.833, 1.667]]
+print("feature variances:", np.round(t2_feature_vars, 3).tolist())  # -> [2.917, 1.667]
+print("feature covariance:", round(float(t2_feature_cov), 3))  # -> 1.833
+assert np.allclose(t2_cov, t2_cov.T)
+
+plt.figure(figsize=(4, 3.5))
+plt.imshow(t2_cov, cmap="Blues")
+for t2_i in range(2):
+    for t2_j in range(2):
+        plt.text(t2_j, t2_i, f"{t2_cov[t2_i, t2_j]:.2f}", ha="center", va="center")
+plt.xticks([0, 1], ["f0", "f1"])
+plt.yticks([0, 1], ["f0", "f1"])
+plt.title("Toy 2: covariance matrix")
+plt.colorbar(label="covariance")
+plt.show()
+```
+▶ What you'll see: feature `0` has larger variance, and the positive off-diagonal covariance shows the features rise together.
+
+### ✍️ Toy 3 · Eigen-decomposition and PCA projection
+
+PCA eigenvectors are unit directions of the covariance matrix. Projecting onto the top eigenvector gives one-dimensional PCA coordinates.
+
+```python
+import numpy as np
+import matplotlib.pyplot as plt
+
+t3_rng = np.random.default_rng(0)  # -> seeded generator for reproducibility
+t3_X = np.array([[1.0, 2.0], [2.0, 1.0], [3.0, 3.0], [4.0, 3.0], [5.0, 5.0], [6.0, 4.0]])  # -> 6 items, 2 dims
+t3_mean = t3_X.mean(axis=0)  # -> [3.5, 3.0]
+t3_centered = t3_X - t3_mean  # -> centered data
+t3_cov = (t3_centered.T @ t3_centered) / t3_X.shape[0]  # -> [[2.917, 1.833], [1.833, 1.667]]
+t3_eigvals_raw, t3_eigvecs_raw = np.linalg.eigh(t3_cov)  # -> ascending eigenpairs
+t3_order = np.argsort(t3_eigvals_raw)[::-1]  # -> [1, 0]
+t3_eigvals = t3_eigvals_raw[t3_order]  # -> [4.229, 0.355]
+t3_eigvecs = t3_eigvecs_raw[:, t3_order]  # -> principal directions as columns
+t3_pc1 = t3_eigvecs[:, 0]  # -> top direction
+t3_scores = t3_centered @ t3_pc1  # -> 1-D PCA coordinates
+t3_first_projection = t3_scores[0] * t3_pc1  # -> first centered row dropped onto PC1
+print("seed:", 0)  # -> 0
+print("X:", t3_X.tolist())  # -> 6 two-dimensional rows
+print("mean:", t3_mean.tolist())  # -> [3.5, 3.0]
+print("covariance:", np.round(t3_cov, 3).tolist())  # -> [[2.917, 1.833], [1.833, 1.667]]
+print("raw eigenvalues:", np.round(t3_eigvals_raw, 3).tolist())  # -> [0.355, 4.229]
+print("sort order:", t3_order.tolist())  # -> [1, 0]
+print("sorted eigenvalues:", np.round(t3_eigvals, 3).tolist())  # -> [4.229, 0.355]
+print("eigenvectors columns:", np.round(t3_eigvecs, 3).tolist())  # -> top PC first
+print("PC1:", np.round(t3_pc1, 3).tolist())  # -> unit vector
+print("PCA scores:", np.round(t3_scores, 3).tolist())  # -> six 1-D coordinates
+print("first projection:", np.round(t3_first_projection, 3).tolist())  # -> projected centered first row
+assert np.allclose(t3_cov @ t3_pc1, t3_eigvals[0] * t3_pc1)
+
+plt.figure(figsize=(5, 4))
+plt.scatter(t3_centered[:, 0], t3_centered[:, 1], s=90, color="slateblue")
+t3_arrow = t3_pc1 * np.sqrt(t3_eigvals[0])
+plt.arrow(0, 0, t3_arrow[0], t3_arrow[1], color="crimson", width=0.03, length_includes_head=True)
+plt.scatter(t3_first_projection[0], t3_first_projection[1], color="gold", edgecolor="black", s=130, label="first projection")
+plt.axhline(0, color="gray", linestyle="--")
+plt.axvline(0, color="gray", linestyle="--")
+plt.xlabel("centered feature 0")
+plt.ylabel("centered feature 1")
+plt.title("Toy 3: project onto the top eigenvector")
+plt.axis("equal")
+plt.legend()
+plt.show()
+```
+▶ What you'll see: the top eigenvector points along the widest direction, and each row gets a scalar PCA score on that line.
+
+### ✍️ Toy 4 · Explained variance ratio from eigenvalues
+
+Each eigenvalue is the variance captured by one principal component. Dividing by the eigenvalue sum gives explained variance ratios.
+
+```python
+import numpy as np
+import matplotlib.pyplot as plt
+
+t4_rng = np.random.default_rng(0)  # -> seeded generator for reproducibility
+t4_X = np.array([[1.0, 2.0], [2.0, 1.0], [3.0, 3.0], [4.0, 3.0], [5.0, 5.0], [6.0, 4.0]])  # -> 6 items, 2 dims
+t4_centered = t4_X - t4_X.mean(axis=0)  # -> mean-centered data
+t4_cov = (t4_centered.T @ t4_centered) / t4_X.shape[0]  # -> [[2.917, 1.833], [1.833, 1.667]]
+t4_eigvals_raw, t4_eigvecs_raw = np.linalg.eigh(t4_cov)  # -> ascending eigenvalues
+t4_order = np.argsort(t4_eigvals_raw)[::-1]  # -> descending variance order
+t4_eigvals = t4_eigvals_raw[t4_order]  # -> [4.229, 0.355]
+t4_total_variance = t4_eigvals.sum()  # -> 4.583
+t4_ratios = t4_eigvals / t4_total_variance  # -> [0.923, 0.077]
+t4_cumulative = np.cumsum(t4_ratios)  # -> [0.923, 1.0]
+t4_k90 = int(np.searchsorted(t4_cumulative, 0.90) + 1)  # -> 1
+print("seed:", 0)  # -> 0
+print("X:", t4_X.tolist())  # -> 6 two-dimensional rows
+print("centered X:", t4_centered.tolist())  # -> shifted rows
+print("covariance:", np.round(t4_cov, 3).tolist())  # -> [[2.917, 1.833], [1.833, 1.667]]
+print("eigenvalues:", np.round(t4_eigvals, 3).tolist())  # -> [4.229, 0.355]
+print("total variance:", round(float(t4_total_variance), 3))  # -> 4.583
+print("explained variance ratios:", np.round(t4_ratios, 3).tolist())  # -> [0.923, 0.077]
+print("cumulative ratios:", np.round(t4_cumulative, 3).tolist())  # -> [0.923, 1.0]
+print("components for at least 90%:", t4_k90)  # -> 1
+assert np.isclose(t4_ratios.sum(), 1.0)
+
+plt.figure(figsize=(5, 3))
+plt.bar(["PC1", "PC2"], t4_ratios, color=["crimson", "seagreen"])
+plt.plot(["PC1", "PC2"], t4_cumulative, marker="o", color="black", label="cumulative")
+plt.ylim(0, 1.05)
+plt.ylabel("variance fraction")
+plt.title("Toy 4: eigenvalues become variance ratios")
+plt.legend()
+plt.show()
+```
+▶ What you'll see: PC1 captures about `92%` of the variance, while both PCs together capture `100%`.
+
+### ✍️ Toy 5 · Reconstruction error after dropping a component
+
+Projecting to one PC compresses the data. Reconstructing from that one coordinate loses the discarded perpendicular component, which appears as reconstruction error.
+
+```python
+import numpy as np
+import matplotlib.pyplot as plt
+
+t5_rng = np.random.default_rng(0)  # -> seeded generator for reproducibility
+t5_X = np.array([[1.0, 2.0], [2.0, 1.0], [3.0, 3.0], [4.0, 3.0], [5.0, 5.0], [6.0, 4.0]])  # -> 6 items, 2 dims
+t5_mean = t5_X.mean(axis=0)  # -> [3.5, 3.0]
+t5_centered = t5_X - t5_mean  # -> centered data
+t5_cov = (t5_centered.T @ t5_centered) / t5_X.shape[0]  # -> covariance matrix
+t5_eigvals_raw, t5_eigvecs_raw = np.linalg.eigh(t5_cov)  # -> ascending eigenpairs
+t5_order = np.argsort(t5_eigvals_raw)[::-1]  # -> descending order
+t5_eigvals = t5_eigvals_raw[t5_order]  # -> [4.229, 0.355]
+t5_eigvecs = t5_eigvecs_raw[:, t5_order]  # -> principal axes
+t5_U1 = t5_eigvecs[:, :1]  # -> keep PC1 only
+t5_Z = t5_centered @ t5_U1  # -> 6x1 compressed coordinates
+t5_recon_centered = t5_Z @ t5_U1.T  # -> reconstructed centered rows
+t5_recon = t5_recon_centered + t5_mean  # -> reconstructed original-space rows
+t5_row_sq_errors = np.sum((t5_X - t5_recon) ** 2, axis=1)  # -> per-row squared errors
+t5_reconstruction_error = t5_row_sq_errors.mean()  # -> 0.355
+t5_discarded_variance = t5_eigvals[1]  # -> 0.355
+print("seed:", 0)  # -> 0
+print("X:", t5_X.tolist())  # -> 6 two-dimensional rows
+print("mean:", t5_mean.tolist())  # -> [3.5, 3.0]
+print("eigenvalues:", np.round(t5_eigvals, 3).tolist())  # -> [4.229, 0.355]
+print("U1:", np.round(t5_U1, 3).tolist())  # -> top eigenvector column
+print("compressed Z:", np.round(t5_Z[:, 0], 3).tolist())  # -> one coordinate per row
+print("reconstructed rows:", np.round(t5_recon, 3).tolist())  # -> approximate original rows
+print("row squared errors:", np.round(t5_row_sq_errors, 3).tolist())  # -> losses from dropping PC2
+print("mean reconstruction error:", round(float(t5_reconstruction_error), 3))  # -> 0.355
+print("discarded variance:", round(float(t5_discarded_variance), 3))  # -> 0.355
+assert np.isclose(t5_reconstruction_error, t5_discarded_variance)
+
+plt.figure(figsize=(5, 4))
+plt.scatter(t5_centered[:, 0], t5_centered[:, 1], s=90, color="lightgray", edgecolor="black", label="centered data")
+plt.scatter(t5_recon_centered[:, 0], t5_recon_centered[:, 1], s=90, color="crimson", label="1-PC reconstruction")
+for t5_original, t5_projected in zip(t5_centered, t5_recon_centered):
+    plt.plot([t5_original[0], t5_projected[0]], [t5_original[1], t5_projected[1]], color="gray", linestyle="--")
+plt.xlabel("centered feature 0")
+plt.ylabel("centered feature 1")
+plt.title("Toy 5: dashed segments are reconstruction error")
+plt.axis("equal")
+plt.legend()
+plt.show()
+```
+▶ What you'll see: points drop onto the PC1 line, and the mean squared reconstruction error equals the discarded PC2 variance.
+
 ## 0. Step-by-Step Worked Example — Start Here (Beginner Friendly)
 
 > 🧑‍🎓 **New to this topic? Start here.** This is a gentle, fully runnable walkthrough that

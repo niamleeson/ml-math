@@ -2,6 +2,319 @@
 > **Source:** CS 230 · **Category:** Function · **Type:** ⚖️ Both · [↑ Full reference](../../ai-ml-cheatsheets.md)
 > 📓 The coded examples form a runnable notebook section; an .ipynb will be generated.
 
+## ✍️ Toy Examples
+
+These tiny activation toys isolate each computation before the full worked example. Every block uses small hand-checkable arrays, prints the forward values and derivative pieces, pins the result with an assertion, and draws one picture.
+
+### ✍️ Toy 1 · Sigmoid forward, derivative, and saturation
+
+Sigmoid turns each pre-activation into a number between 0 and 1. The derivative is largest at 0 and shrinks in both saturated tails.
+
+```python
+import numpy as np
+import matplotlib.pyplot as plt
+
+t1_rng = np.random.default_rng(0)  # -> reproducible generator seeded with 0
+t1_z = np.array([-4.0, -2.0, -1.0, 0.0, 1.0, 2.0, 4.0])  # -> seven hand-checkable pre-activations
+t1_neg_z = -t1_z  # -> [4.0, 2.0, 1.0, -0.0, -1.0, -2.0, -4.0]
+t1_exp = np.exp(t1_neg_z)  # -> [54.598, 7.389, 2.718, 1.0, 0.368, 0.135, 0.018]
+t1_denom = 1.0 + t1_exp  # -> [55.598, 8.389, 3.718, 2.0, 1.368, 1.135, 1.018]
+t1_sigmoid = 1.0 / t1_denom  # -> [0.018, 0.119, 0.269, 0.5, 0.731, 0.881, 0.982]
+t1_one_minus = 1.0 - t1_sigmoid  # -> [0.982, 0.881, 0.731, 0.5, 0.269, 0.119, 0.018]
+t1_grad = t1_sigmoid * t1_one_minus  # -> [0.0177, 0.105, 0.1966, 0.25, 0.1966, 0.105, 0.0177]
+print("rng seed:", 0)
+print("z:", t1_z.tolist())
+print("-z:", t1_neg_z.tolist())
+print("exp(-z):", np.round(t1_exp, 3).tolist())
+print("1 + exp(-z):", np.round(t1_denom, 3).tolist())
+print("sigmoid(z):", np.round(t1_sigmoid, 3).tolist())
+print("1 - sigmoid(z):", np.round(t1_one_minus, 3).tolist())
+print("sigmoid'(z):", np.round(t1_grad, 4).tolist())
+assert np.allclose(np.round(t1_sigmoid, 3), [0.018, 0.119, 0.269, 0.5, 0.731, 0.881, 0.982])
+assert np.isclose(t1_grad[3], 0.25)
+assert t1_grad[0] < 0.02 and t1_grad[-1] < 0.02
+
+t1_fig, t1_ax = plt.subplots(figsize=(6, 3.5))
+t1_ax.plot(t1_z, t1_sigmoid, marker="o", label="sigmoid")
+t1_ax.plot(t1_z, t1_grad, marker="s", label="derivative")
+t1_ax.set_title("Sigmoid saturates in both tails")
+t1_ax.set_xlabel("z")
+t1_ax.set_ylabel("value")
+t1_ax.legend()
+plt.show()
+```
+▶ What you'll see: sigmoid values near 0 and 1 at the tails, with derivative 0.25 at z=0 and about 0.0177 at z=±4.
+
+### ✍️ Toy 2 · Tanh forward, derivative, and saturation
+
+Tanh is zero-centered, but its derivative still collapses when the input is far from zero.
+
+```python
+import numpy as np
+import matplotlib.pyplot as plt
+
+t2_rng = np.random.default_rng(0)  # -> reproducible generator seeded with 0
+t2_z = np.array([-3.0, -2.0, -1.0, 0.0, 1.0, 2.0, 3.0])  # -> seven pre-activations
+t2_tanh = np.tanh(t2_z)  # -> [-0.995, -0.964, -0.762, 0.0, 0.762, 0.964, 0.995]
+t2_tanh_squared = t2_tanh ** 2  # -> [0.990, 0.929, 0.580, 0.0, 0.580, 0.929, 0.990]
+t2_grad = 1.0 - t2_tanh_squared  # -> [0.0099, 0.0707, 0.4200, 1.0, 0.4200, 0.0707, 0.0099]
+print("rng seed:", 0)
+print("z:", t2_z.tolist())
+print("tanh(z):", np.round(t2_tanh, 3).tolist())
+print("tanh(z)^2:", np.round(t2_tanh_squared, 3).tolist())
+print("1 - tanh(z)^2:", np.round(t2_grad, 4).tolist())
+assert np.allclose(np.round(t2_tanh, 3), [-0.995, -0.964, -0.762, 0.0, 0.762, 0.964, 0.995])
+assert np.isclose(t2_grad[3], 1.0)
+assert t2_grad[0] < 0.01 and t2_grad[-1] < 0.01
+
+t2_fig, t2_ax = plt.subplots(figsize=(6, 3.5))
+t2_ax.plot(t2_z, t2_tanh, marker="o", label="tanh")
+t2_ax.plot(t2_z, t2_grad, marker="s", label="derivative")
+t2_ax.axhline(0.0, color="black", linewidth=0.8)
+t2_ax.set_title("Tanh is centered but still saturates")
+t2_ax.set_xlabel("z")
+t2_ax.set_ylabel("value")
+t2_ax.legend()
+plt.show()
+```
+▶ What you'll see: tanh crosses 0 with slope 1, while the derivative near z=±3 is already under 0.01.
+
+### ✍️ Toy 3 · ReLU forward gate and derivative
+
+ReLU keeps positive values unchanged and clips nonpositive values to zero. The practical derivative passes gradient only on the positive side.
+
+```python
+import numpy as np
+import matplotlib.pyplot as plt
+
+t3_rng = np.random.default_rng(0)  # -> reproducible generator seeded with 0
+t3_z = np.array([-3.0, -1.0, 0.0, 1.0, 2.0, 4.0])  # -> six branch-test inputs
+t3_values = np.maximum(0.0, t3_z)  # -> [0.0, 0.0, 0.0, 1.0, 2.0, 4.0]
+t3_positive_mask = t3_z > 0.0  # -> [False, False, False, True, True, True]
+t3_grad = t3_positive_mask.astype(float)  # -> [0.0, 0.0, 0.0, 1.0, 1.0, 1.0]
+t3_upstream = np.full_like(t3_z, 2.0)  # -> [2.0, 2.0, 2.0, 2.0, 2.0, 2.0]
+t3_backprop = t3_upstream * t3_grad  # -> [0.0, 0.0, 0.0, 2.0, 2.0, 2.0]
+print("rng seed:", 0)
+print("z:", t3_z.tolist())
+print("ReLU(z):", t3_values.tolist())
+print("z > 0 mask:", t3_positive_mask.tolist())
+print("ReLU'(z):", t3_grad.tolist())
+print("upstream gradient:", t3_upstream.tolist())
+print("backprop through ReLU:", t3_backprop.tolist())
+assert np.array_equal(t3_values, [0.0, 0.0, 0.0, 1.0, 2.0, 4.0])
+assert np.array_equal(t3_backprop, [0.0, 0.0, 0.0, 2.0, 2.0, 2.0])
+
+t3_fig, t3_ax = plt.subplots(figsize=(6, 3.5))
+t3_ax.plot(t3_z, t3_values, marker="o", label="ReLU")
+t3_ax.step(t3_z, t3_grad, where="mid", label="derivative")
+t3_ax.set_title("ReLU gates both activations and gradients")
+t3_ax.set_xlabel("z")
+t3_ax.set_ylabel("value")
+t3_ax.legend()
+plt.show()
+```
+▶ What you'll see: negative and zero inputs become zero, and only the positive inputs pass the upstream gradient of 2.
+
+### ✍️ Toy 4 · Dead-ReLU zero-gradient failure
+
+A ReLU unit is dead when all examples land on the negative side, so its output and gradient are zero for the whole minibatch.
+
+```python
+import numpy as np
+import matplotlib.pyplot as plt
+
+t4_rng = np.random.default_rng(0)  # -> reproducible generator seeded with 0
+t4_X = np.array([[1.0, 0.0], [0.0, 1.0], [1.0, 1.0], [2.0, 0.0], [0.0, 2.0], [2.0, 1.0]])  # -> six 2-D examples
+t4_w = np.array([-1.0, -1.0])  # -> bad negative weights
+t4_b = -0.5  # -> bad negative bias
+t4_weighted = t4_X @ t4_w  # -> [-1.0, -1.0, -2.0, -2.0, -2.0, -3.0]
+t4_z = t4_weighted + t4_b  # -> [-1.5, -1.5, -2.5, -2.5, -2.5, -3.5]
+t4_output = np.maximum(0.0, t4_z)  # -> [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+t4_grad_mask = (t4_z > 0.0).astype(float)  # -> [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+t4_upstream = np.ones(len(t4_z))  # -> [1.0, 1.0, 1.0, 1.0, 1.0, 1.0]
+t4_local_grad = t4_upstream * t4_grad_mask  # -> [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+t4_grad_w = t4_X.T @ t4_local_grad  # -> [0.0, 0.0]
+t4_grad_b = np.sum(t4_local_grad)  # -> 0.0
+print("rng seed:", 0)
+print("X:", t4_X.tolist())
+print("weighted X @ w:", t4_weighted.tolist())
+print("z = X @ w + b:", t4_z.tolist())
+print("ReLU(z):", t4_output.tolist())
+print("ReLU derivative mask:", t4_grad_mask.tolist())
+print("local gradient:", t4_local_grad.tolist())
+print("gradient wrt w:", t4_grad_w.tolist())
+print("gradient wrt b:", float(t4_grad_b))
+assert np.all(t4_output == 0.0)
+assert np.all(t4_grad_w == 0.0) and t4_grad_b == 0.0
+
+t4_fig, t4_ax = plt.subplots(figsize=(6, 3.5))
+t4_ax.bar(np.arange(len(t4_z)), t4_z, color="tomato", label="pre-activation z")
+t4_ax.axhline(0.0, color="black", linewidth=1.0, label="ReLU cutoff")
+t4_ax.set_title("A dead ReLU stays below zero for every example")
+t4_ax.set_xlabel("example index")
+t4_ax.set_ylabel("z")
+t4_ax.legend()
+plt.show()
+```
+▶ What you'll see: every pre-activation is below zero, so the ReLU outputs and parameter gradients are all exactly zero.
+
+### ✍️ Toy 5 · Leaky ReLU forward and derivative
+
+Leaky ReLU changes only the negative branch, replacing zero slope with a small slope so gradients still flow.
+
+```python
+import numpy as np
+import matplotlib.pyplot as plt
+
+t5_rng = np.random.default_rng(0)  # -> reproducible generator seeded with 0
+t5_z = np.array([-3.0, -1.0, 0.0, 1.0, 2.0, 4.0])  # -> six branch-test inputs
+t5_epsilon = 0.10  # -> negative-side slope
+t5_negative_branch = t5_epsilon * t5_z  # -> [-0.3, -0.1, 0.0, 0.1, 0.2, 0.4]
+t5_values = np.where(t5_z > 0.0, t5_z, t5_negative_branch)  # -> [-0.3, -0.1, 0.0, 1.0, 2.0, 4.0]
+t5_grad = np.where(t5_z > 0.0, 1.0, t5_epsilon)  # -> [0.1, 0.1, 0.1, 1.0, 1.0, 1.0]
+t5_upstream = np.full_like(t5_z, 2.0)  # -> [2.0, 2.0, 2.0, 2.0, 2.0, 2.0]
+t5_backprop = t5_upstream * t5_grad  # -> [0.2, 0.2, 0.2, 2.0, 2.0, 2.0]
+print("rng seed:", 0)
+print("z:", t5_z.tolist())
+print("epsilon:", t5_epsilon)
+print("epsilon * z:", np.round(t5_negative_branch, 2).tolist())
+print("LeakyReLU(z):", np.round(t5_values, 2).tolist())
+print("LeakyReLU'(z):", np.round(t5_grad, 2).tolist())
+print("backprop through LeakyReLU:", np.round(t5_backprop, 2).tolist())
+assert np.allclose(t5_values, [-0.3, -0.1, 0.0, 1.0, 2.0, 4.0])
+assert np.allclose(t5_backprop[:3], [0.2, 0.2, 0.2])
+
+t5_fig, t5_ax = plt.subplots(figsize=(6, 3.5))
+t5_ax.plot(t5_z, t5_values, marker="o", label="Leaky ReLU")
+t5_ax.step(t5_z, t5_grad, where="mid", label="derivative")
+t5_ax.set_title("Leaky ReLU keeps a small left-side gradient")
+t5_ax.set_xlabel("z")
+t5_ax.set_ylabel("value")
+t5_ax.legend()
+plt.show()
+```
+▶ What you'll see: negative inputs are not clipped to zero; they keep a small output and a backprop multiplier of 0.1.
+
+### ✍️ Toy 6 · ELU forward and derivative
+
+ELU keeps the positive branch linear but replaces the negative branch with a smooth exponential that saturates near $-\alpha$.
+
+```python
+import numpy as np
+import matplotlib.pyplot as plt
+
+t6_rng = np.random.default_rng(0)  # -> reproducible generator seeded with 0
+t6_z = np.array([-3.0, -1.0, 0.0, 1.0, 2.0, 4.0])  # -> six branch-test inputs
+t6_alpha = 1.0  # -> common ELU shape parameter
+t6_exp_z = np.exp(t6_z)  # -> [0.0498, 0.3679, 1.0, 2.7183, 7.3891, 54.5982]
+t6_left_branch = t6_alpha * (t6_exp_z - 1.0)  # -> [-0.9502, -0.6321, 0.0, 1.7183, 6.3891, 53.5982]
+t6_values = np.where(t6_z < 0.0, t6_left_branch, t6_z)  # -> [-0.9502, -0.6321, 0.0, 1.0, 2.0, 4.0]
+t6_grad = np.where(t6_z < 0.0, t6_alpha * t6_exp_z, 1.0)  # -> [0.0498, 0.3679, 1.0, 1.0, 1.0, 1.0]
+print("rng seed:", 0)
+print("z:", t6_z.tolist())
+print("exp(z):", np.round(t6_exp_z, 4).tolist())
+print("alpha * (exp(z) - 1):", np.round(t6_left_branch, 4).tolist())
+print("ELU(z):", np.round(t6_values, 4).tolist())
+print("ELU'(z):", np.round(t6_grad, 4).tolist())
+assert np.allclose(np.round(t6_values, 4), [-0.9502, -0.6321, 0.0, 1.0, 2.0, 4.0])
+assert np.allclose(np.round(t6_grad, 4), [0.0498, 0.3679, 1.0, 1.0, 1.0, 1.0])
+
+t6_fig, t6_ax = plt.subplots(figsize=(6, 3.5))
+t6_ax.plot(t6_z, t6_values, marker="o", label="ELU")
+t6_ax.plot(t6_z, t6_grad, marker="s", label="derivative")
+t6_ax.axhline(-t6_alpha, color="gray", linestyle="--", label="-alpha")
+t6_ax.set_title("ELU smooths and saturates the negative branch")
+t6_ax.set_xlabel("z")
+t6_ax.set_ylabel("value")
+t6_ax.legend()
+plt.show()
+```
+▶ What you'll see: the ELU output approaches −1 on the far left, while its negative-side derivative remains positive but small.
+
+### ✍️ Toy 7 · Stable softmax forward and Jacobian
+
+Stable softmax subtracts the maximum logit before exponentiating. Its Jacobian shows that each output probability depends on every input logit.
+
+```python
+import numpy as np
+import matplotlib.pyplot as plt
+
+t7_rng = np.random.default_rng(0)  # -> reproducible generator seeded with 0
+t7_logits = np.array([3.0, 1.0, 0.0, -2.0])  # -> four class scores
+t7_max_logit = np.max(t7_logits)  # -> 3.0
+t7_shifted = t7_logits - t7_max_logit  # -> [0.0, -2.0, -3.0, -5.0]
+t7_exp = np.exp(t7_shifted)  # -> [1.0, 0.135335, 0.049787, 0.006738]
+t7_exp_sum = np.sum(t7_exp)  # -> 1.191860298603562
+t7_probs = t7_exp / t7_exp_sum  # -> [0.839025, 0.11355, 0.041773, 0.005653]
+t7_diag = np.diag(t7_probs)  # -> diagonal probability matrix
+t7_outer = np.outer(t7_probs, t7_probs)  # -> pairwise probability products
+t7_jacobian = t7_diag - t7_outer  # -> softmax derivative matrix
+t7_shifted_big = (t7_logits + 1000.0) - np.max(t7_logits + 1000.0)  # -> [0.0, -2.0, -3.0, -5.0]
+t7_probs_big = np.exp(t7_shifted_big) / np.sum(np.exp(t7_shifted_big))  # -> same probabilities as t7_probs
+print("rng seed:", 0)
+print("logits:", t7_logits.tolist())
+print("max logit:", float(t7_max_logit))
+print("shifted logits:", t7_shifted.tolist())
+print("exp(shifted):", np.round(t7_exp, 6).tolist())
+print("sum exp:", round(float(t7_exp_sum), 6))
+print("softmax probabilities:", np.round(t7_probs, 6).tolist())
+print("Jacobian row sums:", np.round(t7_jacobian.sum(axis=1), 10).tolist())
+print("shift-invariance max diff:", float(np.max(np.abs(t7_probs - t7_probs_big))))
+assert np.allclose(np.round(t7_probs, 6), [0.839025, 0.11355, 0.041773, 0.005653])
+assert np.isclose(np.sum(t7_probs), 1.0)
+assert np.max(np.abs(t7_probs - t7_probs_big)) == 0.0
+
+t7_fig, t7_axes = plt.subplots(1, 2, figsize=(8, 3.5))
+t7_axes[0].bar(["c0", "c1", "c2", "c3"], t7_probs, color="slateblue")
+t7_axes[0].set_title("softmax probabilities")
+t7_axes[0].set_ylim(0.0, 1.0)
+t7_image = t7_axes[1].imshow(t7_jacobian, cmap="coolwarm", vmin=-0.12, vmax=0.14)
+t7_axes[1].set_title("softmax Jacobian")
+t7_fig.colorbar(t7_image, ax=t7_axes[1], fraction=0.046)
+t7_fig.tight_layout()
+plt.show()
+```
+▶ What you'll see: the largest logit gets probability about 0.839, probabilities sum to 1, and the Jacobian has negative off-diagonal couplings.
+
+### ✍️ Toy 8 · Vanishing-gradient chain products
+
+Backpropagation multiplies local derivatives. Several modest slopes can shrink the final gradient by orders of magnitude.
+
+```python
+import numpy as np
+import matplotlib.pyplot as plt
+
+t8_rng = np.random.default_rng(0)  # -> reproducible generator seeded with 0
+t8_layer_ids = np.arange(1, 7)  # -> [1, 2, 3, 4, 5, 6]
+t8_saturating_slopes = np.array([0.25, 0.25, 0.20, 0.50, 0.10, 0.25])  # -> six small local derivatives
+t8_cumprod = np.cumprod(t8_saturating_slopes)  # -> [0.25, 0.0625, 0.0125, 0.00625, 0.000625, 0.00015625]
+t8_active_relu_slopes = np.ones_like(t8_saturating_slopes)  # -> [1.0, 1.0, 1.0, 1.0, 1.0, 1.0]
+t8_active_relu_cumprod = np.cumprod(t8_active_relu_slopes)  # -> [1.0, 1.0, 1.0, 1.0, 1.0, 1.0]
+t8_dead_relu_slopes = np.array([1.0, 1.0, 0.0, 1.0, 1.0, 1.0])  # -> one zero derivative in the chain
+t8_dead_relu_cumprod = np.cumprod(t8_dead_relu_slopes)  # -> [1.0, 1.0, 0.0, 0.0, 0.0, 0.0]
+print("rng seed:", 0)
+print("layers:", t8_layer_ids.tolist())
+print("saturating slopes:", t8_saturating_slopes.tolist())
+print("saturating cumulative product:", t8_cumprod.tolist())
+print("active ReLU cumulative product:", t8_active_relu_cumprod.tolist())
+print("dead ReLU slopes:", t8_dead_relu_slopes.tolist())
+print("dead ReLU cumulative product:", t8_dead_relu_cumprod.tolist())
+assert np.isclose(t8_cumprod[-1], 0.00015625)
+assert t8_active_relu_cumprod[-1] == 1.0
+assert t8_dead_relu_cumprod[-1] == 0.0
+
+t8_fig, t8_ax = plt.subplots(figsize=(6, 3.5))
+t8_ax.semilogy(t8_layer_ids, t8_cumprod, marker="o", label="saturating slopes")
+t8_ax.semilogy(t8_layer_ids, t8_active_relu_cumprod, marker="s", label="active ReLU")
+t8_ax.plot(t8_layer_ids, t8_dead_relu_cumprod + 1e-6, marker="^", label="dead ReLU + epsilon for log plot")
+t8_ax.set_title("Gradient multipliers are products")
+t8_ax.set_xlabel("layer")
+t8_ax.set_ylabel("cumulative gradient multiplier")
+t8_ax.legend()
+plt.show()
+```
+▶ What you'll see: small derivatives shrink to 0.00015625 by layer 6, active ReLUs stay at 1, and one dead ReLU zeros the path.
+
 ## 0. Step-by-Step Worked Example — Start Here (Beginner Friendly)
 
 > 🧑‍🎓 **New to this topic? Start here.** This is a gentle, fully runnable walkthrough that
