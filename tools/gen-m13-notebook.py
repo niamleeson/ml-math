@@ -85,13 +85,45 @@ print(f"{N} items x {DIM} numbers  |  {len(Q)} queries  |  {DIM*4} bytes per vec
 md("---\n# Part 0 · 🧸 Toy Examples — trace each mechanic by hand")
 
 md(r"""
-Before the full pipeline, here is **one tiny, hand-traceable toy example per core mechanic** in
-this lesson. Each uses a handful of small numbers you can check by hand, prints every
-intermediate value, and draws a picture. The at-scale versions follow in Parts A–G.
+Before the full pipeline, here is **one tiny, hand-traceable toy example for every mechanic** in
+this lesson — exact search, recall, IVF, PQ codebooks + encoding, residuals, ADC, the HNSW graph
+(walk, layers, heuristic), ScaNN's anisotropic pick, and hybrid search. Each uses a handful of
+small numbers you can check by hand, prints every intermediate value, and draws a picture. The
+at-scale versions follow in Parts A–G.
 """)
 
 md(r"""
-## 🧸 Toy 1 · recall@k by hand (the accuracy score)
+## 🧸 Toy 1 · exact top-k by hand (the baseline every method approximates)
+
+**Exact search** = measure the distance from the query to *every* item, sort, and keep the `k`
+smallest. That's the CORRECT answer ANN tries to reproduce cheaply — and the thing recall@k
+grades against. Traced on 6 tiny points so you can check each distance by hand.
+""")
+code(r"""
+ex_items = np.array([[0,0],[1,0],[3,3],[6,5],[5,6],[8,8]], float)   # 6 items
+ex_q     = np.array([5.5, 5.5])                                     # the query
+ex_d = ((ex_items - ex_q)**2).sum(1)                               # squared distance to EVERY item (touch all 6)
+print("distance to each item:", np.round(ex_d, 1).tolist())        # -> [60.5, 50.5, 12.5, 0.5, 0.5, 12.5]
+ex_order = np.argsort(ex_d)                                        # sort ascending by distance
+print("items sorted by distance:", ex_order.tolist())             # -> [3, 4, 2, 5, 1, 0]
+ex_top3 = ex_order[:3].tolist()                                   # the exact top-3 neighbours
+print("exact top-3:", ex_top3, " (this is the ground truth)")     # -> [3, 4, 2]
+assert ex_top3[0] in (3, 4)                                       # nearest is item 3 or 4 (tie at 0.5)
+print(f"touched all {len(ex_items)} items -> O(N). ANN's job: return {ex_top3} WITHOUT scanning everything.")
+
+plt.figure(figsize=(4.5, 4))
+plt.scatter(ex_items[:,0], ex_items[:,1], s=80, c="lightgray")
+for i,(px,py) in enumerate(ex_items): plt.text(px+0.1, py+0.1, f"{i}: d={ex_d[i]:.1f}")
+plt.scatter(ex_items[ex_top3,0], ex_items[ex_top3,1], s=160, facecolors="none",
+            edgecolors=GREEN, linewidths=2, label="exact top-3")
+plt.scatter(*ex_q, marker="*", s=300, c="gold", edgecolor="k", label="query", zorder=5)
+plt.title("exact search: distance to every item, keep the 3 smallest"); plt.legend(); plt.show()
+""")
+md("▶ What you'll see: distances to all 6 items, then the exact top-3 `[3, 4, 2]`. Every method below "
+   "tries to return this set while touching far fewer than all N items. Step 2 shows why that matters at scale.")
+
+md(r"""
+## 🧸 Toy 2 · recall@k by hand (the accuracy score)
 
 **recall@k = (of the true top-k, how many did the method return) / k.** 1.0 = found them all.
 Traced on a tiny 6-item example (item IDs), so you can check every fraction by hand.
@@ -113,7 +145,7 @@ print("\nhigher recall = fewer misses. every method below is scored this way.")
 """)
 
 md(r"""
-## 🧸 Toy 2 · IVF assign & probe by hand
+## 🧸 Toy 3 · IVF assign & probe by hand
 
 Before the visual version, do IVF on **6 points** by hand. **Assign** each item to its nearest
 **cell center**; at query time, **probe** only the nearest cell and scan just its members —
@@ -142,7 +174,34 @@ md("▶ What you'll see: items split `[0 0 0 1 1 1]`; the query probes cell 1 an
    "3,4,5 — half the corpus skipped. Steps 4–6 scale this up on more points.")
 
 md(r"""
-## 🧸 Toy 3 · encode ONE vector by hand (before the real thing)
+## 🧸 Toy 4 · PQ codebook build by hand (make the crayon box)
+
+Before you can *encode* (Toy 5), you must **build the codebook** — the set of representative
+"crayons." For one subspace that's just **k-means over the sub-vectors**: each codeword becomes the
+**average** of the sub-vectors assigned to it. Traced on 6 sub-vectors with `k=2` codewords.
+""")
+code(r"""
+cb_sub = np.array([[1,1],[1,2],[2,1],[8,8],[9,8],[8,9]], float)   # 6 sub-vectors to summarise
+cb_C   = np.array([[0,0],[10,10]], float)                        # initial 2 codewords (deliberately off)
+for it in range(2):
+    cb_assign = np.argmin(((cb_sub[:,None] - cb_C[None])**2).sum(2), axis=1)   # nearest codeword per sub-vector
+    for c in range(2):
+        cb_C[c] = cb_sub[cb_assign == c].mean(0)                 # codeword <- AVERAGE of its members
+    print(f"iter {it}: assign={cb_assign.tolist()}  codewords={np.round(cb_C,2).tolist()}")
+# -> iter 0: assign=[0,0,0,1,1,1] codewords=[[1.33,1.33],[8.33,8.33]] ; iter 1 identical (converged)
+assert np.allclose(cb_C[0], cb_sub[:3].mean(0))                  # codeword 0 == mean of the 3 low sub-vectors
+print("this 2-row codebook is the 'crayon box'; Toy 5 ENCODES a vector by picking the nearest row.")
+
+plt.figure(figsize=(4.5, 4))
+plt.scatter(cb_sub[:,0], cb_sub[:,1], c=cb_assign, cmap="coolwarm", s=80)
+plt.scatter(cb_C[:,0], cb_C[:,1], marker="X", s=220, c="black", label="codewords (averages)")
+plt.title("PQ codebook = k-means averages of the sub-vectors"); plt.legend(); plt.show()
+""")
+md("▶ What you'll see: the 2 codewords settle to the clump averages `[1.33,1.33]` and `[8.33,8.33]` "
+   "in one pass. Step 8 does this per subspace with `k=256` codewords.")
+
+md(r"""
+## 🧸 Toy 5 · encode ONE vector by hand (before the real thing)
 
 Before we PQ the whole dataset, let's do **one** vector with tiny numbers you can trace by hand.
 PQ = **split** the vector into `m` chunks → each chunk has its own **codebook** of `k` codewords
@@ -186,7 +245,7 @@ md("▶ What you'll see: distances `[15, 1, 45, 7]` and `[243, 93, 1, 7]` → ne
    "quantization error 1.41). Below, Step 7 does exactly this at scale with `m=8`, `k=256`.")
 
 md(r"""
-## 🧸 Toy 4 · residual encoding by hand
+## 🧸 Toy 6 · residual encoding by hand
 
 Before doing it at scale, see *why* residuals help. Take one item and its cell **centroid**;
 the **residual** `r = item − centroid` is what's left after IVF already told us roughly where the
@@ -210,7 +269,7 @@ md("▶ What you'll see: the item has norm ~16.6 but its residual only ~1.1 — 
    "residual is why IVF-PQ is far more accurate than plain PQ for the same bytes.")
 
 md(r"""
-## 🧸 Toy 5 · ADC by hand (score without decompressing)
+## 🧸 Toy 7 · ADC by hand (score without decompressing)
 
 This is the speed trick, by hand. For a query, **precompute a table** of the distance from each
 query **chunk** to each **codeword** (done once). Then any stored item's distance is just a few
@@ -247,7 +306,7 @@ md("▶ What you'll see: two small tables, then item `(3,1)`'s distance = `LUT_A
    "12 does this over the whole probed cell.")
 
 md(r"""
-## 🧸 Toy 6 · greedy graph walk by hand
+## 🧸 Toy 8 · greedy graph walk by hand
 
 HNSW **walks a graph** toward the query: from where you are, hop to the neighbor **closest to the
 query**; stop when no neighbor is closer. Trace it on a 5-node line graph where each node knows
@@ -282,7 +341,68 @@ md("▶ What you'll see: the walk `[0,1,2,3,4]` with distance dropping every hop
    "it reaches the query's nearest node. Steps 14–18 add the layers and the real insertion rule.")
 
 md(r"""
-## 🧸 Toy 7 · why parallel error hurts MIPS (by hand)
+## 🧸 Toy 9 · HNSW layer assignment by hand (the "H")
+
+The **H** in HNSW is *Hierarchical*: each node gets a **top layer** from
+`level = floor(-ln(u) · mL)` with `mL = 1/ln(M)` and `u` uniform in (0,1]. Big draws are rare, so
+most nodes stop at layer 0 and only a few reach the sparse upper "highways." Trace a few by hand.
+""")
+code(r"""
+import math
+M = 4; mL = 1.0 / math.log(M)                                    # layer-assignment scale -> ~0.721
+for u in [0.9, 0.5, 0.2, 0.05, 0.01]:                            # a few uniform draws, traced by hand
+    lvl = int(math.floor(-math.log(u) * mL))
+    print(f"  u={u:<5} -> -ln(u)*mL = {-math.log(u)*mL:5.2f} -> top-layer {lvl}")
+# -> 0.9->0.08->L0 ; 0.5->0.50->L0 ; 0.2->1.16->L1 ; 0.05->2.16->L2 ; 0.01->3.32->L3 (only tiny u climb high)
+rng = np.random.default_rng(0)
+levels = np.floor(-np.log(rng.random(4000)) * mL).astype(int)    # assign 4000 nodes a top layer
+counts = np.bincount(levels)
+print("pyramid (nodes per top layer):", counts.tolist())        # -> most on L0, exponentially fewer above
+assert counts[0] > counts[1] > 0                                # layer 0 is the biggest floor
+
+plt.figure(figsize=(5, 3)); plt.bar(range(len(counts)), counts, color=GREEN); plt.yscale("log")
+plt.xlabel("node's top layer"); plt.ylabel("# nodes (log)"); plt.title("HNSW layer assignment -> a pyramid"); plt.show()
+""")
+md("▶ What you'll see: only tiny `u` reach high layers, so the counts shrink exponentially "
+   "(`~3500, ~450, ~40, ~8`). That pyramid is what Step 15 builds — the upper layers are long-range highways.")
+
+md(r"""
+## 🧸 Toy 10 · HNSW neighbor heuristic by hand (Algorithm 4)
+
+When wiring a new node, HNSW does **not** just keep the `M` nearest candidates — that clusters all
+your links in one direction. The heuristic keeps a candidate only if it is **closer to the new node
+than to any already-kept neighbor**, dropping a redundant near-twin and keeping **diverse
+directions**. Trace it on 4 candidates (1 and 2 are twins).
+""")
+code(r"""
+heur_b    = np.array([0.0, 0.0])                                 # the node we're wiring up
+heur_cand = {1:[1.0,0.1], 2:[1.1,0.0], 3:[0.0,1.2], 4:[-1.1,0.2]}  # candidates (1 & 2 point the same way)
+d2b   = lambda i: float(np.linalg.norm(np.array(heur_cand[i]) - heur_b))
+order = sorted(heur_cand, key=d2b)                              # consider nearest-to-base first
+print("candidates by distance to base:", [(i, round(d2b(i),3)) for i in order])   # -> 1, 2, 4, 3
+kept = []
+for i in order:
+    p = np.array(heur_cand[i])
+    # drop i if it's closer to an already-kept neighbour than to the base (redundant)
+    redundant = any(float(np.linalg.norm(p - np.array(heur_cand[j]))) < d2b(i) for j in kept)
+    print(f"  {'drop' if redundant else 'keep'} {i}" + ("  (nearer a kept twin than the base)" if redundant else ""))
+    if not redundant: kept.append(i)                            # -> keep 1, drop 2, keep 4, keep 3
+print("heuristic kept:", kept)                                  # -> [1, 4, 3]  (dropped the twin 2)
+assert 2 not in kept and set(kept) == {1, 3, 4}
+
+plt.figure(figsize=(4.5, 4))
+for i,(x,y) in heur_cand.items():
+    col = GREEN if i in kept else "lightgray"
+    plt.annotate("", xy=(x,y), xytext=(0,0), arrowprops=dict(arrowstyle="->", color=col, lw=2))
+    plt.text(x, y, f" {i}")
+plt.scatter(0, 0, c="black", s=60, zorder=5); plt.xlim(-1.6, 1.6); plt.ylim(-0.4, 1.6)
+plt.title("neighbor heuristic: keep diverse directions (green), drop the twin"); plt.show()
+""")
+md("▶ What you'll see: candidate 2 is dropped because it sits nearer to the kept candidate 1 than to the "
+   "base — a redundant twin — leaving the diverse set `[1, 4, 3]`. Step 16 applies this exact rule.")
+
+md(r"""
+## 🧸 Toy 11 · why parallel error hurts MIPS (by hand)
 
 ScaNN's insight: when you rank by **inner product** (MIPS), a quantization error **along** the
 data vector (parallel) distorts the score, but an error **perpendicular** (orthogonal) barely
@@ -316,6 +436,73 @@ ax.set_xlim(-0.5, 3.5); ax.set_ylim(-0.5, 1.5); ax.set_title("error split: paral
 md("▶ What you'll see: total error splits into parallel `[-0.4, 0]` and orthogonal `[0, 0.5]`; for "
    "an x-aligned MIPS query only the parallel part (0.4) shifts the score. Step 19–20 build a loss "
    "that penalizes parallel error more.")
+
+md(r"""
+## 🧸 Toy 12 · ScaNN η-weighted assignment by hand (the decision flip)
+
+Toy 11 showed *why* parallel error hurts MIPS. Here is the actual **decision**: given one vector and
+two candidate codewords, plain k-means picks the one with smaller **total** error, but the
+**anisotropic** loss `η·parallel² + orthogonal²` (η>1) can pick a **different** codeword that keeps
+the parallel error small. Watch the pick flip.
+""")
+code(r"""
+sc_x = np.array([3.0, 0.0])                                     # data vector, points along +x
+sc_A = np.array([3.3, 0.0])                                     # candidate A: all error is PARALLEL
+sc_B = np.array([3.0, 0.4])                                     # candidate B: all error is ORTHOGONAL
+u = sc_x / np.linalg.norm(sc_x)                                # unit direction of x
+def split(cw):
+    e = cw - sc_x; par = np.dot(e, u) * u; orth = e - par
+    return float(par @ par), float(orth @ orth)                # (parallel^2, orthogonal^2)
+for name, cw in [("A", sc_A), ("B", sc_B)]:
+    p2, o2 = split(cw)
+    print(f"  {name}: par^2={p2:.3f} orth^2={o2:.3f} | plain={p2+o2:.3f}  aniso(6*par^2+orth^2)={6*p2+o2:.3f}")
+# -> A: plain=0.090 aniso=0.540 ; B: plain=0.160 aniso=0.160
+plain_pick = min("AB", key=lambda n: sum(split(sc_A if n=="A" else sc_B)))                      # -> A (smaller total)
+aniso_pick = min("AB", key=lambda n: (lambda po: 6*po[0]+po[1])(split(sc_A if n=="A" else sc_B)))  # -> B
+print("plain loss picks:", plain_pick, " | anisotropic picks:", aniso_pick, " <- the FLIP")
+assert plain_pick == "A" and aniso_pick == "B"
+q = np.array([1.0, 0.0])                                        # a MIPS query along x
+print("inner-product error  A:", round(abs(float((sc_A-sc_x)@q)),2),
+      " B:", round(abs(float((sc_B-sc_x)@q)),2))               # -> 0.30 vs 0.00
+
+plt.figure(figsize=(5, 3)); xax = np.arange(2)
+plt.bar(xax-0.2, [sum(split(sc_A)), sum(split(sc_B))], 0.4, label="plain loss")
+plt.bar(xax+0.2, [(lambda po:6*po[0]+po[1])(split(sc_A)), (lambda po:6*po[0]+po[1])(split(sc_B))],
+        0.4, label="anisotropic loss")
+plt.xticks(xax, ["A", "B"]); plt.ylabel("loss"); plt.legend()
+plt.title("plain picks A; anisotropic picks B (protects the parallel direction)"); plt.show()
+""")
+md("▶ What you'll see: plain loss favours A (total 0.09 < 0.16) but anisotropic favours B, because B's "
+   "error is orthogonal (harmless to MIPS) while A's is parallel. Step 20 runs this over the corpus.")
+
+md(r"""
+## 🧸 Toy 13 · hybrid dense + lexical by hand (keyword pins the exact item)
+
+Dense vectors capture *meaning* but can miss an **exact** token (a SKU, a rare name). Hybrid search
+**adds a keyword-match bonus** to the dense score. On an exact-SKU query, dense alone ranks the right
+item last; the keyword bonus pins it to the top. Traced on 5 items.
+""")
+code(r"""
+hy_emb = np.array([[0.9,0.1],[0.8,0.2],[0.85,0.15],[0.4,0.9],[0.3,0.8]])   # dense embeddings
+hy_tok = ["shoe", "shoerack", "sneaker", "AF1-2024", "boot"]               # each item's keyword token
+hy_q_emb = np.array([0.85, 0.2]); hy_q_kw = "AF1-2024"                     # query: generic-shoe vector + exact SKU
+hy_dense = -((hy_emb - hy_q_emb)**2).sum(1)                                # dense similarity (higher = closer)
+print("dense sim:", np.round(hy_dense, 3).tolist())                       # -> item 3 (exact SKU) scores lowest
+print("dense ranking:", np.argsort(-hy_dense).tolist())                   # -> [1, 2, 0, 4, 3]  exact item LAST
+hy_kw = np.array([1.0 if t == hy_q_kw else 0.0 for t in hy_tok])          # exact keyword match -> only item 3
+hy_hybrid = hy_dense + 1.0 * hy_kw                                        # fuse: dense + keyword bonus
+print("hybrid score:", np.round(hy_hybrid, 3).tolist())                   # -> item 3 jumps up
+print("hybrid ranking:", np.argsort(-hy_hybrid).tolist())                 # -> [3, 1, 2, 0, 4]  exact item FIRST
+assert int(np.argsort(-hy_dense)[-1]) == 3 and int(np.argsort(-hy_hybrid)[0]) == 3
+
+plt.figure(figsize=(6, 3)); xax = np.arange(5)
+plt.bar(xax-0.2, hy_dense, 0.4, label="dense only")
+plt.bar(xax+0.2, hy_hybrid, 0.4, label="hybrid (dense + keyword)")
+plt.xticks(xax, hy_tok, rotation=20); plt.ylabel("score"); plt.legend()
+plt.title("keyword bonus pins the exact SKU (item 3) that dense ranked last"); plt.tight_layout(); plt.show()
+""")
+md("▶ What you'll see: dense ranks the exact SKU (item 3) LAST, but the keyword bonus lifts it to FIRST "
+   "in the hybrid ranking. Step 24 does this on 150 exact-name queries.")
 
 # =================================================================== PART A
 md("---\n# Part A · Why ANN, and how we grade it")
