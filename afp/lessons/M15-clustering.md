@@ -20,6 +20,8 @@ Two sub-lessons:
 - **M15.1 k-means & GMM** — centroid clusters, soft assignments, and choosing k.
 - **M15.2 Density clustering & validating without labels** — DBSCAN/HDBSCAN, internal metrics, stability, and method choice.
 
+<p class="cur-colab"><a class="cur-colab-btn" href="https://colab.research.google.com/github/niamleeson/ml-math/blob/main/afp/notebooks/M15-clustering.ipynb" target="_blank" rel="noopener">▶ Open the runnable clustering notebook (k-means by hand, elbow + silhouette, GMM soft assignment, and the two-moons DBSCAN break case) in Google Colab</a></p>
+
 ---
 
 ## M15.1 · k-means & GMM
