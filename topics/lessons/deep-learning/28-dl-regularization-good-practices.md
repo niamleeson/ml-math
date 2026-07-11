@@ -2,6 +2,178 @@
 > **Source:** CS 230 · **Category:** Regularization · **Type:** ⚖️ Both · [↑ Full reference](../../ai-ml-cheatsheets.md)
 > 📓 The coded examples form a runnable notebook section; an .ipynb will be generated.
 
+## ✍️ Toy Examples
+
+These tiny regularization toys isolate each training-time mechanic before the full worked example. Every block prints the arithmetic, asserts the result, and draws one visual.
+
+### ✍️ Toy 1 · L2 weight decay
+
+L2 weight decay adds a gradient proportional to the current weight, nudging large weights toward zero on every update.
+
+```python
+import numpy as np
+import matplotlib.pyplot as plt
+
+t1_rng = np.random.default_rng(0)  # -> reproducible generator seeded with 0
+t1_weights = np.array([2.0, -1.0, 0.5])  # -> starting weights
+t1_data_grad = np.array([0.4, -0.2, 0.1])  # -> data-loss gradient
+t1_lambda = 0.1  # -> L2 strength
+t1_lr = 0.5  # -> learning rate
+t1_l2_penalty = 0.5 * t1_lambda * np.sum(t1_weights ** 2)  # -> 0.2625
+t1_decay_grad = t1_lambda * t1_weights  # -> [0.2, -0.1, 0.05]
+t1_total_grad = t1_data_grad + t1_decay_grad  # -> [0.6, -0.3, 0.15]
+t1_decay_only_weights = (1.0 - t1_lr * t1_lambda) * t1_weights  # -> [1.9, -0.95, 0.475]
+t1_new_weights = t1_weights - t1_lr * t1_total_grad  # -> [1.7, -0.85, 0.425]
+t1_old_norm = float(np.linalg.norm(t1_weights))  # -> 2.29128784747792
+t1_new_norm = float(np.linalg.norm(t1_new_weights))  # -> 1.947594670356232
+print("rng seed:", 0)
+print("weights:", t1_weights.tolist())
+print("data gradient:", t1_data_grad.tolist())
+print("L2 penalty:", round(t1_l2_penalty, 4))
+print("decay gradient:", t1_decay_grad.tolist())
+print("total gradient:", t1_total_grad.tolist())
+print("decay-only weights:", t1_decay_only_weights.tolist())
+print("new weights:", t1_new_weights.tolist())
+print("old/new norm:", round(t1_old_norm, 4), round(t1_new_norm, 4))
+assert t1_new_norm < t1_old_norm
+assert np.allclose(t1_new_weights, [1.7, -0.85, 0.425])
+
+t1_fig, t1_ax = plt.subplots(figsize=(6, 3.2))
+t1_pos = np.arange(t1_weights.size)
+t1_ax.bar(t1_pos - 0.18, t1_weights, width=0.36, label="before")
+t1_ax.bar(t1_pos + 0.18, t1_new_weights, width=0.36, label="after decay update")
+t1_ax.axhline(0.0, color="black", linewidth=0.8)
+t1_ax.set_xticks(t1_pos, ["w0", "w1", "w2"])
+t1_ax.set_title("L2 update shrinks weights")
+t1_ax.legend()
+plt.show()
+```
+▶ What you'll see: the decay term increases the gradient magnitude away from zero, reducing the weight norm after one update.
+
+### ✍️ Toy 2 · Dropout mask/scaling
+
+Inverted dropout zeros sampled units and divides surviving units by the keep probability so their expected scale is preserved.
+
+```python
+import numpy as np
+import matplotlib.pyplot as plt
+
+t2_rng = np.random.default_rng(0)  # -> reproducible generator seeded with 0
+t2_activations = np.array([1.0, 2.0, 3.0, 4.0, 5.0, 6.0])  # -> six hidden activations
+t2_keep_prob = 0.5  # -> keep probability
+t2_random_draws = t2_rng.random(t2_activations.size)  # -> [0.637, 0.27, 0.041, 0.017, 0.813, 0.913]
+t2_mask = (t2_random_draws < t2_keep_prob).astype(float)  # -> [0.0, 1.0, 1.0, 1.0, 0.0, 0.0]
+t2_scaled_mask = t2_mask / t2_keep_prob  # -> [0.0, 2.0, 2.0, 2.0, 0.0, 0.0]
+t2_dropped = t2_activations * t2_scaled_mask  # -> [0.0, 4.0, 6.0, 8.0, 0.0, 0.0]
+t2_expected = t2_activations * (t2_keep_prob / t2_keep_prob)  # -> [1.0, 2.0, 3.0, 4.0, 5.0, 6.0]
+print("rng seed:", 0)
+print("activations:", t2_activations.tolist())
+print("random draws:", np.round(t2_random_draws, 3).tolist())
+print("mask:", t2_mask.tolist())
+print("scaled mask:", t2_scaled_mask.tolist())
+print("dropout output:", t2_dropped.tolist())
+print("expected activation scale:", t2_expected.tolist())
+assert np.array_equal(t2_mask, [0.0, 1.0, 1.0, 1.0, 0.0, 0.0])
+assert np.array_equal(t2_dropped, [0.0, 4.0, 6.0, 8.0, 0.0, 0.0])
+
+t2_fig, t2_ax = plt.subplots(figsize=(6, 3.2))
+t2_pos = np.arange(t2_activations.size)
+t2_ax.bar(t2_pos - 0.2, t2_activations, width=0.4, label="original")
+t2_ax.bar(t2_pos + 0.2, t2_dropped, width=0.4, label="one dropout sample")
+t2_ax.set_xlabel("unit")
+t2_ax.set_title("Inverted dropout mask and scaling")
+t2_ax.legend()
+plt.show()
+```
+▶ What you'll see: units with mask 0 disappear, while kept units double because the keep probability is 0.5.
+
+### ✍️ Toy 3 · Early stopping
+
+Early stopping selects the validation-best epoch and stops after patience is exhausted without improvement.
+
+```python
+import numpy as np
+import matplotlib.pyplot as plt
+
+t3_rng = np.random.default_rng(0)  # -> reproducible generator seeded with 0
+t3_epochs = np.arange(1, 9)  # -> [1, 2, 3, 4, 5, 6, 7, 8]
+t3_train_loss = np.array([1.0, 0.78, 0.62, 0.50, 0.43, 0.38, 0.34, 0.31])  # -> decreasing training loss
+t3_val_loss = np.array([0.90, 0.72, 0.58, 0.49, 0.46, 0.47, 0.50, 0.55])  # -> validation loss bottoms then rises
+t3_best_index = int(np.argmin(t3_val_loss))  # -> 4
+t3_best_epoch = int(t3_epochs[t3_best_index])  # -> 5
+t3_patience = 2  # -> 2
+t3_stop_epoch = t3_best_epoch + t3_patience  # -> 7
+t3_restored_val = float(t3_val_loss[t3_best_index])  # -> 0.46
+t3_final_val = float(t3_val_loss[-1])  # -> 0.55
+print("rng seed:", 0)
+print("epochs:", t3_epochs.tolist())
+print("train loss:", t3_train_loss.tolist())
+print("validation loss:", t3_val_loss.tolist())
+print("best epoch:", t3_best_epoch)
+print("patience:", t3_patience)
+print("stop epoch:", t3_stop_epoch)
+print("restored validation loss:", t3_restored_val)
+print("final validation loss:", t3_final_val)
+assert t3_best_epoch == 5
+assert t3_restored_val < t3_final_val
+
+t3_fig, t3_ax = plt.subplots(figsize=(6, 3.2))
+t3_ax.plot(t3_epochs, t3_train_loss, marker="o", label="train")
+t3_ax.plot(t3_epochs, t3_val_loss, marker="o", label="validation")
+t3_ax.axvline(t3_best_epoch, color="green", linestyle="--", label="best")
+t3_ax.axvline(t3_stop_epoch, color="red", linestyle=":", label="stop")
+t3_ax.set_xlabel("epoch")
+t3_ax.set_ylabel("loss")
+t3_ax.set_title("Validation-best checkpoint beats final epoch")
+t3_ax.legend()
+plt.show()
+```
+▶ What you'll see: validation loss is lowest at epoch 5, and patience would stop at epoch 7 instead of keeping the worse final weights.
+
+### ✍️ Toy 4 · Label smoothing
+
+Label smoothing moves a little probability mass from the true class to every class, making targets less overconfident.
+
+```python
+import numpy as np
+import matplotlib.pyplot as plt
+
+t4_rng = np.random.default_rng(0)  # -> reproducible generator seeded with 0
+t4_labels = np.array([0, 2, 1, 2])  # -> four class labels
+t4_num_classes = 3  # -> 3
+t4_epsilon = 0.1  # -> smoothing strength
+t4_one_hot = np.eye(t4_num_classes)[t4_labels]  # -> [[1,0,0], [0,0,1], [0,1,0], [0,0,1]]
+t4_smoothed = t4_one_hot * (1.0 - t4_epsilon) + t4_epsilon / t4_num_classes  # -> [[0.933,0.033,0.033], [0.033,0.033,0.933], [0.033,0.933,0.033], [0.033,0.033,0.933]]
+t4_probs = np.array([[0.82, 0.10, 0.08], [0.10, 0.15, 0.75], [0.20, 0.65, 0.15], [0.05, 0.25, 0.70]])  # -> model probabilities
+t4_hard_ce = -np.sum(t4_one_hot * np.log(t4_probs), axis=1)  # -> [0.198, 0.288, 0.431, 0.357]
+t4_smooth_ce = -np.sum(t4_smoothed * np.log(t4_probs), axis=1)  # -> [0.346, 0.408, 0.519, 0.479]
+t4_hard_mean = float(np.mean(t4_hard_ce))  # -> 0.31839771780170145
+t4_smooth_mean = float(np.mean(t4_smooth_ce))  # -> 0.43814289784138877
+print("rng seed:", 0)
+print("labels:", t4_labels.tolist())
+print("one-hot targets:", t4_one_hot.tolist())
+print("smoothed targets:", np.round(t4_smoothed, 3).tolist())
+print("model probabilities:", t4_probs.tolist())
+print("hard CE:", np.round(t4_hard_ce, 3).tolist())
+print("smoothed CE:", np.round(t4_smooth_ce, 3).tolist())
+print("mean hard/smoothed CE:", round(t4_hard_mean, 3), round(t4_smooth_mean, 3))
+assert np.allclose(t4_smoothed.sum(axis=1), np.ones(len(t4_labels)))
+assert np.all(t4_smoothed[t4_one_hot == 1.0] < 1.0)
+
+t4_fig, t4_axes = plt.subplots(1, 2, figsize=(8, 3.2))
+t4_axes[0].bar(np.arange(t4_num_classes) - 0.18, t4_one_hot[0], width=0.36, label="one-hot")
+t4_axes[0].bar(np.arange(t4_num_classes) + 0.18, t4_smoothed[0], width=0.36, label="smoothed")
+t4_axes[0].set_title("target for example 0")
+t4_axes[0].legend()
+t4_axes[1].plot(t4_hard_ce, marker="o", label="hard CE")
+t4_axes[1].plot(t4_smooth_ce, marker="s", label="smoothed CE")
+t4_axes[1].set_title("loss per example")
+t4_axes[1].legend()
+plt.tight_layout()
+plt.show()
+```
+▶ What you'll see: the true class target drops from 1.0 to about 0.933, each other class gets about 0.033, and the smoothed loss changes accordingly.
+
 ## 0. Step-by-Step Worked Example — Start Here (Beginner Friendly)
 
 > 🧑‍🎓 **New to this topic? Start here.** This is a gentle, fully runnable walkthrough that

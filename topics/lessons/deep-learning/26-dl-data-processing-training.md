@@ -2,6 +2,176 @@
 > **Source:** CS 230 · **Category:** Tips/Method · **Type:** 💻 Colab · [↑ Full reference](../../ai-ml-cheatsheets.md)
 > 📓 Runnable notebook section; an .ipynb will be generated.
 
+## ✍️ Toy Examples
+
+These tiny data-processing toys isolate the mechanics that happen before and during training. Each block uses small arrays, prints every intermediate, checks the math, and draws one visual.
+
+### ✍️ Toy 1 · Normalization
+
+Standardization subtracts a training-set mean and divides by a training-set standard deviation feature by feature.
+
+```python
+import numpy as np
+import matplotlib.pyplot as plt
+
+t1_rng = np.random.default_rng(0)  # -> reproducible generator seeded with 0
+t1_X = np.array([[2.0, 10.0], [4.0, 14.0], [6.0, 18.0], [8.0, 22.0], [10.0, 26.0], [12.0, 30.0]])  # -> six 2-D examples
+t1_mean = t1_X.mean(axis=0)  # -> [7.0, 20.0]
+t1_centered = t1_X - t1_mean  # -> [[-5.0, -10.0], [-3.0, -6.0], [-1.0, -2.0], [1.0, 2.0], [3.0, 6.0], [5.0, 10.0]]
+t1_std = t1_X.std(axis=0)  # -> [3.416, 6.831]
+t1_normalized = t1_centered / t1_std  # -> [[-1.464, -1.464], [-0.878, -0.878], [-0.293, -0.293], [0.293, 0.293], [0.878, 0.878], [1.464, 1.464]]
+t1_norm_mean = t1_normalized.mean(axis=0)  # -> [0.0, 0.0]
+t1_norm_std = t1_normalized.std(axis=0)  # -> [1.0, 1.0]
+print("rng seed:", 0)
+print("raw X:", t1_X.tolist())
+print("feature means:", t1_mean.tolist())
+print("centered X:", t1_centered.tolist())
+print("feature stds:", np.round(t1_std, 3).tolist())
+print("normalized X:", np.round(t1_normalized, 3).tolist())
+print("normalized means:", np.round(t1_norm_mean, 3).tolist())
+print("normalized stds:", np.round(t1_norm_std, 3).tolist())
+assert np.allclose(t1_norm_mean, [0.0, 0.0])
+assert np.allclose(t1_norm_std, [1.0, 1.0])
+
+t1_fig, t1_axes = plt.subplots(1, 2, figsize=(8, 3.2))
+t1_axes[0].scatter(t1_X[:, 0], t1_X[:, 1], color="tomato")
+t1_axes[0].set_title("raw scale")
+t1_axes[1].scatter(t1_normalized[:, 0], t1_normalized[:, 1], color="seagreen")
+t1_axes[1].set_title("standardized scale")
+plt.tight_layout()
+plt.show()
+```
+▶ What you'll see: the raw features have different units, while the normalized columns have mean 0 and standard deviation 1.
+
+### ✍️ Toy 2 · Batching
+
+Mini-batching shuffles example indices once, then slices that order into small groups for updates.
+
+```python
+import numpy as np
+import matplotlib.pyplot as plt
+
+t2_rng = np.random.default_rng(0)  # -> reproducible generator seeded with 0
+t2_x = np.arange(1, 9)  # -> [1, 2, 3, 4, 5, 6, 7, 8]
+t2_y = 2 * t2_x  # -> [2, 4, 6, 8, 10, 12, 14, 16]
+t2_order = t2_rng.permutation(len(t2_x))  # -> [2, 4, 3, 6, 5, 0, 1, 7]
+t2_batch_size = 3  # -> 3
+t2_batch1_idx = t2_order[0:3]  # -> [2, 4, 3]
+t2_batch2_idx = t2_order[3:6]  # -> [6, 5, 0]
+t2_batch3_idx = t2_order[6:8]  # -> [1, 7]
+t2_batch1_x = t2_x[t2_batch1_idx]  # -> [3, 5, 4]
+t2_batch2_x = t2_x[t2_batch2_idx]  # -> [7, 6, 1]
+t2_batch3_x = t2_x[t2_batch3_idx]  # -> [2, 8]
+t2_batch1_y = t2_y[t2_batch1_idx]  # -> [6, 10, 8]
+t2_batch2_y = t2_y[t2_batch2_idx]  # -> [14, 12, 2]
+t2_batch3_y = t2_y[t2_batch3_idx]  # -> [4, 16]
+t2_batch_means = np.array([t2_batch1_x.mean(), t2_batch2_x.mean(), t2_batch3_x.mean()])  # -> [4.0, 4.6667, 5.0]
+print("rng seed:", 0)
+print("x:", t2_x.tolist())
+print("y:", t2_y.tolist())
+print("shuffle order:", t2_order.tolist())
+print("batch 1 x/y:", t2_batch1_x.tolist(), t2_batch1_y.tolist())
+print("batch 2 x/y:", t2_batch2_x.tolist(), t2_batch2_y.tolist())
+print("batch 3 x/y:", t2_batch3_x.tolist(), t2_batch3_y.tolist())
+print("batch x means:", np.round(t2_batch_means, 3).tolist())
+assert np.array_equal(np.sort(t2_order), np.arange(len(t2_x)))
+assert len(t2_batch1_idx) + len(t2_batch2_idx) + len(t2_batch3_idx) == len(t2_x)
+
+t2_reordered_x = t2_x[t2_order]
+t2_batch_ids = np.array([1, 1, 1, 2, 2, 2, 3, 3])
+t2_colors = ["tab:blue" if t2_id == 1 else "tab:orange" if t2_id == 2 else "tab:green" for t2_id in t2_batch_ids]
+t2_fig, t2_ax = plt.subplots(figsize=(6, 3.2))
+t2_ax.bar(np.arange(len(t2_reordered_x)), t2_reordered_x, color=t2_colors)
+t2_ax.set_xlabel("position in shuffled order")
+t2_ax.set_ylabel("x value")
+t2_ax.set_title("Shuffled order sliced into mini-batches")
+plt.show()
+```
+▶ What you'll see: every original example appears exactly once in the shuffled order, grouped into batches of 3, 3, and 2.
+
+### ✍️ Toy 3 · Augmentation math
+
+A label-preserving geometric augmentation can be written as direct coordinate arithmetic.
+
+```python
+import numpy as np
+import matplotlib.pyplot as plt
+
+t3_rng = np.random.default_rng(0)  # -> reproducible generator seeded with 0
+t3_points = np.array([[0.0, 0.0], [1.0, 1.0], [3.0, 0.0], [2.0, 2.0]])  # -> four 2-D points
+t3_width = 4.0  # -> image width used for horizontal flip
+t3_flipped_x = (t3_width - 1.0) - t3_points[:, 0]  # -> [3.0, 2.0, 0.0, 1.0]
+t3_flipped = np.column_stack([t3_flipped_x, t3_points[:, 1]])  # -> [[3.0, 0.0], [2.0, 1.0], [0.0, 0.0], [1.0, 2.0]]
+t3_shift = np.array([0.5, -0.5])  # -> [0.5, -0.5]
+t3_shifted = t3_flipped + t3_shift  # -> [[3.5, -0.5], [2.5, 0.5], [0.5, -0.5], [1.5, 1.5]]
+t3_dist_original = float(np.linalg.norm(t3_points[0] - t3_points[1]))  # -> 1.4142
+t3_dist_flipped = float(np.linalg.norm(t3_flipped[0] - t3_flipped[1]))  # -> 1.4142
+print("rng seed:", 0)
+print("original points:", t3_points.tolist())
+print("flipped x coordinates:", t3_flipped_x.tolist())
+print("flipped points:", t3_flipped.tolist())
+print("shift vector:", t3_shift.tolist())
+print("shifted augmented points:", t3_shifted.tolist())
+print("distance before flip:", round(t3_dist_original, 4))
+print("distance after flip:", round(t3_dist_flipped, 4))
+assert np.allclose(t3_dist_original, t3_dist_flipped)
+assert np.array_equal(t3_flipped[:, 1], t3_points[:, 1])
+
+t3_fig, t3_ax = plt.subplots(figsize=(5, 4))
+t3_ax.scatter(t3_points[:, 0], t3_points[:, 1], label="original", s=70)
+t3_ax.scatter(t3_flipped[:, 0], t3_flipped[:, 1], label="flipped", s=70)
+t3_ax.scatter(t3_shifted[:, 0], t3_shifted[:, 1], label="flipped + shifted", marker="x", s=90)
+t3_ax.set_aspect("equal", adjustable="box")
+t3_ax.set_title("Coordinate augmentation math")
+t3_ax.legend()
+plt.show()
+```
+▶ What you'll see: horizontal flipping changes x-coordinates but preserves distances, then a small shift moves the augmented copy.
+
+### ✍️ Toy 4 · Train/val split
+
+A train/validation split uses held-out examples to estimate generalization on data not used for updates.
+
+```python
+import numpy as np
+import matplotlib.pyplot as plt
+
+t4_rng = np.random.default_rng(0)  # -> reproducible generator seeded with 0
+t4_x = np.arange(10)  # -> [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+t4_y = np.array([0, 0, 0, 0, 1, 1, 1, 1, 1, 0])  # -> ten labels
+t4_order = t4_rng.permutation(len(t4_x))  # -> [4, 6, 2, 7, 3, 5, 9, 0, 8, 1]
+t4_train_idx = np.sort(t4_order[:7])  # -> [2, 3, 4, 5, 6, 7, 9]
+t4_val_idx = np.sort(t4_order[7:])  # -> [0, 1, 8]
+t4_train_x = t4_x[t4_train_idx]  # -> [2, 3, 4, 5, 6, 7, 9]
+t4_val_x = t4_x[t4_val_idx]  # -> [0, 1, 8]
+t4_train_y = t4_y[t4_train_idx]  # -> [0, 0, 1, 1, 1, 1, 0]
+t4_val_y = t4_y[t4_val_idx]  # -> [0, 0, 1]
+t4_train_counts = np.bincount(t4_train_y, minlength=2)  # -> [3, 4]
+t4_val_counts = np.bincount(t4_val_y, minlength=2)  # -> [2, 1]
+print("rng seed:", 0)
+print("x:", t4_x.tolist())
+print("y:", t4_y.tolist())
+print("shuffle order:", t4_order.tolist())
+print("train indices:", t4_train_idx.tolist())
+print("validation indices:", t4_val_idx.tolist())
+print("train labels:", t4_train_y.tolist())
+print("validation labels:", t4_val_y.tolist())
+print("train class counts:", t4_train_counts.tolist())
+print("validation class counts:", t4_val_counts.tolist())
+assert len(np.intersect1d(t4_train_idx, t4_val_idx)) == 0
+assert np.array_equal(np.sort(np.concatenate([t4_train_idx, t4_val_idx])), np.arange(10))
+
+t4_fig, t4_ax = plt.subplots(figsize=(6, 3.2))
+t4_ax.scatter(t4_train_x, t4_train_y, label="train", s=90, color="seagreen")
+t4_ax.scatter(t4_val_x, t4_val_y, label="validation", s=90, color="tomato")
+t4_ax.set_xlabel("example index")
+t4_ax.set_ylabel("label")
+t4_ax.set_title("Held-out validation examples")
+t4_ax.legend()
+plt.show()
+```
+▶ What you'll see: seven examples are assigned to training and three disjoint examples are held out for validation.
+
 ## 0. Step-by-Step Worked Example — Start Here (Beginner Friendly)
 
 > 🧑‍🎓 **New to this topic? Start here.** This is a gentle, fully runnable walkthrough that

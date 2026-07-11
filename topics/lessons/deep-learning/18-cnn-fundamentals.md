@@ -2,6 +2,169 @@
 > **Source:** CS 230 · **Category:** Model/Concept · **Type:** ⚖️ Both · [↑ Full reference](../../ai-ml-cheatsheets.md)
 > 📓 The coded examples form a runnable notebook section; an .ipynb will be generated.
 
+## ✍️ Toy Examples
+
+These tiny CNN toys isolate each sliding-window mechanic before the full worked example. Each block uses hand-checkable arrays, prints every intermediate value, checks the result with an assertion, and draws one visual.
+
+### ✍️ Toy 1 · Convolution op
+
+A convolution output cell is just one local patch multiplied elementwise by one kernel, then summed.
+
+```python
+import numpy as np
+import matplotlib.pyplot as plt
+
+t1_rng = np.random.default_rng(0)  # -> reproducible generator seeded with 0
+t1_image = np.array([[1.0, 2.0, 0.0, 1.0], [0.0, 1.0, 3.0, 1.0], [2.0, 2.0, 1.0, 0.0]])  # -> 3x4 image
+t1_kernel = np.array([[1.0, 0.0], [-1.0, 2.0]])  # -> 2x2 filter
+t1_patch = t1_image[0:2, 1:3]  # -> [[2.0, 0.0], [1.0, 3.0]]
+t1_products = t1_patch * t1_kernel  # -> [[2.0, 0.0], [-1.0, 6.0]]
+t1_score = float(np.sum(t1_products))  # -> 7.0
+print("rng seed:", 0)
+print("image:", t1_image.tolist())
+print("kernel:", t1_kernel.tolist())
+print("selected patch:", t1_patch.tolist())
+print("patch * kernel:", t1_products.tolist())
+print("sum for one output cell:", t1_score)
+assert np.isclose(t1_score, 7.0)
+assert np.array_equal(t1_products, [[2.0, 0.0], [-1.0, 6.0]])
+
+t1_fig, t1_axes = plt.subplots(1, 3, figsize=(8, 2.8))
+t1_axes[0].imshow(t1_image, cmap="gray")
+t1_axes[0].set_title("image")
+t1_axes[1].imshow(t1_kernel, cmap="coolwarm")
+t1_axes[1].set_title("kernel")
+t1_axes[2].imshow(t1_products, cmap="magma")
+t1_axes[2].set_title("products")
+plt.tight_layout()
+plt.show()
+```
+▶ What you'll see: the highlighted patch and kernel multiply to signed contributions whose sum is the single convolution score 7.0.
+
+### ✍️ Toy 2 · Stride/padding output size
+
+The output-size formula counts legal window starts; non-integer results mean the stride/padding choice does not tile the input cleanly.
+
+```python
+import numpy as np
+import matplotlib.pyplot as plt
+
+t2_rng = np.random.default_rng(0)  # -> reproducible generator seeded with 0
+t2_input_size = np.array([5, 6, 7, 8])  # -> [5, 6, 7, 8]
+t2_filter_size = np.array([3, 3, 3, 3])  # -> [3, 3, 3, 3]
+t2_padding = np.array([0, 1, 1, 0])  # -> [0, 1, 1, 0]
+t2_stride = np.array([1, 1, 2, 2])  # -> [1, 1, 2, 2]
+t2_numerator = t2_input_size - t2_filter_size + 2 * t2_padding  # -> [2, 5, 6, 5]
+t2_raw_output = t2_numerator / t2_stride + 1  # -> [3.0, 6.0, 4.0, 3.5]
+t2_compatible = (t2_numerator % t2_stride) == 0  # -> [True, True, True, False]
+t2_output_size = np.where(t2_compatible, t2_raw_output.astype(int), -1)  # -> [3, 6, 4, -1]
+print("rng seed:", 0)
+print("input sizes:", t2_input_size.tolist())
+print("filter sizes:", t2_filter_size.tolist())
+print("padding:", t2_padding.tolist())
+print("stride:", t2_stride.tolist())
+print("I - F + 2P:", t2_numerator.tolist())
+print("raw O = numerator / S + 1:", t2_raw_output.tolist())
+print("compatible?:", t2_compatible.tolist())
+print("integer output size (-1 means invalid):", t2_output_size.tolist())
+assert np.array_equal(t2_output_size, [3, 6, 4, -1])
+assert t2_compatible.tolist() == [True, True, True, False]
+
+t2_colors = ["seagreen" if t2_flag else "salmon" for t2_flag in t2_compatible]
+t2_fig, t2_ax = plt.subplots(figsize=(6, 3.2))
+t2_ax.bar(["case 1", "case 2", "case 3", "case 4"], t2_raw_output, color=t2_colors)
+t2_ax.set_ylabel("computed output length")
+t2_ax.set_title("Stride/padding formula: green = legal")
+plt.show()
+```
+▶ What you'll see: three settings land on integer output sizes, while the stride-2 no-padding case computes 3.5 and is marked invalid.
+
+### ✍️ Toy 3 · Pooling
+
+Pooling replaces each small window by a summary, commonly the maximum or the average.
+
+```python
+import numpy as np
+import matplotlib.pyplot as plt
+
+t3_rng = np.random.default_rng(0)  # -> reproducible generator seeded with 0
+t3_feature = np.array([[1.0, 3.0, 2.0, 4.0, 0.0, 2.0], [0.0, 5.0, 1.0, 2.0, 3.0, 1.0]])  # -> 2x6 feature map
+t3_window0 = t3_feature[:, 0:2]  # -> [[1.0, 3.0], [0.0, 5.0]]
+t3_window1 = t3_feature[:, 2:4]  # -> [[2.0, 4.0], [1.0, 2.0]]
+t3_window2 = t3_feature[:, 4:6]  # -> [[0.0, 2.0], [3.0, 1.0]]
+t3_max0 = float(np.max(t3_window0))  # -> 5.0
+t3_max1 = float(np.max(t3_window1))  # -> 4.0
+t3_max2 = float(np.max(t3_window2))  # -> 3.0
+t3_avg0 = float(np.mean(t3_window0))  # -> 2.25
+t3_avg1 = float(np.mean(t3_window1))  # -> 2.25
+t3_avg2 = float(np.mean(t3_window2))  # -> 1.5
+t3_max_pool = np.array([[t3_max0, t3_max1, t3_max2]])  # -> [[5.0, 4.0, 3.0]]
+t3_avg_pool = np.array([[t3_avg0, t3_avg1, t3_avg2]])  # -> [[2.25, 2.25, 1.5]]
+print("rng seed:", 0)
+print("feature map:", t3_feature.tolist())
+print("window 0:", t3_window0.tolist())
+print("window 1:", t3_window1.tolist())
+print("window 2:", t3_window2.tolist())
+print("max pooled:", t3_max_pool.tolist())
+print("average pooled:", t3_avg_pool.tolist())
+assert np.array_equal(t3_max_pool, [[5.0, 4.0, 3.0]])
+assert np.allclose(t3_avg_pool, [[2.25, 2.25, 1.5]])
+
+t3_fig, t3_axes = plt.subplots(1, 3, figsize=(8, 2.8))
+t3_axes[0].imshow(t3_feature, cmap="magma")
+t3_axes[0].set_title("input map")
+t3_axes[1].imshow(t3_max_pool, cmap="magma", vmin=0, vmax=5)
+t3_axes[1].set_title("max pool")
+t3_axes[2].imshow(t3_avg_pool, cmap="magma", vmin=0, vmax=5)
+t3_axes[2].set_title("avg pool")
+plt.tight_layout()
+plt.show()
+```
+▶ What you'll see: max pooling keeps the strongest activation in each 2x2 window, while average pooling keeps smoother local summaries.
+
+### ✍️ Toy 4 · Feature map
+
+A feature map is the grid of scores produced by applying the same filter at every legal location.
+
+```python
+import numpy as np
+import matplotlib.pyplot as plt
+
+t4_rng = np.random.default_rng(0)  # -> reproducible generator seeded with 0
+t4_image = np.array([[0.0, 0.0, 1.0, 1.0], [0.0, 1.0, 1.0, 0.0], [0.0, 0.0, 1.0, 1.0]])  # -> 3x4 image
+t4_kernel = np.array([[-1.0, 1.0], [-1.0, 1.0]])  # -> vertical-change detector
+t4_patch_00 = t4_image[0:2, 0:2]  # -> [[0.0, 0.0], [0.0, 1.0]]
+t4_patch_01 = t4_image[0:2, 1:3]  # -> [[0.0, 1.0], [1.0, 1.0]]
+t4_patch_02 = t4_image[0:2, 2:4]  # -> [[1.0, 1.0], [1.0, 0.0]]
+t4_patch_10 = t4_image[1:3, 0:2]  # -> [[0.0, 1.0], [0.0, 0.0]]
+t4_patch_11 = t4_image[1:3, 1:3]  # -> [[1.0, 1.0], [0.0, 1.0]]
+t4_patch_12 = t4_image[1:3, 2:4]  # -> [[1.0, 0.0], [1.0, 1.0]]
+t4_score_00 = float(np.sum(t4_patch_00 * t4_kernel))  # -> 1.0
+t4_score_01 = float(np.sum(t4_patch_01 * t4_kernel))  # -> 1.0
+t4_score_02 = float(np.sum(t4_patch_02 * t4_kernel))  # -> -1.0
+t4_score_10 = float(np.sum(t4_patch_10 * t4_kernel))  # -> 1.0
+t4_score_11 = float(np.sum(t4_patch_11 * t4_kernel))  # -> 1.0
+t4_score_12 = float(np.sum(t4_patch_12 * t4_kernel))  # -> -1.0
+t4_feature = np.array([[t4_score_00, t4_score_01, t4_score_02], [t4_score_10, t4_score_11, t4_score_12]])  # -> [[1.0, 1.0, -1.0], [1.0, 1.0, -1.0]]
+print("rng seed:", 0)
+print("image:", t4_image.tolist())
+print("kernel:", t4_kernel.tolist())
+print("patch scores row 0:", [t4_score_00, t4_score_01, t4_score_02])
+print("patch scores row 1:", [t4_score_10, t4_score_11, t4_score_12])
+print("feature map:", t4_feature.tolist())
+assert np.array_equal(t4_feature, [[1.0, 1.0, -1.0], [1.0, 1.0, -1.0]])
+assert t4_feature.shape == (2, 3)
+
+t4_fig, t4_axes = plt.subplots(1, 2, figsize=(7, 2.8))
+t4_axes[0].imshow(t4_image, cmap="gray", vmin=0, vmax=1)
+t4_axes[0].set_title("input image")
+t4_axes[1].imshow(t4_feature, cmap="coolwarm", vmin=-1, vmax=1)
+t4_axes[1].set_title("feature map")
+plt.tight_layout()
+plt.show()
+```
+▶ What you'll see: each cell in the 2x3 feature map is one reused-filter response at a different spatial location.
+
 ## 0. Step-by-Step Worked Example — Start Here (Beginner Friendly)
 
 > 🧑‍🎓 **New to this topic? Start here.** This is a gentle, fully runnable walkthrough that

@@ -2,6 +2,261 @@
 > **Source:** CS 229 · **Category:** Concept/Tips · **Type:** ⚖️ Both · [↑ Full reference](../../ai-ml-cheatsheets.md)
 > 📓 The coded examples form a runnable notebook section; an .ipynb will be generated.
 
+## ✍️ Toy Examples
+
+Before the full worked notebook, here are tiny, hand-traceable model-selection toys for the computational mechanics in this lesson. Each toy prints the intermediate arrays, checks one invariant, and draws a compact picture.
+
+### ✍️ Toy 1 · Train/validation/test split
+
+A split gives each row exactly one job: fit parameters, tune choices, or report the final untouched score.
+
+```python
+import numpy as np
+import matplotlib.pyplot as plt
+
+t1_rng = np.random.default_rng(0)  # -> seeded generator for reproducibility
+t1_x = np.arange(12, dtype=float)  # -> [0.0, 1.0, ..., 11.0]
+t1_y = 1.0 + 0.5 * t1_x  # -> [1.0, 1.5, ..., 6.5]
+t1_indices = np.arange(t1_x.size)  # -> [0, 1, ..., 11]
+t1_perm = t1_rng.permutation(t1_indices)  # -> [9, 2, 7, 4, 5, 11, 0, 3, 6, 10, 8, 1]
+t1_train_idx = t1_perm[:6]  # -> [9, 2, 7, 4, 5, 11]
+t1_val_idx = t1_perm[6:9]  # -> [0, 3, 6]
+t1_test_idx = t1_perm[9:]  # -> [10, 8, 1]
+t1_covered = np.sort(np.concatenate([t1_train_idx, t1_val_idx, t1_test_idx]))  # -> [0, 1, ..., 11]
+t1_disjoint = np.unique(t1_covered).size == t1_x.size  # -> True
+t1_complete = np.array_equal(t1_covered, t1_indices)  # -> True
+print("seed:", 0)  # -> 0
+print("x:", t1_x.tolist())  # -> [0.0, 1.0, ..., 11.0]
+print("y:", t1_y.tolist())  # -> [1.0, 1.5, ..., 6.5]
+print("permutation:", t1_perm.tolist())  # -> [9, 2, 7, 4, 5, 11, 0, 3, 6, 10, 8, 1]
+print("train indices:", t1_train_idx.tolist())  # -> [9, 2, 7, 4, 5, 11]
+print("validation indices:", t1_val_idx.tolist())  # -> [0, 3, 6]
+print("test indices:", t1_test_idx.tolist())  # -> [10, 8, 1]
+print("covered indices:", t1_covered.tolist())  # -> [0, 1, ..., 11]
+print("disjoint:", bool(t1_disjoint))  # -> True
+print("complete:", bool(t1_complete))  # -> True
+assert t1_disjoint and t1_complete
+
+plt.figure(figsize=(6, 3.5))
+plt.scatter(t1_x[t1_train_idx], t1_y[t1_train_idx], s=90, label="train", color="steelblue")
+plt.scatter(t1_x[t1_val_idx], t1_y[t1_val_idx], s=90, label="validation", color="orange")
+plt.scatter(t1_x[t1_test_idx], t1_y[t1_test_idx], s=90, label="test", color="seagreen")
+plt.xlabel("row index / x")
+plt.ylabel("target y")
+plt.title("Toy 1: every row has one role")
+plt.legend()
+plt.show()
+```
+▶ What you'll see: 12 rows are shuffled into 6 train, 3 validation, and 3 test points with no overlap.
+
+### ✍️ Toy 2 · k-fold cross-validation average
+
+Cross-validation rotates the validation fold, records one error per fold, and chooses the hyperparameter with the best mean error.
+
+```python
+import numpy as np
+import matplotlib.pyplot as plt
+
+t2_rng = np.random.default_rng(0)  # -> seeded generator for reproducibility
+t2_x = np.arange(12, dtype=float)  # -> [0.0, 1.0, ..., 11.0]
+t2_noise = np.array([0.0, 0.2, -0.1, 0.1, -0.2, 0.0, 0.2, -0.1, 0.1, -0.2, 0.0, 0.2])  # -> small deterministic wiggles
+t2_y = 1.0 + 0.5 * t2_x  # -> straight-line signal
+t2_y = t2_y + t2_noise  # -> [1.0, 1.7, 1.9, 2.6, 2.8, 3.5, 4.2, 4.4, 5.1, 5.3, 6.0, 6.7]
+t2_perm = t2_rng.permutation(t2_x.size)  # -> [9, 2, 7, 4, 5, 11, 0, 3, 6, 10, 8, 1]
+t2_folds = np.array_split(t2_perm, 3)  # -> [[9, 2, 7, 4], [5, 11, 0, 3], [6, 10, 8, 1]]
+t2_degrees = np.array([0, 1, 3])  # -> [0, 1, 3]
+t2_fold_errors = []  # -> will hold one row of fold MSEs per degree
+for t2_degree in t2_degrees:
+    t2_errors_for_degree = []
+    for t2_val_idx in t2_folds:
+        t2_train_idx = np.setdiff1d(np.arange(t2_x.size), t2_val_idx)
+        t2_coef = np.polyfit(t2_x[t2_train_idx], t2_y[t2_train_idx], int(t2_degree))
+        t2_pred = np.polyval(t2_coef, t2_x[t2_val_idx])
+        t2_error = np.mean((t2_pred - t2_y[t2_val_idx]) ** 2)
+        t2_errors_for_degree.append(float(t2_error))
+    t2_fold_errors.append(t2_errors_for_degree)
+t2_fold_errors = np.array(t2_fold_errors)  # -> [[1.827, 4.548, 3.098], [0.065, 0.019, 0.034], [0.066, 0.128, 0.054]]
+t2_mean_errors = t2_fold_errors.mean(axis=1)  # -> [3.158, 0.04, 0.083]
+t2_best_degree = int(t2_degrees[np.argmin(t2_mean_errors)])  # -> 1
+print("seed:", 0)  # -> 0
+print("x:", t2_x.tolist())  # -> [0.0, 1.0, ..., 11.0]
+print("y:", np.round(t2_y, 3).tolist())  # -> [1.0, 1.7, 1.9, 2.6, 2.8, 3.5, 4.2, 4.4, 5.1, 5.3, 6.0, 6.7]
+print("folds:", [fold.tolist() for fold in t2_folds])  # -> [[9, 2, 7, 4], [5, 11, 0, 3], [6, 10, 8, 1]]
+print("degrees:", t2_degrees.tolist())  # -> [0, 1, 3]
+print("fold MSEs:", np.round(t2_fold_errors, 3).tolist())  # -> [[1.827, 4.548, 3.098], [0.065, 0.019, 0.034], [0.066, 0.128, 0.054]]
+print("mean CV MSE:", np.round(t2_mean_errors, 3).tolist())  # -> [3.158, 0.04, 0.083]
+print("best degree:", t2_best_degree)  # -> 1
+assert t2_best_degree == 1
+
+plt.figure(figsize=(5, 3.5))
+plt.plot(t2_degrees, t2_mean_errors, marker="o", color="black", label="mean CV MSE")
+for t2_degree, t2_errors in zip(t2_degrees, t2_fold_errors):
+    plt.scatter(np.repeat(t2_degree, t2_errors.size), t2_errors, color="gray", alpha=0.7)
+plt.axvline(t2_best_degree, color="seagreen", linestyle="--", label="chosen degree")
+plt.xlabel("polynomial degree")
+plt.ylabel("validation MSE")
+plt.title("Toy 2: k-fold CV averages fold errors")
+plt.legend()
+plt.show()
+```
+▶ What you'll see: the degree-1 line has the smallest average validation error across the three folds.
+
+### ✍️ Toy 3 · Bias-variance pieces from repeated predictions
+
+Bias measures how far the average prediction is from truth; variance measures how much predictions move across training sets.
+
+```python
+import numpy as np
+import matplotlib.pyplot as plt
+
+t3_rng = np.random.default_rng(0)  # -> seeded generator for reproducibility
+t3_true_value = 2.0  # -> target f(x0)
+t3_model_names = np.array(["simple", "flexible"])  # -> two model families
+t3_predictions = np.array([[1.6, 1.7, 1.65, 1.55, 1.6, 1.7], [1.2, 2.8, 1.5, 2.6, 1.0, 2.9]])  # -> 6 repeated predictions per model
+t3_mean_prediction = t3_predictions.mean(axis=1)  # -> [1.633, 2.0]
+t3_bias2 = (t3_mean_prediction - t3_true_value) ** 2  # -> [0.134, 0.0]
+t3_variance = t3_predictions.var(axis=1)  # -> [0.003, 0.617]
+t3_noise = np.array([0.04, 0.04])  # -> irreducible noise floor
+t3_total = t3_bias2 + t3_variance  # -> model-dependent error
+t3_total = t3_total + t3_noise  # -> [0.178, 0.657]
+print("seed:", 0)  # -> 0
+print("true value:", t3_true_value)  # -> 2.0
+print("model names:", t3_model_names.tolist())  # -> ['simple', 'flexible']
+print("predictions:", t3_predictions.tolist())  # -> 6 repeated predictions per model
+print("mean predictions:", np.round(t3_mean_prediction, 3).tolist())  # -> [1.633, 2.0]
+print("bias^2:", np.round(t3_bias2, 3).tolist())  # -> [0.134, 0.0]
+print("variance:", np.round(t3_variance, 3).tolist())  # -> [0.003, 0.617]
+print("noise:", t3_noise.tolist())  # -> [0.04, 0.04]
+print("total error pieces:", np.round(t3_total, 3).tolist())  # -> [0.178, 0.657]
+assert t3_bias2[0] > t3_bias2[1] and t3_variance[1] > t3_variance[0]
+
+plt.figure(figsize=(5, 3.5))
+plt.bar(t3_model_names, t3_bias2, label="bias²", color="salmon")
+plt.bar(t3_model_names, t3_variance, bottom=t3_bias2, label="variance", color="cornflowerblue")
+plt.bar(t3_model_names, t3_noise, bottom=t3_bias2 + t3_variance, label="noise", color="lightgray")
+plt.ylabel("error contribution")
+plt.title("Toy 3: bias-variance trade-off")
+plt.legend()
+plt.show()
+```
+▶ What you'll see: the simple model is biased but stable, while the flexible model is centered but much more variable.
+
+### ✍️ Toy 4 · Learning curve by training size
+
+A learning curve refits the same model with more training rows and compares training error to validation error.
+
+```python
+import numpy as np
+import matplotlib.pyplot as plt
+
+t4_rng = np.random.default_rng(0)  # -> seeded generator for reproducibility
+t4_x = np.arange(12, dtype=float)  # -> [0.0, 1.0, ..., 11.0]
+t4_y = np.array([1.0, 1.5, 1.7, 2.3, 2.6, 3.1, 3.3, 3.9, 4.2, 4.7, 5.1, 5.3])  # -> 12 targets
+t4_train_idx = np.arange(8)  # -> [0, 1, ..., 7]
+t4_val_idx = np.arange(8, 12)  # -> [8, 9, 10, 11]
+t4_sizes = np.array([3, 5, 8])  # -> [3, 5, 8]
+t4_coefs = []  # -> one fitted line per size
+t4_train_mse = []  # -> training errors
+t4_val_mse = []  # -> validation errors
+for t4_size in t4_sizes:
+    t4_subset = t4_train_idx[:t4_size]
+    t4_coef = np.polyfit(t4_x[t4_subset], t4_y[t4_subset], 1)
+    t4_train_pred = np.polyval(t4_coef, t4_x[t4_subset])
+    t4_val_pred = np.polyval(t4_coef, t4_x[t4_val_idx])
+    t4_train_error = np.mean((t4_train_pred - t4_y[t4_subset]) ** 2)
+    t4_val_error = np.mean((t4_val_pred - t4_y[t4_val_idx]) ** 2)
+    t4_coefs.append(t4_coef)
+    t4_train_mse.append(float(t4_train_error))
+    t4_val_mse.append(float(t4_val_error))
+t4_coefs = np.array(t4_coefs)  # -> [[0.35, 1.05], [0.4, 1.02], [0.402, 1.017]]
+t4_train_mse = np.array(t4_train_mse)  # -> [0.005, 0.006, 0.007]
+t4_val_mse = np.array(t4_val_mse)  # -> [0.209, 0.007, 0.007]
+print("seed:", 0)  # -> 0
+print("x:", t4_x.tolist())  # -> [0.0, 1.0, ..., 11.0]
+print("y:", t4_y.tolist())  # -> 12 targets
+print("train indices:", t4_train_idx.tolist())  # -> [0, 1, ..., 7]
+print("validation indices:", t4_val_idx.tolist())  # -> [8, 9, 10, 11]
+print("train sizes:", t4_sizes.tolist())  # -> [3, 5, 8]
+print("line coefficients:", np.round(t4_coefs, 3).tolist())  # -> [[0.35, 1.05], [0.4, 1.02], [0.402, 1.017]]
+print("train MSE:", np.round(t4_train_mse, 3).tolist())  # -> [0.005, 0.006, 0.007]
+print("validation MSE:", np.round(t4_val_mse, 3).tolist())  # -> [0.209, 0.007, 0.007]
+assert t4_val_mse[-1] <= t4_val_mse[0]
+
+plt.figure(figsize=(5, 3.5))
+plt.plot(t4_sizes, t4_train_mse, marker="o", label="train MSE")
+plt.plot(t4_sizes, t4_val_mse, marker="o", label="validation MSE")
+plt.xlabel("training rows used")
+plt.ylabel("mean squared error")
+plt.title("Toy 4: learning curve")
+plt.legend()
+plt.show()
+```
+▶ What you'll see: validation error drops sharply once the fitted line sees more of the training range.
+
+### ✍️ Toy 5 · Regularization path for ridge weights
+
+A regularization path solves the same model for several penalty strengths and tracks how weights shrink.
+
+```python
+import numpy as np
+import matplotlib.pyplot as plt
+
+t5_rng = np.random.default_rng(0)  # -> seeded generator for reproducibility
+t5_x = np.linspace(-1.5, 1.5, 8)  # -> [-1.5, -1.071, -0.643, -0.214, 0.214, 0.643, 1.071, 1.5]
+t5_y = np.array([-1.9, -1.1, -0.2, 0.4, 0.7, 1.0, 1.5, 2.4])  # -> 8 targets
+t5_degree = 3  # -> cubic features
+t5_X = np.vander(t5_x, N=t5_degree + 1, increasing=True)  # -> columns [1, x, x^2, x^3]
+t5_lambdas = np.array([0.0, 0.1, 1.0, 10.0])  # -> regularization strengths
+t5_penalty = np.eye(t5_degree + 1)  # -> identity penalty
+t5_penalty[0, 0] = 0.0  # -> intercept is not penalized
+t5_coefs = []  # -> coefficients by lambda
+t5_norms = []  # -> non-intercept norms by lambda
+t5_train_mse = []  # -> training errors by lambda
+for t5_lambda in t5_lambdas:
+    t5_system = t5_X.T @ t5_X
+    t5_system = t5_system + t5_lambda * t5_penalty
+    t5_rhs = t5_X.T @ t5_y
+    t5_coef = np.linalg.solve(t5_system, t5_rhs)
+    t5_pred = t5_X @ t5_coef
+    t5_mse = np.mean((t5_pred - t5_y) ** 2)
+    t5_norm = np.linalg.norm(t5_coef[1:])
+    t5_coefs.append(t5_coef)
+    t5_norms.append(float(t5_norm))
+    t5_train_mse.append(float(t5_mse))
+t5_coefs = np.array(t5_coefs)  # -> [[0.475, 0.88, -0.13, 0.25], [0.473, 0.819, -0.127, 0.28], [0.456, 0.556, -0.11, 0.399], [0.395, 0.27, -0.047, 0.403]]
+t5_norms = np.array(t5_norms)  # -> [0.924, 0.875, 0.693, 0.488]
+t5_train_mse = np.array(t5_train_mse)  # -> [0.008, 0.009, 0.024, 0.142]
+print("seed:", 0)  # -> 0
+print("x:", np.round(t5_x, 3).tolist())  # -> [-1.5, -1.071, -0.643, -0.214, 0.214, 0.643, 1.071, 1.5]
+print("y:", t5_y.tolist())  # -> 8 targets
+print("lambda values:", t5_lambdas.tolist())  # -> [0.0, 0.1, 1.0, 10.0]
+print("coefficients:", np.round(t5_coefs, 3).tolist())  # -> [[0.475, 0.88, -0.13, 0.25], [0.473, 0.819, -0.127, 0.28], [0.456, 0.556, -0.11, 0.399], [0.395, 0.27, -0.047, 0.403]]
+print("weight norms:", np.round(t5_norms, 3).tolist())  # -> [0.924, 0.875, 0.693, 0.488]
+print("train MSE:", np.round(t5_train_mse, 3).tolist())  # -> [0.008, 0.009, 0.024, 0.142]
+assert np.all(np.diff(t5_norms) <= 0.0)
+
+t5_grid = np.linspace(-1.6, 1.6, 100)  # -> plotting grid
+t5_grid_X = np.vander(t5_grid, N=t5_degree + 1, increasing=True)  # -> cubic grid features
+plt.figure(figsize=(8, 3.5))
+plt.subplot(1, 2, 1)
+plt.scatter(t5_x, t5_y, color="black", label="data")
+for t5_lambda, t5_coef in zip(t5_lambdas, t5_coefs):
+    plt.plot(t5_grid, t5_grid_X @ t5_coef, label=f"λ={t5_lambda:g}")
+plt.title("ridge fits")
+plt.xlabel("x")
+plt.ylabel("y")
+plt.legend(fontsize=8)
+plt.subplot(1, 2, 2)
+plt.plot(t5_lambdas, t5_norms, marker="o", color="crimson")
+plt.xscale("symlog", linthresh=0.1)
+plt.xlabel("λ")
+plt.ylabel("non-intercept norm")
+plt.title("regularization path")
+plt.tight_layout()
+plt.show()
+```
+▶ What you'll see: larger `λ` values shrink the non-intercept weight norm, trading a little more training error for smoother weights.
+
 ## 0. Step-by-Step Worked Example — Start Here (Beginner Friendly)
 
 > 🧑‍🎓 **New to this topic? Start here.** This is a gentle, fully runnable walkthrough that

@@ -2,6 +2,161 @@
 > **Source:** CS 221 · **Category:** Method/Algorithm · **Type:** ⚖️ Both · [↑ Full reference](../../ai-ml-cheatsheets.md)
 > 📓 The coded examples form a runnable notebook section; an .ipynb will be generated.
 
+## ✍️ Toy Examples
+
+Before the full worked notebook, here are tiny, hand-traceable examples for the game-playing mechanics used in this lesson. Each toy prints the backed-up numbers, checks one result, and draws a small diagnostic plot.
+
+### ✍️ Toy 1 · Minimax value
+
+Minimax backs terminal utilities up through opponent min nodes and then through the agent's max node.
+
+```python
+import numpy as np
+import matplotlib.pyplot as plt
+
+t1_rng = np.random.default_rng(0)  # -> seeded generator for reproducibility
+t1_agent_actions = np.array(["Left", "Right"])  # -> root choices
+t1_opp_replies = np.array(["low", "mid", "high"])  # -> opponent choices
+t1_leaf_values = np.array([[3, 5, 4], [2, 9, 6]])  # -> 6 terminal utilities for the agent
+t1_opp_values = np.min(t1_leaf_values, axis=1)  # -> [3, 2]
+t1_root_value = np.max(t1_opp_values)  # -> 3
+t1_best_action = int(np.argmax(t1_opp_values))  # -> 0
+print("seed:", 0)  # -> 0
+print("agent actions:", t1_agent_actions.tolist())  # -> ['Left', 'Right']
+print("opponent replies:", t1_opp_replies.tolist())  # -> ['low', 'mid', 'high']
+print("leaf values:", t1_leaf_values.tolist())  # -> [[3, 5, 4], [2, 9, 6]]
+print("opponent min backups:", t1_opp_values.tolist())  # -> [3, 2]
+print("root minimax value:", int(t1_root_value))  # -> 3
+print("best root action:", str(t1_agent_actions[t1_best_action]))  # -> Left
+assert t1_root_value == 3 and t1_best_action == 0
+
+plt.figure(figsize=(5, 3))
+plt.imshow(t1_leaf_values, cmap="Blues")
+plt.colorbar(label="agent utility")
+plt.xticks(np.arange(len(t1_opp_replies)), t1_opp_replies)
+plt.yticks(np.arange(len(t1_agent_actions)), t1_agent_actions)
+plt.title("Toy 1: opponent takes row minima, agent takes max")
+plt.show()
+```
+▶ What you'll see: `Left` guarantees `3`, `Right` guarantees `2`, so the root minimax value is `3`.
+
+### ✍️ Toy 2 · Alpha-beta pruning
+
+Alpha-beta keeps the same minimax value while skipping branches that cannot beat the current bounds.
+
+```python
+import numpy as np
+import matplotlib.pyplot as plt
+
+t2_rng = np.random.default_rng(0)  # -> seeded generator for reproducibility
+t2_leaf_values = np.array([[3, 5, 4], [2, 100, 100]])  # -> 6 leaves visited left-to-right
+t2_child_minima = np.min(t2_leaf_values, axis=1)  # -> [3, 2]
+t2_full_value = np.max(t2_child_minima)  # -> 3
+t2_a_seen = t2_leaf_values[0]  # -> [3, 5, 4]
+t2_a_value = np.min(t2_a_seen)  # -> 3
+t2_alpha = t2_a_value  # -> 3
+t2_b_first = t2_leaf_values[1, 0]  # -> 2
+t2_beta = t2_b_first  # -> 2
+t2_cutoff = t2_beta <= t2_alpha  # -> True
+t2_ab_value = max(t2_a_value, t2_beta)  # -> 3
+t2_full_visits = t2_leaf_values.size  # -> 6
+t2_ab_visits = len(t2_a_seen) + 1  # -> 4
+t2_pruned = t2_full_visits - t2_ab_visits  # -> 2
+print("seed:", 0)  # -> 0
+print("leaf values:", t2_leaf_values.tolist())  # -> [[3, 5, 4], [2, 100, 100]]
+print("full child minima:", t2_child_minima.tolist())  # -> [3, 2]
+print("full minimax value:", int(t2_full_value))  # -> 3
+print("A seen leaves:", t2_a_seen.tolist())  # -> [3, 5, 4]
+print("alpha after A:", int(t2_alpha))  # -> 3
+print("first B leaf:", int(t2_b_first))  # -> 2
+print("beta after first B leaf:", int(t2_beta))  # -> 2
+print("cutoff beta <= alpha:", bool(t2_cutoff))  # -> True
+print("alpha-beta value:", int(t2_ab_value))  # -> 3
+print("full visits:", int(t2_full_visits))  # -> 6
+print("alpha-beta visits:", int(t2_ab_visits))  # -> 4
+print("pruned leaves:", int(t2_pruned))  # -> 2
+assert t2_ab_value == t2_full_value and t2_pruned == 2
+
+plt.figure(figsize=(5, 3))
+plt.bar(["full minimax", "alpha-beta"], [t2_full_visits, t2_ab_visits], color=["gray", "seagreen"], edgecolor="black")
+plt.ylabel("leaf visits")
+plt.title("Toy 2: alpha-beta skips impossible-to-matter leaves")
+plt.show()
+```
+▶ What you'll see: alpha-beta returns the same value `3` while visiting only `4` of `6` leaves.
+
+### ✍️ Toy 3 · Expectimax expected value
+
+Expectimax uses a probability-weighted average at chance nodes instead of an adversarial minimum.
+
+```python
+import numpy as np
+import matplotlib.pyplot as plt
+
+t3_rng = np.random.default_rng(0)  # -> seeded generator for reproducibility
+t3_outcomes = np.array(["bad", "ok", "great"])  # -> chance outcomes
+t3_probs = np.array([0.25, 0.50, 0.25])  # -> outcome probabilities
+t3_values = np.array([-4.0, 6.0, 10.0])  # -> utility for each outcome
+t3_terms = t3_probs * t3_values  # -> [-1.0, 3.0, 2.5]
+t3_risky_value = np.sum(t3_terms)  # -> 4.5
+t3_safe_value = 4.0  # -> deterministic safe action value
+t3_action_values = np.array([t3_safe_value, t3_risky_value])  # -> [4.0, 4.5]
+t3_root_value = np.max(t3_action_values)  # -> 4.5
+t3_best_action = int(np.argmax(t3_action_values))  # -> 1
+print("seed:", 0)  # -> 0
+print("outcomes:", t3_outcomes.tolist())  # -> ['bad', 'ok', 'great']
+print("probabilities:", t3_probs.tolist())  # -> [0.25, 0.5, 0.25]
+print("outcome values:", t3_values.tolist())  # -> [-4.0, 6.0, 10.0]
+print("probability-weighted terms:", t3_terms.tolist())  # -> [-1.0, 3.0, 2.5]
+print("risky expected value:", float(t3_risky_value))  # -> 4.5
+print("action values [safe, risky]:", t3_action_values.tolist())  # -> [4.0, 4.5]
+print("root expectimax value:", float(t3_root_value))  # -> 4.5
+print("best action index:", t3_best_action)  # -> 1
+assert np.isclose(t3_root_value, 4.5) and t3_best_action == 1
+
+plt.figure(figsize=(5, 3))
+plt.bar(t3_outcomes, t3_terms, color="mediumpurple", edgecolor="black")
+plt.axhline(t3_risky_value, color="black", linestyle="--", label="risky expectation")
+plt.ylabel("p(outcome) × value")
+plt.title("Toy 3: chance contributions add to expected value")
+plt.legend()
+plt.show()
+```
+▶ What you'll see: chance contributions `[-1.0, 3.0, 2.5]` add to `4.5`, so risky beats safe.
+
+### ✍️ Toy 4 · Evaluation function as weighted features
+
+A depth-limited game agent scores a nonterminal state by multiplying features by weights and adding the contributions.
+
+```python
+import numpy as np
+import matplotlib.pyplot as plt
+
+t4_rng = np.random.default_rng(0)  # -> seeded generator for reproducibility
+t4_feature_names = np.array(["my pieces", "mobility", "opp threat", "center", "corner", "tempo"])  # -> six features
+t4_features = np.array([2.0, 1.0, -1.0, 3.0, 0.0, 1.0])  # -> feature values for one board
+t4_weights = np.array([1.5, 0.5, 2.0, -0.25, 0.1, 0.75])  # -> learned or hand-tuned weights
+t4_contributions = t4_features * t4_weights  # -> [3.0, 0.5, -2.0, -0.75, 0.0, 0.75]
+t4_score = np.sum(t4_contributions)  # -> 1.5
+print("seed:", 0)  # -> 0
+print("feature names:", t4_feature_names.tolist())  # -> ['my pieces', 'mobility', 'opp threat', 'center', 'corner', 'tempo']
+print("features:", t4_features.tolist())  # -> [2.0, 1.0, -1.0, 3.0, 0.0, 1.0]
+print("weights:", t4_weights.tolist())  # -> [1.5, 0.5, 2.0, -0.25, 0.1, 0.75]
+print("contributions:", t4_contributions.tolist())  # -> [3.0, 0.5, -2.0, -0.75, 0.0, 0.75]
+print("evaluation score:", float(t4_score))  # -> 1.5
+assert np.isclose(t4_score, 1.5)
+
+plt.figure(figsize=(6, 3))
+plt.bar(t4_feature_names, t4_contributions, color=["seagreen" if t4_v >= 0 else "salmon" for t4_v in t4_contributions], edgecolor="black")
+plt.axhline(0.0, color="black", linewidth=1)
+plt.xticks(rotation=30, ha="right")
+plt.ylabel("weighted contribution")
+plt.title("Toy 4: evaluation is a weighted sum of features")
+plt.tight_layout()
+plt.show()
+```
+▶ What you'll see: positive and negative feature contributions add to the final heuristic score `1.5`.
+
 ## 0. Step-by-Step Worked Example — Start Here (Beginner Friendly)
 
 > 🧑‍🎓 **New to this topic? Start here.** This is a gentle, fully runnable walkthrough that

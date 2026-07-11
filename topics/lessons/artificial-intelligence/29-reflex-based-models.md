@@ -2,6 +2,229 @@
 > **Source:** CS 221 · **Category:** Model/Concept · **Type:** ⚖️ Both · [↑ Full reference](../../ai-ml-cheatsheets.md)
 > 📓 The coded examples form a runnable notebook section; an .ipynb will be generated.
 
+## ✍️ Toy Examples
+
+These tiny reflex-model toys isolate the core computations before the full worked example: build feature vectors, score them with a linear predictor, turn scores into margins and losses, update weights with a hinge-style rule, and see how feature choices change the boundary.
+
+### ✍️ Toy 1 · Feature vectors and weighted score contributions
+
+A reflex predictor first maps raw inputs into feature vectors. The linear score is just each feature times its weight, then summed.
+
+```python
+import numpy as np
+import matplotlib.pyplot as plt
+
+t1_rng = np.random.default_rng(0)  # -> reproducible generator seeded with 0
+t1_raw = np.array([[0.0, 1.0], [1.0, 0.0], [2.0, 1.0], [3.0, 1.0], [1.0, 3.0], [2.0, 2.0]])  # -> six raw 2-D examples
+t1_bias = np.ones((t1_raw.shape[0], 1))  # -> [[1.0], [1.0], [1.0], [1.0], [1.0], [1.0]]
+t1_features = np.hstack([t1_bias, t1_raw])  # -> [[1.0, 0.0, 1.0], [1.0, 1.0, 0.0], [1.0, 2.0, 1.0], [1.0, 3.0, 1.0], [1.0, 1.0, 3.0], [1.0, 2.0, 2.0]]
+t1_weights = np.array([-1.0, 0.8, 0.5])  # -> bias weight -1.0, x1 weight 0.8, x2 weight 0.5
+t1_contributions = t1_features * t1_weights  # -> [[-1.0, 0.0, 0.5], [-1.0, 0.8, 0.0], [-1.0, 1.6, 0.5], [-1.0, 2.4, 0.5], [-1.0, 0.8, 1.5], [-1.0, 1.6, 1.0]]
+t1_scores = t1_contributions.sum(axis=1)  # -> [-0.5, -0.2, 1.1, 1.9, 1.3, 1.6]
+print("rng seed:", 0)
+print("raw inputs:", t1_raw.tolist())
+print("bias column:", t1_bias.ravel().tolist())
+print("feature vectors phi(x):", t1_features.tolist())
+print("weights w:", t1_weights.tolist())
+print("feature contributions:", np.round(t1_contributions, 3).tolist())
+print("linear scores:", np.round(t1_scores, 3).tolist())
+assert np.allclose(t1_scores, [-0.5, -0.2, 1.1, 1.9, 1.3, 1.6])
+
+t1_index = np.arange(len(t1_scores))  # -> [0, 1, 2, 3, 4, 5]
+t1_fig, t1_ax = plt.subplots(figsize=(6, 3.5))
+t1_ax.bar(t1_index, t1_scores, color=np.where(t1_scores >= 0.0, "seagreen", "salmon"), edgecolor="black")
+t1_ax.axhline(0.0, color="black", linewidth=1)
+t1_ax.set_title("Linear score = sum of feature contributions")
+t1_ax.set_xlabel("example index")
+t1_ax.set_ylabel("score")
+plt.show()
+```
+▶ What you'll see: the first two examples have negative scores, while the later feature vectors accumulate enough positive evidence to cross zero.
+
+### ✍️ Toy 2 · Linear classification margins and losses
+
+For labels in {-1, +1}, the score sign gives the prediction and the margin y·score tells the loss how confident that prediction is.
+
+```python
+import numpy as np
+import matplotlib.pyplot as plt
+
+t2_rng = np.random.default_rng(0)  # -> reproducible generator seeded with 0
+t2_points = np.array([[-2.0, -1.0], [-1.0, 0.0], [-0.5, 0.2], [0.5, 0.5], [1.0, 1.0], [2.0, 0.5]])  # -> six 2-D inputs
+t2_labels = np.array([-1, -1, -1, 1, 1, 1])  # -> true classes
+t2_features = np.column_stack([np.ones(len(t2_points)), t2_points])  # -> add a bias feature to every point
+t2_weights = np.array([-0.2, 1.0, 0.8])  # -> [bias, x1, x2] weights
+t2_scores = t2_features @ t2_weights  # -> [-3.0, -1.2, -0.54, 0.7, 1.6, 2.2]
+t2_predictions = np.where(t2_scores >= 0.0, 1, -1)  # -> [-1, -1, -1, 1, 1, 1]
+t2_margins = t2_labels * t2_scores  # -> [3.0, 1.2, 0.54, 0.7, 1.6, 2.2]
+t2_zero_one = (t2_margins <= 0.0).astype(float)  # -> [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+t2_hinge = np.maximum(1.0 - t2_margins, 0.0)  # -> [0.0, 0.0, 0.46, 0.3, 0.0, 0.0]
+t2_logistic = np.log1p(np.exp(-t2_margins))  # -> [0.049, 0.263, 0.459, 0.403, 0.184, 0.105]
+print("rng seed:", 0)
+print("points:", t2_points.tolist())
+print("labels:", t2_labels.tolist())
+print("features:", t2_features.tolist())
+print("weights:", t2_weights.tolist())
+print("scores:", np.round(t2_scores, 3).tolist())
+print("predictions:", t2_predictions.tolist())
+print("margins y*s:", np.round(t2_margins, 3).tolist())
+print("zero-one losses:", t2_zero_one.tolist())
+print("hinge losses:", np.round(t2_hinge, 3).tolist())
+print("logistic losses:", np.round(t2_logistic, 3).tolist())
+assert np.array_equal(t2_predictions, t2_labels)
+assert np.allclose(np.round(t2_hinge, 2), [0.0, 0.0, 0.46, 0.3, 0.0, 0.0])
+
+t2_grid = np.linspace(-0.2, 2.4, 100)  # -> 100 margins for smooth loss curves
+t2_hinge_grid = np.maximum(1.0 - t2_grid, 0.0)  # -> hinge curve values
+t2_logistic_grid = np.log1p(np.exp(-t2_grid))  # -> logistic curve values
+t2_fig, t2_ax = plt.subplots(figsize=(6, 3.5))
+t2_ax.plot(t2_grid, t2_hinge_grid, label="hinge")
+t2_ax.plot(t2_grid, t2_logistic_grid, label="logistic")
+t2_ax.scatter(t2_margins, t2_hinge, color="black", zorder=3, label="toy margins")
+t2_ax.axvline(1.0, color="gray", linestyle="--")
+t2_ax.set_title("Loss depends on margin, not raw score alone")
+t2_ax.set_xlabel("margin y·score")
+t2_ax.set_ylabel("loss")
+t2_ax.legend()
+plt.show()
+```
+▶ What you'll see: all signs are correct, but hinge loss still penalizes the two examples whose margins are below 1.
+
+### ✍️ Toy 3 · Perceptron mask versus hinge update
+
+A perceptron update fires only on mistakes, while hinge loss also updates correct-but-low-margin examples. This toy shows the hinge gradient moving the weights even when every sign is correct.
+
+```python
+import numpy as np
+import matplotlib.pyplot as plt
+
+t3_rng = np.random.default_rng(0)  # -> reproducible generator seeded with 0
+t3_points = np.array([[-2.0, -1.0], [-1.0, -1.0], [-1.0, 0.0], [1.0, 0.0], [1.0, 1.0], [2.0, 1.0]])  # -> six labeled inputs
+t3_labels = np.array([-1, -1, -1, 1, 1, 1])  # -> three negatives then three positives
+t3_features = np.column_stack([np.ones(len(t3_points)), t3_points])  # -> bias plus two raw features
+t3_weights = np.array([0.0, 0.2, 0.1])  # -> a small separating weight vector
+t3_scores = t3_features @ t3_weights  # -> [-0.5, -0.3, -0.2, 0.2, 0.3, 0.5]
+t3_margins = t3_labels * t3_scores  # -> [0.5, 0.3, 0.2, 0.2, 0.3, 0.5]
+t3_perceptron_mask = (t3_margins <= 0.0).astype(float)  # -> [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+t3_hinge_mask = (t3_margins < 1.0).astype(float)  # -> [1.0, 1.0, 1.0, 1.0, 1.0, 1.0]
+t3_weighted_labels = t3_labels * t3_hinge_mask  # -> [-1.0, -1.0, -1.0, 1.0, 1.0, 1.0]
+t3_gradient = -(t3_features.T @ t3_weighted_labels) / len(t3_labels)  # -> [-0.0, -1.333, -0.667]
+t3_eta = 0.5  # -> hinge-update learning rate
+t3_new_weights = t3_weights - t3_eta * t3_gradient  # -> [0.0, 0.867, 0.433]
+print("rng seed:", 0)
+print("points:", t3_points.tolist())
+print("labels:", t3_labels.tolist())
+print("features:", t3_features.tolist())
+print("old weights:", t3_weights.tolist())
+print("scores:", np.round(t3_scores, 3).tolist())
+print("margins:", np.round(t3_margins, 3).tolist())
+print("perceptron mistake mask:", t3_perceptron_mask.tolist())
+print("hinge active mask:", t3_hinge_mask.tolist())
+print("labels times hinge mask:", t3_weighted_labels.tolist())
+print("hinge gradient:", np.round(t3_gradient, 3).tolist())
+print("new weights:", np.round(t3_new_weights, 3).tolist())
+assert np.all(t3_perceptron_mask == 0.0)
+assert np.allclose(t3_new_weights, [0.0, 0.8666666667, 0.4333333333])
+
+t3_index = np.arange(len(t3_margins))  # -> [0, 1, 2, 3, 4, 5]
+t3_fig, t3_ax = plt.subplots(figsize=(6, 3.5))
+t3_ax.bar(t3_index, t3_margins, color="gold", edgecolor="black")
+t3_ax.axhline(0.0, color="black", linewidth=1, label="perceptron threshold")
+t3_ax.axhline(1.0, color="purple", linestyle="--", label="hinge comfort margin")
+t3_ax.set_title("Correct signs can still be inside the hinge band")
+t3_ax.set_xlabel("example index")
+t3_ax.set_ylabel("margin")
+t3_ax.legend()
+plt.show()
+```
+▶ What you'll see: every margin is positive, so perceptron makes no move, but hinge updates all six low-margin examples.
+
+### ✍️ Toy 4 · Linear regression residuals and average loss
+
+For regression, the same dot product becomes a numeric prediction. Residuals drive squared and absolute losses.
+
+```python
+import numpy as np
+import matplotlib.pyplot as plt
+
+t4_rng = np.random.default_rng(0)  # -> reproducible generator seeded with 0
+t4_x = np.array([0.0, 1.0, 2.0, 3.0, 4.0, 5.0])  # -> six scalar inputs
+t4_y = np.array([0.2, 1.0, 2.1, 2.8, 3.7, 4.4])  # -> six regression targets
+t4_features = np.column_stack([np.ones(len(t4_x)), t4_x])  # -> [[1.0, 0.0], ..., [1.0, 5.0]]
+t4_weights = np.array([0.5, 0.8])  # -> intercept 0.5 and slope 0.8
+t4_predictions = t4_features @ t4_weights  # -> [0.5, 1.3, 2.1, 2.9, 3.7, 4.5]
+t4_residuals = t4_predictions - t4_y  # -> [0.3, 0.3, 0.0, 0.1, 0.0, 0.1]
+t4_squared_losses = t4_residuals ** 2  # -> [0.09, 0.09, 0.0, 0.01, 0.0, 0.01]
+t4_absolute_losses = np.abs(t4_residuals)  # -> [0.3, 0.3, 0.0, 0.1, 0.0, 0.1]
+t4_mse = t4_squared_losses.mean()  # -> 0.033
+t4_mae = t4_absolute_losses.mean()  # -> 0.133
+print("rng seed:", 0)
+print("x:", t4_x.tolist())
+print("targets y:", t4_y.tolist())
+print("features:", t4_features.tolist())
+print("weights:", t4_weights.tolist())
+print("predictions:", np.round(t4_predictions, 3).tolist())
+print("residuals:", np.round(t4_residuals, 3).tolist())
+print("squared losses:", np.round(t4_squared_losses, 3).tolist())
+print("absolute losses:", np.round(t4_absolute_losses, 3).tolist())
+print("mean squared loss:", round(float(t4_mse), 3))
+print("mean absolute loss:", round(float(t4_mae), 3))
+assert np.isclose(t4_mse, 1.0 / 30.0)
+assert np.isclose(t4_mae, 0.13333333333333336)
+
+t4_fig, t4_ax = plt.subplots(figsize=(6, 3.5))
+t4_ax.scatter(t4_x, t4_y, color="steelblue", label="targets")
+t4_ax.plot(t4_x, t4_predictions, color="black", label="linear predictor")
+for t4_xi, t4_yi, t4_pi in zip(t4_x, t4_y, t4_predictions):
+    t4_ax.plot([t4_xi, t4_xi], [t4_yi, t4_pi], color="salmon")
+t4_ax.set_title("Residuals are vertical prediction errors")
+t4_ax.set_xlabel("x")
+t4_ax.set_ylabel("target / prediction")
+t4_ax.legend()
+plt.show()
+```
+▶ What you'll see: small vertical residual segments, with MSE about 0.033 and MAE about 0.133.
+
+### ✍️ Toy 5 · Nonlinear feature vector, linear score, curved boundary
+
+A model can stay linear in its feature vector while drawing a nonlinear boundary in raw input space by adding a radius-squared feature.
+
+```python
+import numpy as np
+import matplotlib.pyplot as plt
+
+t5_rng = np.random.default_rng(0)  # -> reproducible generator seeded with 0
+t5_points = np.array([[-0.4, 0.0], [0.3, 0.2], [0.0, -0.5], [1.1, 0.0], [0.0, 1.2], [-1.0, -0.8]])  # -> six 2-D points
+t5_labels = np.array([-1, -1, -1, 1, 1, 1])  # -> inner points negative, outer points positive
+t5_radius_squared = np.sum(t5_points ** 2, axis=1)  # -> [0.16, 0.13, 0.25, 1.21, 1.44, 1.64]
+t5_features = np.column_stack([np.ones(len(t5_points)), t5_points, t5_radius_squared])  # -> [1, x1, x2, r^2]
+t5_weights = np.array([-0.5, 0.0, 0.0, 1.0])  # -> score = r^2 - 0.5
+t5_scores = t5_features @ t5_weights  # -> [-0.34, -0.37, -0.25, 0.71, 0.94, 1.14]
+t5_predictions = np.where(t5_scores >= 0.0, 1, -1)  # -> [-1, -1, -1, 1, 1, 1]
+print("rng seed:", 0)
+print("points:", t5_points.tolist())
+print("labels:", t5_labels.tolist())
+print("radius squared:", np.round(t5_radius_squared, 3).tolist())
+print("features [1,x1,x2,r^2]:", np.round(t5_features, 3).tolist())
+print("weights:", t5_weights.tolist())
+print("scores:", np.round(t5_scores, 3).tolist())
+print("predictions:", t5_predictions.tolist())
+assert np.array_equal(t5_predictions, t5_labels)
+assert np.allclose(np.round(t5_scores, 2), [-0.34, -0.37, -0.25, 0.71, 0.94, 1.14])
+
+t5_fig, t5_ax = plt.subplots(figsize=(4.5, 4.5))
+t5_ax.scatter(t5_points[:, 0], t5_points[:, 1], c=t5_predictions, cmap="bwr", s=90, edgecolor="black")
+t5_circle = plt.Circle((0.0, 0.0), np.sqrt(0.5), fill=False, color="black", linestyle="--")
+t5_ax.add_patch(t5_circle)
+t5_ax.set_aspect("equal")
+t5_ax.set_title("Linear in [1, x1, x2, r²] gives a circle")
+t5_ax.set_xlabel("x1")
+t5_ax.set_ylabel("x2")
+plt.show()
+```
+▶ What you'll see: the linear score in radial-feature space separates inner and outer points with a circular boundary.
+
+
 ## 0. Step-by-Step Worked Example — Start Here (Beginner Friendly)
 
 > 🧑‍🎓 **New to this topic? Start here.** This is a gentle, fully runnable walkthrough that

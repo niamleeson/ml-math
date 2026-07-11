@@ -2,6 +2,153 @@
 > **Source:** CS 221 · **Category:** Method · **Type:** 💻 Colab · [↑ Full reference](../../ai-ml-cheatsheets.md)
 > 📓 Runnable notebook section; an .ipynb will be generated.
 
+## ✍️ Toy Examples
+
+These tiny unsupervised-learning toys isolate the computational mechanics before the full worked example: hard nearest-centroid k-means, soft EM/GMM responsibilities, and PCA projection from covariance eigenvectors.
+
+### ✍️ Toy 1 · k-means assignment, centroid update, and distortion
+
+k-means alternates between assigning each point to the nearest centroid and moving each centroid to the mean of its assigned points.
+
+```python
+import numpy as np
+import matplotlib.pyplot as plt
+
+t1_rng = np.random.default_rng(0)  # -> reproducible generator seeded with 0
+t1_points = np.array([[0.0, 0.0], [0.0, 2.0], [1.0, 1.0], [5.0, 5.0], [6.0, 5.0], [5.0, 6.0]])  # -> six unlabeled 2-D points
+t1_centroids = np.array([[0.0, 1.0], [6.0, 6.0]])  # -> two starting centroids
+t1_differences = t1_points[:, None, :] - t1_centroids[None, :, :]  # -> point-to-centroid offsets
+t1_squared_distances = np.sum(t1_differences ** 2, axis=2)  # -> [[1.0, 72.0], [1.0, 52.0], [1.0, 50.0], [41.0, 2.0], [52.0, 1.0], [50.0, 1.0]]
+t1_assignments = np.argmin(t1_squared_distances, axis=1)  # -> [0, 0, 0, 1, 1, 1]
+t1_old_distortion = t1_squared_distances[np.arange(len(t1_points)), t1_assignments].sum()  # -> 7.0
+t1_updated_centroids = np.array([t1_points[t1_assignments == j].mean(axis=0) for j in range(2)])  # -> [[0.333, 1.0], [5.333, 5.333]]
+t1_updated_squared_distances = np.sum((t1_points[:, None, :] - t1_updated_centroids[None, :, :]) ** 2, axis=2)  # -> distances to updated centroids
+t1_new_distortion = t1_updated_squared_distances[np.arange(len(t1_points)), t1_assignments].sum()  # -> 4.0
+print("rng seed:", 0)
+print("points:", t1_points.tolist())
+print("starting centroids:", t1_centroids.tolist())
+print("point-centroid differences shape:", t1_differences.shape)
+print("squared distances:", np.round(t1_squared_distances, 3).tolist())
+print("assignments:", t1_assignments.tolist())
+print("old distortion:", float(t1_old_distortion))
+print("updated centroids:", np.round(t1_updated_centroids, 3).tolist())
+print("updated squared distances:", np.round(t1_updated_squared_distances, 3).tolist())
+print("new distortion:", round(float(t1_new_distortion), 3))
+assert np.array_equal(t1_assignments, [0, 0, 0, 1, 1, 1])
+assert t1_new_distortion < t1_old_distortion
+
+t1_fig, t1_ax = plt.subplots(figsize=(5, 4))
+t1_ax.scatter(t1_points[:, 0], t1_points[:, 1], c=t1_assignments, cmap="coolwarm", s=90, edgecolor="black")
+t1_ax.scatter(t1_centroids[:, 0], t1_centroids[:, 1], marker="X", s=180, color="gray", label="old centroids")
+t1_ax.scatter(t1_updated_centroids[:, 0], t1_updated_centroids[:, 1], marker="*", s=220, color="gold", edgecolor="black", label="updated centroids")
+t1_ax.set_title("k-means moves centroids to assigned means")
+t1_ax.set_xlabel("feature 1")
+t1_ax.set_ylabel("feature 2")
+t1_ax.legend()
+plt.show()
+```
+▶ What you'll see: hard assignments split the six points into two groups, and moving centroids to means lowers distortion from 7.0 to 4.0.
+
+### ✍️ Toy 2 · EM/GMM responsibilities and weighted means
+
+A Gaussian mixture uses soft cluster weights. The E-step computes responsibilities, and the M-step uses them as weighted counts.
+
+```python
+import numpy as np
+import matplotlib.pyplot as plt
+
+t2_rng = np.random.default_rng(0)  # -> reproducible generator seeded with 0
+t2_x = np.array([-2.0, -1.0, -0.5, 1.5, 2.0, 3.0])  # -> six one-dimensional observations
+t2_means = np.array([-1.0, 2.0])  # -> two Gaussian means
+t2_stds = np.array([1.0, 1.0])  # -> two simple standard deviations
+t2_mixture_weights = np.array([0.4, 0.6])  # -> prior mixture weights
+t2_centered = t2_x[:, None] - t2_means[None, :]  # -> offsets from each mean
+t2_exponent = -0.5 * (t2_centered / t2_stds) ** 2  # -> Gaussian exponent terms
+t2_normalizer = 1.0 / (np.sqrt(2.0 * np.pi) * t2_stds)  # -> [0.3989, 0.3989]
+t2_pdf = t2_normalizer * np.exp(t2_exponent)  # -> Gaussian likelihoods per component
+t2_weighted_pdf = t2_pdf * t2_mixture_weights  # -> likelihood times mixture prior
+t2_responsibilities = t2_weighted_pdf / t2_weighted_pdf.sum(axis=1, keepdims=True)  # -> soft cluster probabilities
+t2_effective_counts = t2_responsibilities.sum(axis=0)  # -> [2.953, 3.047]
+t2_updated_means = (t2_responsibilities * t2_x[:, None]).sum(axis=0) / t2_effective_counts  # -> [-1.146, 2.095]
+print("rng seed:", 0)
+print("observations:", t2_x.tolist())
+print("means:", t2_means.tolist())
+print("stds:", t2_stds.tolist())
+print("mixture weights:", t2_mixture_weights.tolist())
+print("centered offsets:", np.round(t2_centered, 3).tolist())
+print("exponent terms:", np.round(t2_exponent, 3).tolist())
+print("normalizer:", np.round(t2_normalizer, 4).tolist())
+print("Gaussian pdfs:", np.round(t2_pdf, 4).tolist())
+print("weighted pdfs:", np.round(t2_weighted_pdf, 4).tolist())
+print("responsibilities:", np.round(t2_responsibilities, 3).tolist())
+print("effective counts:", np.round(t2_effective_counts, 3).tolist())
+print("updated means:", np.round(t2_updated_means, 3).tolist())
+assert np.allclose(t2_responsibilities.sum(axis=1), np.ones(len(t2_x)))
+assert np.allclose(np.round(t2_updated_means, 3), [-1.146, 2.095])
+
+t2_fig, t2_ax = plt.subplots(figsize=(6, 3.5))
+t2_ax.bar(t2_x - 0.05, t2_responsibilities[:, 0], width=0.1, label="responsibility for left Gaussian")
+t2_ax.bar(t2_x + 0.05, t2_responsibilities[:, 1], width=0.1, label="responsibility for right Gaussian")
+t2_ax.set_title("GMM E-step gives soft assignments")
+t2_ax.set_xlabel("x")
+t2_ax.set_ylabel("responsibility")
+t2_ax.legend()
+plt.show()
+```
+▶ What you'll see: left-side points have responsibilities near 1 for the left Gaussian, right-side points near 1 for the right Gaussian, and the weighted means move to -1.146 and 2.095.
+
+### ✍️ Toy 3 · PCA centering, covariance, eigenvector, and projection
+
+PCA centers the data, finds covariance eigenvectors, and projects each centered point onto the top variance direction.
+
+```python
+import numpy as np
+import matplotlib.pyplot as plt
+
+t3_rng = np.random.default_rng(0)  # -> reproducible generator seeded with 0
+t3_data = np.array([[-2.0, -1.0], [-1.0, -0.5], [0.0, 0.0], [1.0, 0.5], [2.0, 1.1], [3.0, 1.4]])  # -> six correlated 2-D points
+t3_mean = t3_data.mean(axis=0)  # -> [0.5, 0.25]
+t3_centered = t3_data - t3_mean  # -> centered points
+t3_covariance = t3_centered.T @ t3_centered / len(t3_centered)  # -> [[2.917, 1.442], [1.442, 0.716]]
+t3_eigenvalues_raw, t3_eigenvectors_raw = np.linalg.eigh(t3_covariance)  # -> raw eigenpairs from symmetric covariance
+t3_order = np.argsort(t3_eigenvalues_raw)[::-1]  # -> [1, 0]
+t3_eigenvalues = t3_eigenvalues_raw[t3_order]  # -> [3.63, 0.003]
+t3_eigenvectors = t3_eigenvectors_raw[:, t3_order]  # -> eigenvectors sorted by variance
+t3_pc1 = t3_eigenvectors[:, 0]  # -> top principal direction before sign normalization
+t3_pc1 = np.where(t3_pc1[0] < 0.0, -t3_pc1, t3_pc1)  # -> [0.896, 0.443]
+t3_explained = t3_eigenvalues / t3_eigenvalues.sum()  # -> [0.999, 0.001]
+t3_projected = t3_centered @ t3_pc1  # -> [-2.795, -1.677, -0.559, 0.559, 1.721, 2.751]
+t3_reconstructed = np.outer(t3_projected, t3_pc1)  # -> points projected back onto the PC1 line
+print("rng seed:", 0)
+print("data:", t3_data.tolist())
+print("mean:", np.round(t3_mean, 3).tolist())
+print("centered data:", np.round(t3_centered, 3).tolist())
+print("covariance:", np.round(t3_covariance, 3).tolist())
+print("raw eigenvalues:", np.round(t3_eigenvalues_raw, 3).tolist())
+print("sort order:", t3_order.tolist())
+print("sorted eigenvalues:", np.round(t3_eigenvalues, 3).tolist())
+print("PC1 direction:", np.round(t3_pc1, 3).tolist())
+print("explained variance:", np.round(t3_explained, 3).tolist())
+print("1D projected coordinates:", np.round(t3_projected, 3).tolist())
+print("reconstructed points:", np.round(t3_reconstructed, 3).tolist())
+assert t3_explained[0] > 0.99
+assert np.allclose(np.round(t3_pc1, 3), [0.896, 0.443])
+
+t3_axis = np.array([-3.0, 3.0])[:, None] * t3_pc1[None, :]  # -> two endpoints along PC1
+t3_fig, t3_ax = plt.subplots(figsize=(5, 4))
+t3_ax.scatter(t3_centered[:, 0], t3_centered[:, 1], color="steelblue", edgecolor="black", label="centered data")
+t3_ax.plot(t3_axis[:, 0], t3_axis[:, 1], color="black", label="PC1")
+t3_ax.scatter(t3_reconstructed[:, 0], t3_reconstructed[:, 1], color="gold", edgecolor="black", label="projection on PC1")
+t3_ax.set_aspect("equal")
+t3_ax.set_title("PCA projects onto the top covariance eigenvector")
+t3_ax.set_xlabel("centered feature 1")
+t3_ax.set_ylabel("centered feature 2")
+t3_ax.legend()
+plt.show()
+```
+▶ What you'll see: almost all variance lies on PC1, so the gold projected points land nearly on top of the centered data cloud.
+
+
 ## 0. Step-by-Step Worked Example — Start Here (Beginner Friendly)
 
 > 🧑‍🎓 **New to this topic? Start here.** This is a gentle, fully runnable walkthrough that

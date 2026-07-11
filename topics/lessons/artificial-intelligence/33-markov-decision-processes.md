@@ -2,6 +2,175 @@
 > **Source:** CS 221 · **Category:** Concept+Method · **Type:** ⚖️ Both · [↑ Full reference](../../ai-ml-cheatsheets.md)
 > 📓 The coded examples form a runnable notebook section; an `.ipynb` will be generated. [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](#)
 
+## ✍️ Toy Examples
+
+Before the full worked notebook, here are tiny, hand-traceable examples for the MDP mechanics used in this lesson. Each toy prints the intermediate arrays, checks one result, and draws a small diagnostic plot.
+
+### ✍️ Toy 1 · Discounted return
+
+Discounting turns a stream of rewards into one return by multiplying later rewards by smaller powers of $\gamma$.
+
+```python
+import numpy as np
+import matplotlib.pyplot as plt
+
+t1_rng = np.random.default_rng(0)  # -> seeded generator for reproducibility
+t1_rewards = np.array([1.0, 0.0, 2.0, -1.0, 3.0, 0.0])  # -> 6 reward items
+t1_gamma = 0.5  # -> discount factor
+t1_steps = np.arange(len(t1_rewards))  # -> [0, 1, 2, 3, 4, 5]
+t1_discounts = t1_gamma ** t1_steps  # -> [1.0, 0.5, 0.25, 0.125, 0.0625, 0.03125]
+t1_terms = t1_rewards * t1_discounts  # -> [1.0, 0.0, 0.5, -0.125, 0.1875, 0.0]
+t1_return = np.sum(t1_terms)  # -> 1.5625
+print("seed:", 0)  # -> 0
+print("rewards:", t1_rewards.tolist())  # -> [1.0, 0.0, 2.0, -1.0, 3.0, 0.0]
+print("steps:", t1_steps.tolist())  # -> [0, 1, 2, 3, 4, 5]
+print("discounts:", np.round(t1_discounts, 4).tolist())  # -> [1.0, 0.5, 0.25, 0.125, 0.0625, 0.0312]
+print("discounted terms:", np.round(t1_terms, 4).tolist())  # -> [1.0, 0.0, 0.5, -0.125, 0.1875, 0.0]
+print("discounted return:", round(float(t1_return), 4))  # -> 1.5625
+assert np.isclose(t1_return, 1.5625)
+
+plt.figure(figsize=(5, 3))
+plt.bar(t1_steps, t1_terms, color="steelblue", edgecolor="black")
+plt.axhline(0.0, color="black", linewidth=1)
+plt.xlabel("time step")
+plt.ylabel("discounted reward")
+plt.title("Toy 1: discounted terms sum to return")
+plt.show()
+```
+▶ What you'll see: later rewards are visibly shrunk, and the printed discounted terms sum to `1.5625`.
+
+### ✍️ Toy 2 · Q-values as expected one-step returns
+
+A $Q(s,a)$ backup averages immediate reward plus discounted next-state value over the action's possible outcomes.
+
+```python
+import numpy as np
+import matplotlib.pyplot as plt
+
+t2_rng = np.random.default_rng(0)  # -> seeded generator for reproducibility
+t2_actions = np.array(["safe", "risky"])  # -> two candidate actions
+t2_next_states = np.array(["A", "B", "G"])  # -> three possible next states
+t2_gamma = 0.9  # -> discount factor
+t2_next_values = np.array([1.0, 2.0, 0.0])  # -> V(A), V(B), V(G)
+t2_probs = np.array([[0.7, 0.3, 0.0], [0.2, 0.0, 0.8]])  # -> T(next | action)
+t2_rewards = np.array([[0.0, 1.0, 0.0], [-1.0, 0.0, 4.0]])  # -> R(action,next)
+t2_future = t2_gamma * t2_next_values  # -> [0.9, 1.8, 0.0]
+t2_returns = t2_rewards + t2_future  # -> [[0.9, 2.8, 0.0], [-0.1, 1.8, 4.0]]
+t2_weighted_terms = t2_probs * t2_returns  # -> [[0.63, 0.84, 0.0], [-0.02, 0.0, 3.2]]
+t2_q_values = np.sum(t2_weighted_terms, axis=1)  # -> [1.47, 3.18]
+t2_best_action = int(np.argmax(t2_q_values))  # -> 1
+print("seed:", 0)  # -> 0
+print("actions:", t2_actions.tolist())  # -> ['safe', 'risky']
+print("next states:", t2_next_states.tolist())  # -> ['A', 'B', 'G']
+print("next values:", t2_next_values.tolist())  # -> [1.0, 2.0, 0.0]
+print("probabilities:", t2_probs.tolist())  # -> [[0.7, 0.3, 0.0], [0.2, 0.0, 0.8]]
+print("rewards:", t2_rewards.tolist())  # -> [[0.0, 1.0, 0.0], [-1.0, 0.0, 4.0]]
+print("discounted future:", np.round(t2_future, 3).tolist())  # -> [0.9, 1.8, 0.0]
+print("reward plus future:", np.round(t2_returns, 3).tolist())  # -> [[0.9, 2.8, 0.0], [-0.1, 1.8, 4.0]]
+print("weighted terms:", np.round(t2_weighted_terms, 3).tolist())  # -> [[0.63, 0.84, 0.0], [-0.02, 0.0, 3.2]]
+print("Q-values:", np.round(t2_q_values, 3).tolist())  # -> [1.47, 3.18]
+print("best action:", str(t2_actions[t2_best_action]))  # -> risky
+assert np.allclose(t2_q_values, [1.47, 3.18]) and t2_best_action == 1
+
+plt.figure(figsize=(5, 3))
+plt.bar(t2_actions, t2_q_values, color=["lightgray", "seagreen"], edgecolor="black")
+plt.ylabel("Q(s, a)")
+plt.title("Toy 2: choose the action with the larger Q-value")
+plt.show()
+```
+▶ What you'll see: the risky action wins because its high-probability terminal reward makes its expected value `3.18`.
+
+### ✍️ Toy 3 · Policy evaluation by solving Bellman equations
+
+For a fixed policy, policy evaluation solves $V_\pi = r_\pi + \gamma P_\pi V_\pi$ for the state values.
+
+```python
+import numpy as np
+import matplotlib.pyplot as plt
+
+t3_rng = np.random.default_rng(0)  # -> seeded generator for reproducibility
+t3_states = np.array(["A", "B"])  # -> two nonterminal states
+t3_gamma = 0.9  # -> discount factor
+t3_transition = np.array([[0.2, 0.8], [0.0, 0.0]])  # -> P_pi over nonterminal next states
+t3_reward = np.array([-0.1, 1.0])  # -> expected immediate reward under pi
+t3_identity = np.eye(2)  # -> [[1.0, 0.0], [0.0, 1.0]]
+t3_scaled_transition = t3_gamma * t3_transition  # -> [[0.18, 0.72], [0.0, 0.0]]
+t3_system = t3_identity - t3_scaled_transition  # -> [[0.82, -0.72], [0.0, 1.0]]
+t3_values = np.linalg.solve(t3_system, t3_reward)  # -> [0.756098, 1.0]
+t3_future_values = t3_transition @ t3_values  # -> [0.95122, 0.0]
+t3_discounted_future = t3_gamma * t3_future_values  # -> [0.856098, 0.0]
+t3_bellman_backup = t3_reward + t3_discounted_future  # -> [0.756098, 1.0]
+t3_residual = t3_values - t3_bellman_backup  # -> [0.0, 0.0]
+print("seed:", 0)  # -> 0
+print("states:", t3_states.tolist())  # -> ['A', 'B']
+print("transition matrix:", t3_transition.tolist())  # -> [[0.2, 0.8], [0.0, 0.0]]
+print("reward vector:", t3_reward.tolist())  # -> [-0.1, 1.0]
+print("system matrix:", np.round(t3_system, 3).tolist())  # -> [[0.82, -0.72], [0.0, 1.0]]
+print("values:", np.round(t3_values, 6).tolist())  # -> [0.756098, 1.0]
+print("future values:", np.round(t3_future_values, 6).tolist())  # -> [0.95122, 0.0]
+print("Bellman backup:", np.round(t3_bellman_backup, 6).tolist())  # -> [0.756098, 1.0]
+print("residual:", np.round(t3_residual, 10).tolist())  # -> [0.0, 0.0]
+assert np.allclose(t3_values, [0.7560975609756098, 1.0])
+
+plt.figure(figsize=(5, 3))
+plt.bar(t3_states, t3_values, color="mediumpurple", edgecolor="black")
+plt.ylabel("V_pi(s)")
+plt.title("Toy 3: fixed-policy values solve Bellman equations")
+plt.show()
+```
+▶ What you'll see: the solved values exactly match their own Bellman backups, leaving zero residual.
+
+### ✍️ Toy 4 · Value iteration Bellman update
+
+Value iteration replaces the fixed policy action with a max over actions, then repeats that optimal Bellman backup.
+
+```python
+import numpy as np
+import matplotlib.pyplot as plt
+
+t4_rng = np.random.default_rng(0)  # -> seeded generator for reproducibility
+t4_states = np.array(["A", "B", "G"])  # -> two active states plus terminal G
+t4_actions = np.array(["safe/finish", "risky/reset"])  # -> action names by column
+t4_gamma = 0.9  # -> discount factor
+t4_probs = np.array([[[0.2, 0.8, 0.0], [0.5, 0.0, 0.5]], [[0.0, 0.0, 1.0], [1.0, 0.0, 0.0]]])  # -> T(s,a,next)
+t4_rewards = np.array([[[-0.1, -0.1, 0.0], [-0.4, 0.0, 1.0]], [[0.0, 0.0, 1.0], [-0.2, 0.0, 0.0]]])  # -> R(s,a,next)
+t4_v0 = np.array([0.0, 0.0, 0.0])  # -> initial V(A), V(B), V(G)
+t4_future1 = t4_gamma * t4_v0  # -> [0.0, 0.0, 0.0]
+t4_returns1 = t4_rewards + t4_future1  # -> first backup uses immediate rewards only
+t4_weighted1 = t4_probs * t4_returns1  # -> probability-weighted first returns
+t4_q1 = np.sum(t4_weighted1, axis=2)  # -> [[-0.1, 0.3], [1.0, -0.2]]
+t4_v1 = np.r_[np.max(t4_q1, axis=1), 0.0]  # -> [0.3, 1.0, 0.0]
+t4_policy1 = np.argmax(t4_q1, axis=1)  # -> [1, 0]
+t4_future2 = t4_gamma * t4_v1  # -> [0.27, 0.9, 0.0]
+t4_returns2 = t4_rewards + t4_future2  # -> reward plus second-round future values
+t4_weighted2 = t4_probs * t4_returns2  # -> probability-weighted second returns
+t4_q2 = np.sum(t4_weighted2, axis=2)  # -> [[0.674, 0.435], [1.0, 0.07]]
+t4_v2 = np.r_[np.max(t4_q2, axis=1), 0.0]  # -> [0.674, 1.0, 0.0]
+t4_policy2 = np.argmax(t4_q2, axis=1)  # -> [0, 0]
+print("seed:", 0)  # -> 0
+print("states:", t4_states.tolist())  # -> ['A', 'B', 'G']
+print("actions:", t4_actions.tolist())  # -> ['safe/finish', 'risky/reset']
+print("V0:", t4_v0.tolist())  # -> [0.0, 0.0, 0.0]
+print("Q after backup 1:", np.round(t4_q1, 3).tolist())  # -> [[-0.1, 0.3], [1.0, -0.2]]
+print("V after backup 1:", np.round(t4_v1, 3).tolist())  # -> [0.3, 1.0, 0.0]
+print("policy after backup 1:", t4_policy1.tolist())  # -> [1, 0]
+print("future for backup 2:", np.round(t4_future2, 3).tolist())  # -> [0.27, 0.9, 0.0]
+print("Q after backup 2:", np.round(t4_q2, 3).tolist())  # -> [[0.674, 0.435], [1.0, 0.07]]
+print("V after backup 2:", np.round(t4_v2, 3).tolist())  # -> [0.674, 1.0, 0.0]
+print("policy after backup 2:", t4_policy2.tolist())  # -> [0, 0]
+assert np.allclose(t4_v2, [0.674, 1.0, 0.0]) and t4_policy2.tolist() == [0, 0]
+
+plt.figure(figsize=(5, 3))
+plt.bar(np.arange(2) - 0.15, t4_q2[:, 0], width=0.3, label=t4_actions[0])
+plt.bar(np.arange(2) + 0.15, t4_q2[:, 1], width=0.3, label=t4_actions[1])
+plt.xticks(np.arange(2), t4_states[:2])
+plt.ylabel("second-backup Q")
+plt.title("Toy 4: max over actions gives the next values")
+plt.legend()
+plt.show()
+```
+▶ What you'll see: the first backup prefers risky at `A`, but the second backup switches `A` to safe once future value is included.
+
 ## 0. Step-by-Step Worked Example — Start Here (Beginner Friendly)
 
 > 🧑‍🎓 **New to this topic? Start here.** This is a gentle, fully runnable walkthrough that

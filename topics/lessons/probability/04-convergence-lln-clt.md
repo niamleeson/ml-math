@@ -2,6 +2,175 @@
 > **Source:** Probability (MIT) · **Category:** Formula/Theorem · **Type:** ⚖️ Both · [↑ Full reference](../../ai-ml-cheatsheets.md)
 > 📓 The coded examples form a runnable notebook section; an .ipynb will be generated.
 
+## ✍️ Toy Examples
+
+Before the full worked notebook, here are tiny, hand-traceable convergence toys for the computational mechanics in this lesson. Each toy prints the intermediate arrays, checks one invariant, and draws a compact picture.
+
+### ✍️ Toy 1 · Law of large numbers running mean
+
+The sample mean after each new observation is just the cumulative sum divided by the number of observations so far.
+
+```python
+import numpy as np
+import matplotlib.pyplot as plt
+
+t1_rng = np.random.default_rng(0)  # -> seeded generator for reproducibility
+t1_true_p = 0.5  # -> Bernoulli mean
+t1_flips = np.array([1, 0, 1, 1, 0, 0, 1, 0, 1, 0, 1, 0])  # -> 12 coin-flip outcomes
+t1_counts = np.arange(1, t1_flips.size + 1)  # -> [1, 2, ..., 12]
+t1_cumulative_heads = np.cumsum(t1_flips)  # -> [1, 1, 2, 3, 3, 3, 4, 4, 5, 5, 6, 6]
+t1_running_mean = t1_cumulative_heads / t1_counts  # -> [1.0, 0.5, 0.667, 0.75, 0.6, 0.5, 0.571, 0.5, 0.556, 0.5, 0.545, 0.5]
+t1_final_mean = t1_running_mean[-1]  # -> 0.5
+print("seed:", 0)  # -> 0
+print("true p:", t1_true_p)  # -> 0.5
+print("flips:", t1_flips.tolist())  # -> 12 coin-flip outcomes
+print("counts:", t1_counts.tolist())  # -> [1, 2, ..., 12]
+print("cumulative heads:", t1_cumulative_heads.tolist())  # -> [1, 1, 2, 3, 3, 3, 4, 4, 5, 5, 6, 6]
+print("running mean:", np.round(t1_running_mean, 3).tolist())  # -> [1.0, 0.5, 0.667, 0.75, 0.6, 0.5, 0.571, 0.5, 0.556, 0.5, 0.545, 0.5]
+print("final mean:", round(float(t1_final_mean), 3))  # -> 0.5
+assert np.isclose(t1_final_mean, t1_flips.mean())
+
+plt.figure(figsize=(6, 3.5))
+plt.plot(t1_counts, t1_running_mean, marker="o", label="running mean")
+plt.axhline(t1_true_p, color="crimson", linestyle="--", label="true mean 0.5")
+plt.xlabel("number of flips")
+plt.ylabel("sample mean")
+plt.title("Toy 1: LLN running average")
+plt.ylim(0.0, 1.05)
+plt.legend()
+plt.show()
+```
+▶ What you'll see: early averages jump around, but the running mean repeatedly returns to the true mean line.
+
+### ✍️ Toy 2 · CLT sampling distribution of means
+
+The CLT studies the distribution of sample means; even from a skewed population, those means are less skewed than the raw values.
+
+```python
+import numpy as np
+import matplotlib.pyplot as plt
+
+t2_rng = np.random.default_rng(0)  # -> seeded generator for reproducibility
+t2_population = np.array([0.0, 0.0, 1.0, 1.0, 3.0, 7.0])  # -> 6 skewed population values
+t2_sample_size = 4  # -> average 4 draws at a time
+t2_num_samples = 12  # -> make 12 sample means
+t2_samples = t2_rng.choice(t2_population, size=(t2_num_samples, t2_sample_size), replace=True)  # -> 12 by 4 draw table
+t2_sample_means = t2_samples.mean(axis=1)  # -> [2.25, 0.0, 2.75, 3.0, 2.5, 1.5, 2.25, 3.25, 2.0, 0.5, 0.25, 1.25]
+t2_center = t2_sample_means.mean()  # -> 1.792
+t2_spread = t2_sample_means.std(ddof=1)  # -> 1.091
+t2_standardized = (t2_sample_means - t2_center) / t2_spread  # -> [0.42, -1.642, 0.878, 1.107, 0.649, -0.267, 0.42, 1.336, 0.191, -1.183, -1.412, -0.496]
+print("seed:", 0)  # -> 0
+print("population:", t2_population.tolist())  # -> [0.0, 0.0, 1.0, 1.0, 3.0, 7.0]
+print("samples:", t2_samples.tolist())  # -> [[7.0, 1.0, 1.0, 0.0], [0.0, 0.0, 0.0, 0.0], [0.0, 3.0, 1.0, 7.0], [1.0, 1.0, 7.0, 3.0], [1.0, 1.0, 1.0, 7.0], [0.0, 3.0, 3.0, 0.0], [1.0, 7.0, 1.0, 0.0], [3.0, 3.0, 7.0, 0.0], [0.0, 7.0, 0.0, 1.0], [0.0, 0.0, 1.0, 1.0], [1.0, 0.0, 0.0, 0.0], [0.0, 3.0, 1.0, 1.0]]
+print("sample means:", np.round(t2_sample_means, 3).tolist())  # -> [2.25, 0.0, 2.75, 3.0, 2.5, 1.5, 2.25, 3.25, 2.0, 0.5, 0.25, 1.25]
+print("mean of sample means:", round(float(t2_center), 3))  # -> 1.792
+print("std of sample means:", round(float(t2_spread), 3))  # -> 1.091
+print("standardized means:", np.round(t2_standardized, 3).tolist())  # -> [0.42, -1.642, 0.878, 1.107, 0.649, -0.267, 0.42, 1.336, 0.191, -1.183, -1.412, -0.496]
+assert t2_sample_means.shape == (12,)
+
+t2_grid = np.linspace(t2_sample_means.min() - 0.5, t2_sample_means.max() + 0.5, 100)  # -> histogram grid
+t2_pdf = np.exp(-0.5 * ((t2_grid - t2_center) / t2_spread) ** 2)  # -> unnormalized normal numerator
+t2_pdf = t2_pdf / (t2_spread * np.sqrt(2.0 * np.pi))  # -> normal density using sample-mean center/spread
+plt.figure(figsize=(6, 3.5))
+plt.hist(t2_sample_means, bins=6, density=True, alpha=0.65, color="steelblue", label="sample means")
+plt.plot(t2_grid, t2_pdf, color="crimson", label="normal-shaped guide")
+plt.xlabel("sample mean")
+plt.ylabel("density")
+plt.title("Toy 2: sampling distribution of means")
+plt.legend()
+plt.show()
+```
+▶ What you'll see: the plotted values are means of small samples, not raw skewed observations, with a bell-shaped guide overlaid.
+
+### ✍️ Toy 3 · Standard error from sample spread
+
+The standard error is the sample standard deviation divided by the square root of the sample size.
+
+```python
+import numpy as np
+import matplotlib.pyplot as plt
+
+t3_rng = np.random.default_rng(0)  # -> seeded generator for reproducibility
+t3_values = np.array([4.0, 5.0, 6.0, 5.0, 7.0, 6.0, 5.0, 8.0])  # -> 8 observations
+t3_n = t3_values.size  # -> 8
+t3_mean = t3_values.mean()  # -> 5.75
+t3_deviations = t3_values - t3_mean  # -> [-1.75, -0.75, 0.25, -0.75, 1.25, 0.25, -0.75, 2.25]
+t3_squared_deviations = t3_deviations ** 2  # -> [3.062, 0.562, 0.062, 0.562, 1.562, 0.062, 0.562, 5.062]
+t3_sample_variance = t3_squared_deviations.sum() / (t3_n - 1)  # -> 1.643
+t3_sample_std = np.sqrt(t3_sample_variance)  # -> 1.282
+t3_standard_error = t3_sample_std / np.sqrt(t3_n)  # -> 0.453
+t3_ci95 = t3_mean + np.array([-1.96, 1.96]) * t3_standard_error  # -> [4.862, 6.638]
+print("seed:", 0)  # -> 0
+print("values:", t3_values.tolist())  # -> 8 observations
+print("n:", t3_n)  # -> 8
+print("mean:", t3_mean)  # -> 5.75
+print("deviations:", np.round(t3_deviations, 3).tolist())  # -> [-1.75, -0.75, 0.25, -0.75, 1.25, 0.25, -0.75, 2.25]
+print("squared deviations:", np.round(t3_squared_deviations, 3).tolist())  # -> [3.062, 0.562, 0.062, 0.562, 1.562, 0.062, 0.562, 5.062]
+print("sample variance:", round(float(t3_sample_variance), 3))  # -> 1.643
+print("sample std:", round(float(t3_sample_std), 3))  # -> 1.282
+print("standard error:", round(float(t3_standard_error), 3))  # -> 0.453
+print("approx 95% interval:", np.round(t3_ci95, 3).tolist())  # -> [4.862, 6.638]
+assert np.isclose(t3_standard_error, t3_sample_std / np.sqrt(t3_n))
+
+plt.figure(figsize=(6, 3.5))
+plt.scatter(np.arange(t3_n), t3_values, color="gray", label="observations")
+plt.errorbar([t3_n / 2], [t3_mean], yerr=[1.96 * t3_standard_error], fmt="o", color="crimson", capsize=8, label="mean ± 1.96 SE")
+plt.xlabel("observation index")
+plt.ylabel("value")
+plt.title("Toy 3: standard error around the mean")
+plt.legend()
+plt.show()
+```
+▶ What you'll see: the red error bar is much narrower than the raw spread because it measures uncertainty in the mean.
+
+### ✍️ Toy 4 · Convergence in probability tail probabilities
+
+Convergence in probability asks whether the chance of being farther than a fixed tolerance shrinks as sample size grows.
+
+```python
+import numpy as np
+import matplotlib.pyplot as plt
+
+t4_rng = np.random.default_rng(0)  # -> seeded generator for reproducibility
+t4_n_values = np.array([2, 4, 8])  # -> sample sizes
+t4_p = 0.5  # -> Bernoulli mean
+t4_eps = 0.3  # -> distance tolerance
+t4_kernel = np.array([1.0 - t4_p, t4_p])  # -> [0.5, 0.5]
+t4_pmfs = []  # -> exact Binomial(n, 0.5) probabilities
+t4_far_masks = []  # -> which sample means are farther than eps
+t4_prob_far = []  # -> tail probabilities
+for t4_n in t4_n_values:
+    t4_pmf = np.array([1.0])
+    for t4_step in range(int(t4_n)):
+        t4_pmf = np.convolve(t4_pmf, t4_kernel)
+    t4_k = np.arange(int(t4_n) + 1)
+    t4_means = t4_k / t4_n
+    t4_far = np.abs(t4_means - t4_p) >= t4_eps
+    t4_tail = t4_pmf[t4_far].sum()
+    t4_pmfs.append(t4_pmf)
+    t4_far_masks.append(t4_far)
+    t4_prob_far.append(float(t4_tail))
+t4_prob_far = np.array(t4_prob_far)  # -> [0.5, 0.125, 0.0703]
+print("seed:", 0)  # -> 0
+print("n values:", t4_n_values.tolist())  # -> [2, 4, 8]
+print("p:", t4_p)  # -> 0.5
+print("epsilon:", t4_eps)  # -> 0.3
+print("kernel:", t4_kernel.tolist())  # -> [0.5, 0.5]
+print("pmfs:", [np.round(pmf, 4).tolist() for pmf in t4_pmfs])  # -> [[0.25, 0.5, 0.25], [0.0625, 0.25, 0.375, 0.25, 0.0625], [0.0039, 0.0312, 0.1094, 0.2188, 0.2734, 0.2188, 0.1094, 0.0312, 0.0039]]
+print("far masks:", [mask.tolist() for mask in t4_far_masks])  # -> [[True, False, True], [True, False, False, False, True], [True, True, False, False, False, False, False, True, True]]
+print("P(|mean-p| >= eps):", np.round(t4_prob_far, 4).tolist())  # -> [0.5, 0.125, 0.0703]
+assert np.all(np.diff(t4_prob_far) < 0.0)
+
+plt.figure(figsize=(5, 3.5))
+plt.plot(t4_n_values, t4_prob_far, marker="o", color="seagreen")
+plt.xlabel("sample size n")
+plt.ylabel(r"P(|sample mean - p| ≥ ε)")
+plt.title("Toy 4: convergence in probability")
+plt.ylim(0.0, 0.55)
+plt.show()
+```
+▶ What you'll see: the exact tail probability drops as `n` grows from 2 to 8.
+
 ## 0. Step-by-Step Worked Example — Start Here (Beginner Friendly)
 
 > 🧑‍🎓 **New to this topic? Start here.** This is a gentle, fully runnable walkthrough that

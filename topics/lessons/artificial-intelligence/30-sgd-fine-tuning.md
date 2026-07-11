@@ -2,6 +2,267 @@
 > **Source:** CS 221 · **Category:** Method · **Type:** ⚖️ Both · [↑ Full reference](../../ai-ml-cheatsheets.md)
 > 📓 The coded examples form a runnable notebook section; an `.ipynb` will be generated.
 
+## ✍️ Toy Examples
+
+These tiny optimizer toys isolate the mechanics before the full worked example: one stochastic step, learning-rate size, mini-batch averaging, momentum memory, and a fine-tuning freeze mask.
+
+### ✍️ Toy 1 · One SGD step for squared loss
+
+SGD uses one example to estimate a downhill direction. For squared loss, the gradient is residual times the feature vector.
+
+```python
+import numpy as np
+import matplotlib.pyplot as plt
+
+t1_rng = np.random.default_rng(0)  # -> reproducible generator seeded with 0
+t1_x = np.array([-2.0, -1.0, 0.0, 1.0, 2.0, 3.0])  # -> six scalar inputs
+t1_y = np.array([-3.0, -1.0, 1.0, 3.0, 5.0, 7.0])  # -> targets from y = 1 + 2x
+t1_features = np.column_stack([np.ones(len(t1_x)), t1_x])  # -> bias plus x feature
+t1_weights = np.array([0.0, 0.0])  # -> start at zero intercept and zero slope
+t1_index = 4  # -> choose the fifth example for this stochastic update
+t1_phi = t1_features[t1_index]  # -> [1.0, 2.0]
+t1_target = t1_y[t1_index]  # -> 5.0
+t1_prediction = t1_phi @ t1_weights  # -> 0.0
+t1_residual = t1_prediction - t1_target  # -> -5.0
+t1_gradient = t1_residual * t1_phi  # -> [-5.0, -10.0]
+t1_eta = 0.1  # -> learning rate
+t1_new_weights = t1_weights - t1_eta * t1_gradient  # -> [0.5, 1.0]
+print("rng seed:", 0)
+print("x:", t1_x.tolist())
+print("y:", t1_y.tolist())
+print("features:", t1_features.tolist())
+print("old weights:", t1_weights.tolist())
+print("chosen phi:", t1_phi.tolist())
+print("chosen target:", float(t1_target))
+print("prediction:", float(t1_prediction))
+print("residual:", float(t1_residual))
+print("gradient:", t1_gradient.tolist())
+print("new weights:", t1_new_weights.tolist())
+assert np.allclose(t1_gradient, [-5.0, -10.0])
+assert np.allclose(t1_new_weights, [0.5, 1.0])
+
+t1_before = t1_features @ t1_weights  # -> [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+t1_after = t1_features @ t1_new_weights  # -> [-1.5, -0.5, 0.5, 1.5, 2.5, 3.5]
+t1_fig, t1_ax = plt.subplots(figsize=(6, 3.5))
+t1_ax.scatter(t1_x, t1_y, color="black", label="targets")
+t1_ax.plot(t1_x, t1_before, linestyle="--", label="before step")
+t1_ax.plot(t1_x, t1_after, marker="o", label="after one SGD step")
+t1_ax.set_title("One example nudges both intercept and slope")
+t1_ax.set_xlabel("x")
+t1_ax.set_ylabel("prediction")
+t1_ax.legend()
+plt.show()
+```
+▶ What you'll see: the selected example creates gradient [-5, -10], so the weights jump from [0, 0] to [0.5, 1.0].
+
+### ✍️ Toy 2 · Learning rate controls update motion
+
+On a one-dimensional quadratic, the learning rate decides whether steps crawl, converge quickly, or bounce outward.
+
+```python
+import numpy as np
+import matplotlib.pyplot as plt
+
+t2_rng = np.random.default_rng(0)  # -> reproducible generator seeded with 0
+t2_etas = np.array([0.05, 0.25, 1.10])  # -> small, useful, too-large learning rates
+t2_start = -2.0  # -> starting weight
+t2_minimum = 2.0  # -> minimum of L(w) = (w - 2)^2
+t2_factor = 1.0 - 2.0 * t2_etas  # -> [0.9, 0.5, -1.2]
+t2_steps = np.arange(7)  # -> [0, 1, 2, 3, 4, 5, 6]
+t2_paths = t2_minimum + (t2_start - t2_minimum) * (t2_factor[:, None] ** t2_steps)  # -> three weight paths
+t2_losses = (t2_paths - t2_minimum) ** 2  # -> losses along each path
+print("rng seed:", 0)
+print("learning rates:", t2_etas.tolist())
+print("start weight:", t2_start)
+print("minimum weight:", t2_minimum)
+print("update factors 1 - 2eta:", np.round(t2_factor, 3).tolist())
+print("steps:", t2_steps.tolist())
+print("weight paths:", np.round(t2_paths, 3).tolist())
+print("loss paths:", np.round(t2_losses, 3).tolist())
+assert t2_losses[1, -1] < t2_losses[0, -1]
+assert t2_losses[2, -1] > t2_losses[2, 0]
+
+t2_fig, t2_ax = plt.subplots(figsize=(6, 3.5))
+for t2_eta, t2_path, t2_loss in zip(t2_etas, t2_paths, t2_losses):
+    t2_ax.plot(t2_path, t2_loss, marker="o", label=f"eta={t2_eta}")
+t2_grid = np.linspace(-10.0, 12.0, 200)  # -> smooth x-values for the quadratic curve
+t2_curve = (t2_grid - t2_minimum) ** 2  # -> L(w) values on the grid
+t2_ax.plot(t2_grid, t2_curve, color="black", alpha=0.25, label="loss curve")
+t2_ax.set_title("Learning rate changes the optimization path")
+t2_ax.set_xlabel("weight w")
+t2_ax.set_ylabel("loss")
+t2_ax.legend()
+plt.show()
+```
+▶ What you'll see: eta=0.25 quickly approaches the minimum, eta=0.05 crawls, and eta=1.10 oscillates with growing loss.
+
+### ✍️ Toy 3 · Mini-batch gradient is an average of example gradients
+
+A mini-batch step averages several per-example gradients, making it less noisy than one-example SGD but cheaper than a full batch.
+
+```python
+import numpy as np
+import matplotlib.pyplot as plt
+
+t3_rng = np.random.default_rng(0)  # -> reproducible generator seeded with 0
+t3_x = np.array([-2.0, -1.0, 0.0, 1.0, 2.0, 3.0])  # -> six scalar inputs
+t3_y = np.array([-3.0, -1.1, 0.9, 2.9, 5.2, 6.8])  # -> noisy linear targets
+t3_features = np.column_stack([np.ones(len(t3_x)), t3_x])  # -> bias plus x feature
+t3_weights = np.array([0.4, 1.2])  # -> current model parameters
+t3_predictions = t3_features @ t3_weights  # -> [-2.0, -0.8, 0.4, 1.6, 2.8, 4.0]
+t3_residuals = t3_predictions - t3_y  # -> [1.0, 0.3, -0.5, -1.3, -2.4, -2.8]
+t3_per_example_gradients = t3_residuals[:, None] * t3_features  # -> one gradient row per example
+t3_one_gradient = t3_per_example_gradients[0]  # -> [1.0, -2.0]
+t3_mini_gradient = t3_per_example_gradients[:3].mean(axis=0)  # -> [0.267, -0.767]
+t3_full_gradient = t3_per_example_gradients.mean(axis=0)  # -> [-0.95, -2.8]
+t3_eta = 0.1  # -> shared learning rate
+t3_updated_weights = np.vstack([t3_weights - t3_eta * t3_one_gradient, t3_weights - t3_eta * t3_mini_gradient, t3_weights - t3_eta * t3_full_gradient])  # -> [[0.3, 1.4], [0.373, 1.277], [0.495, 1.48]]
+print("rng seed:", 0)
+print("x:", t3_x.tolist())
+print("y:", t3_y.tolist())
+print("features:", t3_features.tolist())
+print("weights:", t3_weights.tolist())
+print("predictions:", np.round(t3_predictions, 3).tolist())
+print("residuals:", np.round(t3_residuals, 3).tolist())
+print("per-example gradients:", np.round(t3_per_example_gradients, 3).tolist())
+print("one-example gradient:", np.round(t3_one_gradient, 3).tolist())
+print("mini-batch gradient:", np.round(t3_mini_gradient, 3).tolist())
+print("full-batch gradient:", np.round(t3_full_gradient, 3).tolist())
+print("updated weights:", np.round(t3_updated_weights, 3).tolist())
+assert np.allclose(np.round(t3_mini_gradient, 3), [0.267, -0.767])
+assert np.allclose(np.round(t3_full_gradient, 2), [-0.95, -2.8])
+
+t3_names = ["one", "mini", "full"]  # -> labels for the three gradient estimates
+t3_gradients = np.vstack([t3_one_gradient, t3_mini_gradient, t3_full_gradient])  # -> stacked gradient table
+t3_fig, t3_ax = plt.subplots(figsize=(6, 3.5))
+t3_positions = np.arange(len(t3_names))
+t3_ax.bar(t3_positions - 0.18, t3_gradients[:, 0], width=0.36, label="bias grad")
+t3_ax.bar(t3_positions + 0.18, t3_gradients[:, 1], width=0.36, label="slope grad")
+t3_ax.axhline(0.0, color="black", linewidth=1)
+t3_ax.set_xticks(t3_positions, t3_names)
+t3_ax.set_title("Batch size changes the gradient estimate")
+t3_ax.set_ylabel("gradient component")
+t3_ax.legend()
+plt.show()
+```
+▶ What you'll see: the one-example gradient points differently from the average, while the mini-batch sits between one-example and full-batch estimates.
+
+### ✍️ Toy 4 · Momentum accumulates a velocity
+
+Momentum mixes the previous velocity with the current gradient, so updates remember recent downhill directions instead of reacting only to the newest gradient.
+
+```python
+import numpy as np
+import matplotlib.pyplot as plt
+
+t4_rng = np.random.default_rng(0)  # -> reproducible generator seeded with 0
+t4_gradients = np.array([4.0, 2.0, -1.0, -2.0, -1.0, 0.0])  # -> six scalar gradients over time
+t4_beta = 0.8  # -> momentum coefficient
+t4_eta = 0.1  # -> learning rate
+t4_w0 = 0.0  # -> starting scalar parameter
+t4_v0 = 0.0  # -> starting velocity
+t4_v1 = t4_beta * t4_v0 + t4_gradients[0]  # -> 4.0
+t4_w1 = t4_w0 - t4_eta * t4_v1  # -> -0.4
+t4_v2 = t4_beta * t4_v1 + t4_gradients[1]  # -> 5.2
+t4_w2 = t4_w1 - t4_eta * t4_v2  # -> -0.92
+t4_v3 = t4_beta * t4_v2 + t4_gradients[2]  # -> 3.16
+t4_w3 = t4_w2 - t4_eta * t4_v3  # -> -1.236
+t4_v4 = t4_beta * t4_v3 + t4_gradients[3]  # -> 0.528
+t4_w4 = t4_w3 - t4_eta * t4_v4  # -> -1.2888
+t4_v5 = t4_beta * t4_v4 + t4_gradients[4]  # -> -0.5776
+t4_w5 = t4_w4 - t4_eta * t4_v5  # -> -1.23104
+t4_v6 = t4_beta * t4_v5 + t4_gradients[5]  # -> -0.46208
+t4_w6 = t4_w5 - t4_eta * t4_v6  # -> -1.184832
+t4_velocities = np.array([t4_v1, t4_v2, t4_v3, t4_v4, t4_v5, t4_v6])  # -> [4.0, 5.2, 3.16, 0.528, -0.5776, -0.46208]
+t4_weights = np.array([t4_w1, t4_w2, t4_w3, t4_w4, t4_w5, t4_w6])  # -> [-0.4, -0.92, -1.236, -1.2888, -1.23104, -1.184832]
+print("rng seed:", 0)
+print("gradients:", t4_gradients.tolist())
+print("beta:", t4_beta)
+print("eta:", t4_eta)
+print("start weight:", t4_w0)
+print("start velocity:", t4_v0)
+print("velocities:", np.round(t4_velocities, 5).tolist())
+print("weights after momentum steps:", np.round(t4_weights, 5).tolist())
+assert np.allclose(np.round(t4_velocities, 5), [4.0, 5.2, 3.16, 0.528, -0.5776, -0.46208])
+assert np.isclose(t4_weights[-1], -1.184832)
+
+t4_steps = np.arange(1, 7)  # -> [1, 2, 3, 4, 5, 6]
+t4_fig, t4_ax = plt.subplots(figsize=(6, 3.5))
+t4_ax.plot(t4_steps, t4_gradients, marker="o", label="raw gradient")
+t4_ax.plot(t4_steps, t4_velocities, marker="s", label="momentum velocity")
+t4_ax.axhline(0.0, color="black", linewidth=1)
+t4_ax.set_title("Momentum smooths and carries gradient direction")
+t4_ax.set_xlabel("update number")
+t4_ax.set_ylabel("value")
+t4_ax.legend()
+plt.show()
+```
+▶ What you'll see: the velocity stays positive after the gradient turns negative, then gradually reverses as more negative gradients arrive.
+
+### ✍️ Toy 5 · Fine-tuning freeze mask versus full update
+
+Fine-tuning is still gradient descent, but a freeze mask decides which parameter block is allowed to move.
+
+```python
+import numpy as np
+import matplotlib.pyplot as plt
+
+t5_rng = np.random.default_rng(0)  # -> reproducible generator seeded with 0
+t5_raw = np.array([[-1.0, 1.0], [0.0, 1.0], [1.0, 1.0], [2.0, 1.0], [1.0, 2.0], [2.0, 2.0]])  # -> six raw examples
+t5_targets = np.array([-0.8, -0.1, 0.6, 1.3, 0.2, 0.9])  # -> target-domain labels
+t5_base_scale = np.array([1.0, 1.0])  # -> base representation scales
+t5_head_weights = np.array([0.5, -0.2])  # -> head weights
+t5_representation = t5_raw * t5_base_scale  # -> same as raw while base scales are ones
+t5_predictions = t5_representation @ t5_head_weights  # -> [-0.7, -0.2, 0.3, 0.8, 0.1, 0.6]
+t5_residuals = t5_predictions - t5_targets  # -> [0.1, -0.1, -0.3, -0.5, -0.1, -0.3]
+t5_initial_loss = np.mean(0.5 * t5_residuals ** 2)  # -> 0.0383
+t5_grad_head = t5_representation.T @ t5_residuals / len(t5_targets)  # -> [-0.35, -0.267]
+t5_grad_base = (t5_raw * t5_head_weights).T @ t5_residuals / len(t5_targets)  # -> [-0.175, 0.053]
+t5_eta = 0.4  # -> fine-tuning step size
+t5_frozen_base = t5_base_scale.copy()  # -> [1.0, 1.0]
+t5_frozen_head = t5_head_weights - t5_eta * t5_grad_head  # -> [0.64, -0.093]
+t5_full_base = t5_base_scale - t5_eta * t5_grad_base  # -> [1.07, 0.979]
+t5_full_head = t5_head_weights - t5_eta * t5_grad_head  # -> [0.64, -0.093]
+t5_frozen_predictions = (t5_raw * t5_frozen_base) @ t5_frozen_head  # -> [-0.733, -0.093, 0.547, 1.187, 0.453, 1.093]
+t5_full_predictions = (t5_raw * t5_full_base) @ t5_full_head  # -> [-0.776, -0.091, 0.593, 1.278, 0.502, 1.187]
+t5_frozen_loss = np.mean(0.5 * (t5_frozen_predictions - t5_targets) ** 2)  # -> 0.0101
+t5_full_loss = np.mean(0.5 * (t5_full_predictions - t5_targets) ** 2)  # -> 0.0146
+print("rng seed:", 0)
+print("raw examples:", t5_raw.tolist())
+print("targets:", t5_targets.tolist())
+print("base scale:", t5_base_scale.tolist())
+print("head weights:", t5_head_weights.tolist())
+print("representation:", t5_representation.tolist())
+print("predictions:", np.round(t5_predictions, 3).tolist())
+print("residuals:", np.round(t5_residuals, 3).tolist())
+print("initial loss:", round(float(t5_initial_loss), 4))
+print("head gradient:", np.round(t5_grad_head, 3).tolist())
+print("base gradient:", np.round(t5_grad_base, 3).tolist())
+print("frozen base:", np.round(t5_frozen_base, 3).tolist())
+print("frozen head:", np.round(t5_frozen_head, 3).tolist())
+print("full-tune base:", np.round(t5_full_base, 3).tolist())
+print("frozen predictions:", np.round(t5_frozen_predictions, 3).tolist())
+print("full predictions:", np.round(t5_full_predictions, 3).tolist())
+print("frozen loss:", round(float(t5_frozen_loss), 4))
+print("full loss:", round(float(t5_full_loss), 4))
+assert np.allclose(t5_frozen_base, [1.0, 1.0])
+assert t5_frozen_loss < t5_initial_loss and t5_full_loss < t5_initial_loss
+
+t5_index = np.arange(len(t5_targets))  # -> [0, 1, 2, 3, 4, 5]
+t5_fig, t5_ax = plt.subplots(figsize=(6, 3.5))
+t5_ax.plot(t5_index, t5_targets, marker="o", color="black", label="targets")
+t5_ax.plot(t5_index, t5_predictions, marker="s", label="initial")
+t5_ax.plot(t5_index, t5_frozen_predictions, marker="^", label="frozen base")
+t5_ax.plot(t5_index, t5_full_predictions, marker="x", label="full tune")
+t5_ax.set_title("Freeze mask changes which parameters move")
+t5_ax.set_xlabel("example index")
+t5_ax.set_ylabel("prediction")
+t5_ax.legend()
+plt.show()
+```
+▶ What you'll see: the frozen-base update changes only the head, while full fine-tuning also nudges the base scales.
+
+
 ## 0. Step-by-Step Worked Example — Start Here (Beginner Friendly)
 
 > 🧑‍🎓 **New to this topic? Start here.** This is a gentle, fully runnable walkthrough that

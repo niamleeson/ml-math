@@ -2,6 +2,173 @@
 > **Source:** CS 221 · **Category:** Concept+Method · **Type:** ⚖️ Both · [↑ Full reference](../../ai-ml-cheatsheets.md)
 > 📓 The coded examples form a runnable notebook section; an .ipynb will be generated.
 
+## ✍️ Toy Examples
+
+Before the full worked notebook, here are tiny, hand-traceable examples for the Bayesian-network mechanics used in this lesson. Each toy prints the intermediate probabilities, checks one result, and draws a small diagnostic plot.
+
+### ✍️ Toy 1 · Joint factorization
+
+A Bayesian network joint probability multiplies one local factor for each variable in topological order.
+
+```python
+import numpy as np
+import matplotlib.pyplot as plt
+
+t1_rng = np.random.default_rng(0)  # -> seeded generator for reproducibility
+t1_variables = np.array(["C", "R", "W"])  # -> Cloudy, Rain, WetGrass
+t1_p_c = np.array([0.6, 0.4])  # -> P(C=0), P(C=1)
+t1_p_r_given_c = np.array([[0.9, 0.1], [0.2, 0.8]])  # -> rows C, cols R
+t1_p_w_given_r = np.array([[0.8, 0.2], [0.1, 0.9]])  # -> rows R, cols W
+t1_assignment = np.array([1, 1, 1])  # -> C=1, R=1, W=1
+t1_term_c = t1_p_c[t1_assignment[0]]  # -> 0.4
+t1_term_r = t1_p_r_given_c[t1_assignment[0], t1_assignment[1]]  # -> 0.8
+t1_term_w = t1_p_w_given_r[t1_assignment[1], t1_assignment[2]]  # -> 0.9
+t1_terms = np.array([t1_term_c, t1_term_r, t1_term_w])  # -> [0.4, 0.8, 0.9]
+t1_joint = np.prod(t1_terms)  # -> 0.288
+print("seed:", 0)  # -> 0
+print("variables:", t1_variables.tolist())  # -> ['C', 'R', 'W']
+print("P(C):", t1_p_c.tolist())  # -> [0.6, 0.4]
+print("P(R|C):", t1_p_r_given_c.tolist())  # -> [[0.9, 0.1], [0.2, 0.8]]
+print("P(W|R):", t1_p_w_given_r.tolist())  # -> [[0.8, 0.2], [0.1, 0.9]]
+print("assignment [C,R,W]:", t1_assignment.tolist())  # -> [1, 1, 1]
+print("local terms:", t1_terms.tolist())  # -> [0.4, 0.8, 0.9]
+print("joint probability:", round(float(t1_joint), 3))  # -> 0.288
+assert np.isclose(t1_joint, 0.288)
+
+plt.figure(figsize=(5, 3))
+plt.bar(["P(C=1)", "P(R=1|C=1)", "P(W=1|R=1)"], t1_terms, color="steelblue", edgecolor="black")
+plt.ylim(0, 1)
+plt.xticks(rotation=20, ha="right")
+plt.ylabel("local factor value")
+plt.title("Toy 1: multiply local factors for one joint row")
+plt.tight_layout()
+plt.show()
+```
+▶ What you'll see: the three local factors `0.4`, `0.8`, and `0.9` multiply to joint probability `0.288`.
+
+### ✍️ Toy 2 · Enumeration inference
+
+Enumeration inference sums hidden-variable terms for each query value, then normalizes the resulting scores.
+
+```python
+import numpy as np
+import matplotlib.pyplot as plt
+
+t2_rng = np.random.default_rng(0)  # -> seeded generator for reproducibility
+t2_p_c = np.array([0.6, 0.4])  # -> P(C=0), P(C=1)
+t2_p_r1_given_c = np.array([0.1, 0.8])  # -> P(R=1|C=0), P(R=1|C=1)
+t2_p_w1_given_r = np.array([0.2, 0.9])  # -> P(W=1|R=0), P(W=1|R=1)
+t2_r0_not_r = 1.0 - t2_p_r1_given_c  # -> [0.9, 0.2]
+t2_r0_prior_terms = t2_p_c * t2_r0_not_r  # -> [0.54, 0.08]
+t2_r0_terms = t2_r0_prior_terms * t2_p_w1_given_r[0]  # -> [0.108, 0.016]
+t2_r1_prior_terms = t2_p_c * t2_p_r1_given_c  # -> [0.06, 0.32]
+t2_r1_terms = t2_r1_prior_terms * t2_p_w1_given_r[1]  # -> [0.054, 0.288]
+t2_scores = np.array([np.sum(t2_r0_terms), np.sum(t2_r1_terms)])  # -> [0.124, 0.342]
+t2_normalizer = np.sum(t2_scores)  # -> 0.466
+t2_posterior = t2_scores / t2_normalizer  # -> [0.266094, 0.733906]
+print("seed:", 0)  # -> 0
+print("P(C):", t2_p_c.tolist())  # -> [0.6, 0.4]
+print("P(R=1|C):", t2_p_r1_given_c.tolist())  # -> [0.1, 0.8]
+print("P(W=1|R):", t2_p_w1_given_r.tolist())  # -> [0.2, 0.9]
+print("hidden C terms for R=0:", np.round(t2_r0_terms, 3).tolist())  # -> [0.108, 0.016]
+print("hidden C terms for R=1:", np.round(t2_r1_terms, 3).tolist())  # -> [0.054, 0.288]
+print("unnormalized scores:", np.round(t2_scores, 3).tolist())  # -> [0.124, 0.342]
+print("normalizer:", round(float(t2_normalizer), 3))  # -> 0.466
+print("posterior P(R=0|W=1), P(R=1|W=1):", np.round(t2_posterior, 6).tolist())  # -> [0.266094, 0.733906]
+assert np.allclose(t2_posterior, [0.26609442060085836, 0.7339055793991417])
+
+plt.figure(figsize=(5, 3))
+plt.bar(["R=0", "R=1"], t2_posterior, color=["lightgray", "seagreen"], edgecolor="black")
+plt.ylim(0, 1)
+plt.ylabel("posterior probability")
+plt.title("Toy 2: enumerate hidden C, then normalize")
+plt.show()
+```
+▶ What you'll see: the two Rain scores are normalized into posterior probabilities about `0.266` and `0.734`.
+
+### ✍️ Toy 3 · Conditional probability from counts
+
+A conditional probability divides the number of rows where both events happen by the number of rows where the condition happens.
+
+```python
+import numpy as np
+import matplotlib.pyplot as plt
+
+t3_rng = np.random.default_rng(0)  # -> seeded generator for reproducibility
+t3_data = np.array([[1, 1], [1, 1], [1, 0], [0, 1], [0, 0], [0, 1], [1, 1], [0, 0]])  # -> 8 rows [Rain,Wet]
+t3_rain = t3_data[:, 0]  # -> [1, 1, 1, 0, 0, 0, 1, 0]
+t3_wet = t3_data[:, 1]  # -> [1, 1, 0, 1, 0, 1, 1, 0]
+t3_wet_mask = t3_wet == 1  # -> [True, True, False, True, False, True, True, False]
+t3_rain_mask = t3_rain == 1  # -> [True, True, True, False, False, False, True, False]
+t3_both_mask = t3_wet_mask & t3_rain_mask  # -> [True, True, False, False, False, False, True, False]
+t3_numerator = np.sum(t3_both_mask)  # -> 3
+t3_denominator = np.sum(t3_wet_mask)  # -> 5
+t3_conditional = t3_numerator / t3_denominator  # -> 0.6
+t3_prior = np.mean(t3_rain_mask)  # -> 0.5
+print("seed:", 0)  # -> 0
+print("data [Rain,Wet]:", t3_data.tolist())  # -> 8 binary observations
+print("wet mask:", t3_wet_mask.tolist())  # -> [True, True, False, True, False, True, True, False]
+print("rain mask:", t3_rain_mask.tolist())  # -> [True, True, True, False, False, False, True, False]
+print("rain and wet mask:", t3_both_mask.tolist())  # -> [True, True, False, False, False, False, True, False]
+print("count Rain=1 and Wet=1:", int(t3_numerator))  # -> 3
+print("count Wet=1:", int(t3_denominator))  # -> 5
+print("P(Rain=1 | Wet=1):", float(t3_conditional))  # -> 0.6
+print("P(Rain=1):", float(t3_prior))  # -> 0.5
+assert np.isclose(t3_conditional, 0.6) and np.isclose(t3_prior, 0.5)
+
+plt.figure(figsize=(5, 3))
+plt.bar(["Rain & Wet", "Wet"], [t3_numerator, t3_denominator], color=["seagreen", "steelblue"], edgecolor="black")
+plt.ylabel("count")
+plt.title("Toy 3: conditional probability is 3 / 5")
+plt.show()
+```
+▶ What you'll see: `3` of the `5` wet rows are rainy, so the conditional probability is `0.6`.
+
+### ✍️ Toy 4 · Marginalization by summing joint rows
+
+Marginalization removes variables from a joint table by summing over their axes.
+
+```python
+import numpy as np
+import matplotlib.pyplot as plt
+
+t4_rng = np.random.default_rng(0)  # -> seeded generator for reproducibility
+t4_p_c = np.array([0.6, 0.4])  # -> P(C)
+t4_p_r_given_c = np.array([[0.9, 0.1], [0.2, 0.8]])  # -> P(R|C)
+t4_p_w_given_r = np.array([[0.8, 0.2], [0.1, 0.9]])  # -> P(W|R)
+t4_joint = np.zeros((2, 2, 2))  # -> joint table over C,R,W
+for t4_c in [0, 1]:
+    for t4_r in [0, 1]:
+        for t4_w in [0, 1]:
+            t4_term_c = t4_p_c[t4_c]
+            t4_term_r = t4_p_r_given_c[t4_c, t4_r]
+            t4_term_w = t4_p_w_given_r[t4_r, t4_w]
+            t4_partial = t4_term_c * t4_term_r
+            t4_joint[t4_c, t4_r, t4_w] = t4_partial * t4_term_w
+t4_p_w = np.sum(t4_joint, axis=(0, 1))  # -> [0.534, 0.466]
+t4_p_r = np.sum(t4_joint, axis=(0, 2))  # -> [0.62, 0.38]
+t4_p_cw = np.sum(t4_joint, axis=1)  # -> [[0.438, 0.162], [0.096, 0.304]]
+t4_total = np.sum(t4_joint)  # -> 1.0
+print("seed:", 0)  # -> 0
+print("P(C):", t4_p_c.tolist())  # -> [0.6, 0.4]
+print("P(R|C):", t4_p_r_given_c.tolist())  # -> [[0.9, 0.1], [0.2, 0.8]]
+print("P(W|R):", t4_p_w_given_r.tolist())  # -> [[0.8, 0.2], [0.1, 0.9]]
+print("joint table:", np.round(t4_joint, 3).tolist())  # -> [[[0.432, 0.108], [0.006, 0.054]], [[0.064, 0.016], [0.032, 0.288]]]
+print("marginal P(W):", np.round(t4_p_w, 3).tolist())  # -> [0.534, 0.466]
+print("marginal P(R):", np.round(t4_p_r, 3).tolist())  # -> [0.62, 0.38]
+print("marginal P(C,W):", np.round(t4_p_cw, 3).tolist())  # -> [[0.438, 0.162], [0.096, 0.304]]
+print("joint total:", round(float(t4_total), 6))  # -> 1.0
+assert np.isclose(t4_total, 1.0) and np.allclose(t4_p_w, [0.534, 0.466])
+
+plt.figure(figsize=(5, 3))
+plt.bar(["W=0", "W=1"], t4_p_w, color="orange", edgecolor="black")
+plt.ylim(0, 1)
+plt.ylabel("marginal probability")
+plt.title("Toy 4: sum C and R out of the joint table")
+plt.show()
+```
+▶ What you'll see: summing the eight joint rows over `C` and `R` leaves the WetGrass marginal `[0.534, 0.466]`.
+
 ## 0. Step-by-Step Worked Example — Start Here (Beginner Friendly)
 
 > 🧑‍🎓 **New to this topic? Start here.** This is a gentle, fully runnable walkthrough that

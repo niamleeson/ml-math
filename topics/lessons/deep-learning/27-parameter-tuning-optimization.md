@@ -2,6 +2,186 @@
 > **Source:** CS 230 · **Category:** Method/Tips · **Type:** ⚖️ Both · [↑ Full reference](../../ai-ml-cheatsheets.md)
 > 📓 The coded examples form a runnable notebook section; an `.ipynb` will be generated.
 
+## ✍️ Toy Examples
+
+These tiny optimization toys isolate the update and search mechanics before the full worked example. Each block prints the arithmetic, asserts the key result, and draws one visual.
+
+### ✍️ Toy 1 · Learning-rate schedule
+
+A schedule makes early steps large and later steps smaller by changing the learning rate over time.
+
+```python
+import numpy as np
+import matplotlib.pyplot as plt
+
+t1_rng = np.random.default_rng(0)  # -> reproducible generator seeded with 0
+t1_steps = np.arange(8)  # -> [0, 1, 2, 3, 4, 5, 6, 7]
+t1_initial_lr = 0.4  # -> 0.4
+t1_decay = 0.5  # -> 0.5
+t1_drop_every = 2  # -> 2
+t1_drop_counts = t1_steps // t1_drop_every  # -> [0, 0, 1, 1, 2, 2, 3, 3]
+t1_lrs = t1_initial_lr * (t1_decay ** t1_drop_counts)  # -> [0.4, 0.4, 0.2, 0.2, 0.1, 0.1, 0.05, 0.05]
+t1_gradient = np.full_like(t1_lrs, 2.0, dtype=float)  # -> [2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0]
+t1_update_sizes = t1_lrs * t1_gradient  # -> [0.8, 0.8, 0.4, 0.4, 0.2, 0.2, 0.1, 0.1]
+print("rng seed:", 0)
+print("steps:", t1_steps.tolist())
+print("drop counts:", t1_drop_counts.tolist())
+print("learning rates:", t1_lrs.tolist())
+print("fixed gradient:", t1_gradient.tolist())
+print("update sizes lr * grad:", t1_update_sizes.tolist())
+assert np.allclose(t1_lrs, [0.4, 0.4, 0.2, 0.2, 0.1, 0.1, 0.05, 0.05])
+assert t1_update_sizes[-1] < t1_update_sizes[0]
+
+t1_fig, t1_ax = plt.subplots(figsize=(6, 3.2))
+t1_ax.step(t1_steps, t1_lrs, where="post", marker="o", label="learning rate")
+t1_ax.step(t1_steps, t1_update_sizes, where="post", marker="s", label="update size")
+t1_ax.set_xlabel("step")
+t1_ax.set_title("Step-decay schedule shrinks updates")
+t1_ax.legend()
+plt.show()
+```
+▶ What you'll see: the learning rate stays flat for two steps, then halves, making the same gradient produce smaller updates later.
+
+### ✍️ Toy 2 · Momentum
+
+Momentum smooths gradients into a velocity so repeated directions build up and sign flips are damped.
+
+```python
+import numpy as np
+import matplotlib.pyplot as plt
+
+t2_rng = np.random.default_rng(0)  # -> reproducible generator seeded with 0
+t2_gradients = np.array([4.0, 3.0, 2.0, -1.0, -2.0, -1.0])  # -> six scalar gradients
+t2_beta = 0.8  # -> momentum memory
+t2_lr = 0.1  # -> learning rate
+t2_velocity = 0.0  # -> 0.0
+t2_velocities = []  # -> []
+for t2_grad in t2_gradients:
+    t2_velocity = t2_beta * t2_velocity + (1.0 - t2_beta) * t2_grad
+    t2_velocities.append(t2_velocity)
+t2_velocities = np.array(t2_velocities)  # -> [0.8, 1.24, 1.392, 0.9136, 0.33088, 0.064704]
+t2_updates = -t2_lr * t2_velocities  # -> [-0.08, -0.124, -0.1392, -0.09136, -0.033088, -0.0064704]
+t2_start = 1.0  # -> 1.0
+t2_position_path = t2_start + np.cumsum(t2_updates)  # -> [0.92, 0.796, 0.6568, 0.56544, 0.532352, 0.5258816]
+print("rng seed:", 0)
+print("gradients:", t2_gradients.tolist())
+print("beta:", t2_beta)
+print("velocities:", np.round(t2_velocities, 6).tolist())
+print("updates:", np.round(t2_updates, 6).tolist())
+print("position path:", np.round(t2_position_path, 6).tolist())
+assert np.allclose(np.round(t2_velocities, 6), [0.8, 1.24, 1.392, 0.9136, 0.33088, 0.064704])
+assert abs(t2_velocities[-1]) < abs(t2_gradients[-1])
+
+t2_fig, t2_ax = plt.subplots(figsize=(6, 3.2))
+t2_ax.plot(t2_gradients, marker="o", label="raw gradient")
+t2_ax.plot(t2_velocities, marker="s", label="momentum velocity")
+t2_ax.axhline(0.0, color="black", linewidth=0.8)
+t2_ax.set_xlabel("step")
+t2_ax.set_title("Momentum damps a late sign flip")
+t2_ax.legend()
+plt.show()
+```
+▶ What you'll see: the velocity changes direction more slowly than the raw gradients, so the update path is smoother.
+
+### ✍️ Toy 3 · Adam update
+
+Adam combines a first moment, a second moment, bias correction, and a coordinatewise scaled step.
+
+```python
+import numpy as np
+import matplotlib.pyplot as plt
+
+t3_rng = np.random.default_rng(0)  # -> reproducible generator seeded with 0
+t3_w = np.array([1.0, -2.0])  # -> starting parameters
+t3_grad = np.array([0.5, -1.5])  # -> current gradient
+t3_lr = 0.1  # -> Adam learning rate
+t3_beta1 = 0.9  # -> first-moment decay
+t3_beta2 = 0.99  # -> second-moment decay
+t3_eps = 1e-8  # -> numerical guard
+t3_m = (1.0 - t3_beta1) * t3_grad  # -> [0.05, -0.15]
+t3_v = (1.0 - t3_beta2) * (t3_grad ** 2)  # -> [0.0025, 0.0225]
+t3_m_hat = t3_m / (1.0 - t3_beta1)  # -> [0.5, -1.5]
+t3_v_hat = t3_v / (1.0 - t3_beta2)  # -> [0.25, 2.25]
+t3_denom = np.sqrt(t3_v_hat) + t3_eps  # -> [0.50000001, 1.50000001]
+t3_step = t3_lr * t3_m_hat / t3_denom  # -> [0.099999998, -0.0999999993]
+t3_new_w = t3_w - t3_step  # -> [0.900000002, -1.9000000007]
+print("rng seed:", 0)
+print("w:", t3_w.tolist())
+print("gradient:", t3_grad.tolist())
+print("first moment m:", np.round(t3_m, 4).tolist())
+print("second moment v:", np.round(t3_v, 4).tolist())
+print("bias-corrected m_hat:", t3_m_hat.tolist())
+print("bias-corrected v_hat:", t3_v_hat.tolist())
+print("Adam step:", np.round(t3_step, 6).tolist())
+print("new w:", np.round(t3_new_w, 6).tolist())
+assert np.allclose(np.round(t3_step, 6), [0.1, -0.1])
+assert np.allclose(np.round(t3_new_w, 6), [0.9, -1.9])
+
+t3_fig, t3_ax = plt.subplots(figsize=(6, 3.2))
+t3_positions = np.arange(t3_w.size)
+t3_ax.bar(t3_positions - 0.18, t3_w, width=0.36, label="before")
+t3_ax.bar(t3_positions + 0.18, t3_new_w, width=0.36, label="after Adam")
+t3_ax.axhline(0.0, color="black", linewidth=0.8)
+t3_ax.set_xticks(t3_positions, ["w0", "w1"])
+t3_ax.set_title("One Adam update")
+t3_ax.legend()
+plt.show()
+```
+▶ What you'll see: after bias correction, the first Adam step moves each coordinate about 0.1 in the signed gradient direction.
+
+### ✍️ Toy 4 · Grid vs random search
+
+Grid search tests fixed Cartesian combinations, while random search spends the same budget exploring continuous values.
+
+```python
+import numpy as np
+import matplotlib.pyplot as plt
+
+t4_rng = np.random.default_rng(0)  # -> reproducible generator seeded with 0
+t4_target_log_lr = float(np.log10(0.03))  # -> -1.5228787452803376
+t4_target_dropout = 0.2  # -> 0.2
+t4_grid_lr = np.array([0.001, 0.01, 0.1])  # -> grid learning rates
+t4_grid_dropout = np.array([0.0, 0.2, 0.4])  # -> grid dropout values
+t4_grid_pairs = np.array([[t4_lr, t4_drop] for t4_lr in t4_grid_lr for t4_drop in t4_grid_dropout])  # -> 9 grid trials
+t4_grid_log_error = np.log10(t4_grid_pairs[:, 0]) - t4_target_log_lr  # -> [-1.477, -1.477, -1.477, -0.477, -0.477, -0.477, 0.523, 0.523, 0.523]
+t4_grid_drop_error = t4_grid_pairs[:, 1] - t4_target_dropout  # -> [-0.2, 0.0, 0.2, -0.2, 0.0, 0.2, -0.2, 0.0, 0.2]
+t4_grid_scores = 1.0 - t4_grid_log_error ** 2 - 4.0 * t4_grid_drop_error ** 2  # -> [-1.342, -1.182, -1.342, 0.612, 0.772, 0.612, 0.567, 0.727, 0.567]
+t4_random_log_lr = t4_rng.uniform(-3.0, -1.0, 9)  # -> [-1.726, -2.46, -2.918, -2.967, -1.373, -1.174, -1.787, -1.541, -1.913]
+t4_random_lr = 10 ** t4_random_log_lr  # -> [0.0188, 0.0035, 0.0012, 0.0011, 0.0423, 0.0669, 0.0163, 0.0288, 0.0122]
+t4_random_dropout = t4_rng.uniform(0.0, 0.4, 9)  # -> [0.374, 0.326, 0.001, 0.343, 0.013, 0.292, 0.07, 0.345, 0.217]
+t4_random_pairs = np.column_stack([t4_random_lr, t4_random_dropout])  # -> 9 random trials
+t4_random_log_error = np.log10(t4_random_pairs[:, 0]) - t4_target_log_lr  # -> [-0.203, -0.937, -1.395, -1.444, 0.15, 0.349, -0.264, -0.018, -0.391]
+t4_random_drop_error = t4_random_pairs[:, 1] - t4_target_dropout  # -> [0.174, 0.126, -0.199, 0.143, -0.187, 0.092, -0.13, 0.145, 0.017]
+t4_random_scores = 1.0 - t4_random_log_error ** 2 - 4.0 * t4_random_drop_error ** 2  # -> [0.838, 0.057, -1.105, -1.167, 0.838, 0.845, 0.863, 0.915, 0.847]
+t4_best_grid_idx = int(np.argmax(t4_grid_scores))  # -> 4
+t4_best_random_idx = int(np.argmax(t4_random_scores))  # -> 7
+t4_best_grid_score = float(t4_grid_scores[t4_best_grid_idx])  # -> 0.7723553082947351
+t4_best_random_score = float(t4_random_scores[t4_best_random_idx])  # -> 0.9152560558338341
+print("rng seed:", 0)
+print("grid pairs:", np.round(t4_grid_pairs, 4).tolist())
+print("grid scores:", np.round(t4_grid_scores, 3).tolist())
+print("best grid pair/score:", t4_grid_pairs[t4_best_grid_idx].tolist(), round(t4_best_grid_score, 3))
+print("random pairs:", np.round(t4_random_pairs, 4).tolist())
+print("random scores:", np.round(t4_random_scores, 3).tolist())
+print("best random pair/score:", np.round(t4_random_pairs[t4_best_random_idx], 4).tolist(), round(t4_best_random_score, 3))
+assert t4_best_grid_idx == 4
+assert t4_best_random_score > t4_best_grid_score
+
+t4_fig, t4_axes = plt.subplots(1, 2, figsize=(9, 3.5))
+t4_axes[0].scatter(np.log10(t4_grid_pairs[:, 0]), t4_grid_pairs[:, 1], c=t4_grid_scores, cmap="viridis", s=90)
+t4_axes[0].scatter(np.log10(t4_grid_pairs[t4_best_grid_idx, 0]), t4_grid_pairs[t4_best_grid_idx, 1], marker="*", s=180, color="red")
+t4_axes[0].set_title("grid trials")
+t4_axes[1].scatter(np.log10(t4_random_pairs[:, 0]), t4_random_pairs[:, 1], c=t4_random_scores, cmap="viridis", s=90)
+t4_axes[1].scatter(np.log10(t4_random_pairs[t4_best_random_idx, 0]), t4_random_pairs[t4_best_random_idx, 1], marker="*", s=180, color="red")
+t4_axes[1].set_title("random trials")
+for t4_ax in t4_axes:
+    t4_ax.set_xlabel("log10(lr)")
+    t4_ax.set_ylabel("dropout")
+plt.tight_layout()
+plt.show()
+```
+▶ What you'll see: the grid checks regular lattice points, while random search samples uneven continuous locations and lands closer to the hidden optimum in this run.
+
 ## 0. Step-by-Step Worked Example — Start Here (Beginner Friendly)
 
 > 🧑‍🎓 **New to this topic? Start here.** This is a gentle, fully runnable walkthrough that

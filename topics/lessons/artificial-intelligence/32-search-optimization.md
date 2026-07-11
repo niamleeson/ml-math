@@ -2,6 +2,328 @@
 > **Source:** CS 221 · **Category:** Method/Algorithm · **Type:** 💻 Colab · [↑ Full reference](../../ai-ml-cheatsheets.md)
 > 📓 Runnable notebook section; an `.ipynb` will be generated. [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](#)
 
+## ✍️ Toy Examples
+
+These tiny search toys isolate the core computations before the full worked example: frontier discipline for BFS/DFS, cumulative costs for UCS, g+h priorities for A*, admissibility checks, and local-search acceptance probabilities.
+
+### ✍️ Toy 1 · BFS queue versus DFS stack
+
+BFS pops the oldest frontier path, so it finds the shallow goal. DFS pops the newest path, so it may dive down a longer branch first.
+
+```python
+import numpy as np
+import matplotlib.pyplot as plt
+
+t1_rng = np.random.default_rng(0)  # -> reproducible generator seeded with 0
+t1_graph = {"S": ["A", "B"], "A": ["C"], "B": ["G"], "C": ["D"], "D": ["G"], "G": []}  # -> six-state graph
+t1_positions = {"S": (0.0, 0.0), "A": (1.0, 0.8), "B": (1.0, -0.8), "C": (2.0, 0.8), "D": (3.0, 0.8), "G": (4.0, 0.0)}  # -> fixed node locations
+t1_bfs_frontier = [("S", ["S"])]  # -> FIFO frontier starts with the start path
+t1_bfs_seen = {"S"}  # -> start already discovered
+t1_bfs_order = []  # -> fills as ['S', 'A', 'B', 'C', 'G']
+t1_bfs_path = None  # -> fills as ['S', 'B', 'G']
+while t1_bfs_frontier:
+    t1_state, t1_path = t1_bfs_frontier.pop(0)
+    t1_bfs_order.append(t1_state)
+    print("BFS pop:", t1_state, "path:", t1_path, "frontier before expand:", t1_bfs_frontier)
+    if t1_state == "G":
+        t1_bfs_path = t1_path
+        break
+    for t1_child in t1_graph[t1_state]:
+        if t1_child not in t1_bfs_seen:
+            t1_bfs_seen.add(t1_child)
+            t1_bfs_frontier.append((t1_child, t1_path + [t1_child]))
+    print("BFS frontier after expand:", t1_bfs_frontier)
+t1_dfs_stack = [("S", ["S"])]  # -> LIFO frontier starts with the start path
+t1_dfs_seen = {"S"}  # -> start already discovered
+t1_dfs_order = []  # -> fills as ['S', 'A', 'C', 'D', 'G']
+t1_dfs_path = None  # -> fills as ['S', 'A', 'C', 'D', 'G']
+while t1_dfs_stack:
+    t1_state, t1_path = t1_dfs_stack.pop()
+    t1_dfs_order.append(t1_state)
+    print("DFS pop:", t1_state, "path:", t1_path, "stack before expand:", t1_dfs_stack)
+    if t1_state == "G":
+        t1_dfs_path = t1_path
+        break
+    for t1_child in reversed(t1_graph[t1_state]):
+        if t1_child not in t1_dfs_seen:
+            t1_dfs_seen.add(t1_child)
+            t1_dfs_stack.append((t1_child, t1_path + [t1_child]))
+    print("DFS stack after expand:", t1_dfs_stack)
+print("rng seed:", 0)
+print("graph:", t1_graph)
+print("BFS order:", t1_bfs_order)
+print("BFS path:", t1_bfs_path)
+print("DFS order:", t1_dfs_order)
+print("DFS path:", t1_dfs_path)
+assert t1_bfs_path == ["S", "B", "G"]
+assert t1_dfs_path == ["S", "A", "C", "D", "G"]
+
+t1_fig, t1_ax = plt.subplots(figsize=(7, 3.5))
+for t1_src, t1_children in t1_graph.items():
+    for t1_dst in t1_children:
+        t1_x0, t1_y0 = t1_positions[t1_src]
+        t1_x1, t1_y1 = t1_positions[t1_dst]
+        t1_ax.annotate("", xy=(t1_x1, t1_y1), xytext=(t1_x0, t1_y0), arrowprops={"arrowstyle": "->", "color": "gray"})
+for t1_node, t1_pos in t1_positions.items():
+    t1_ax.scatter(t1_pos[0], t1_pos[1], s=700, color="white", edgecolor="black")
+    t1_ax.text(t1_pos[0], t1_pos[1], t1_node, ha="center", va="center")
+t1_ax.plot([t1_positions[n][0] for n in t1_bfs_path], [t1_positions[n][1] for n in t1_bfs_path], color="seagreen", linewidth=3, label="BFS shallow path")
+t1_ax.plot([t1_positions[n][0] for n in t1_dfs_path], [t1_positions[n][1] for n in t1_dfs_path], color="purple", linewidth=2, linestyle="--", label="DFS deep path")
+t1_ax.axis("off")
+t1_ax.set_title("Queue versus stack changes which path is found first")
+t1_ax.legend()
+plt.show()
+```
+▶ What you'll see: BFS reaches G through B in two edges, while DFS follows S-A-C-D-G before trying the shallow branch.
+
+### ✍️ Toy 2 · Uniform cost search cumulative path costs
+
+UCS pops the frontier item with the smallest cumulative past cost g, not the fewest edges.
+
+```python
+import numpy as np
+import matplotlib.pyplot as plt
+
+t2_rng = np.random.default_rng(0)  # -> reproducible generator seeded with 0
+t2_graph = {"S": [("A", 1.0), ("B", 5.0)], "A": [("C", 2.0), ("G", 8.0)], "B": [("G", 1.0)], "C": [("G", 2.0)], "G": []}  # -> weighted graph
+t2_positions = {"S": (0.0, 0.0), "A": (1.2, 0.8), "B": (1.2, -0.8), "C": (2.4, 0.8), "G": (3.6, 0.0)}  # -> fixed layout
+t2_frontier = [(0.0, "S", ["S"])]  # -> [(g, state, path)]
+t2_best_cost = {"S": 0.0}  # -> best known g-costs
+t2_explored = set()  # -> finalized states
+t2_pop_order = []  # -> [('S',0.0), ('A',1.0), ('C',3.0), ('B',5.0), ('G',5.0)]
+t2_ucs_path = None  # -> ['S', 'A', 'C', 'G']
+while t2_frontier:
+    t2_index = min(range(len(t2_frontier)), key=lambda j: t2_frontier[j][0])
+    t2_cost, t2_state, t2_path = t2_frontier.pop(t2_index)
+    print("pop candidate:", t2_state, "g:", t2_cost, "path:", t2_path)
+    if t2_state in t2_explored:
+        print("skip stale state:", t2_state)
+        continue
+    t2_explored.add(t2_state)
+    t2_pop_order.append((t2_state, t2_cost))
+    if t2_state == "G":
+        t2_ucs_path = t2_path
+        break
+    for t2_successor, t2_edge_cost in t2_graph[t2_state]:
+        t2_new_cost = t2_cost + t2_edge_cost
+        print("  relax", t2_state, "->", t2_successor, "new g:", t2_new_cost)
+        if t2_new_cost < t2_best_cost.get(t2_successor, float("inf")):
+            t2_best_cost[t2_successor] = t2_new_cost
+            t2_frontier.append((t2_new_cost, t2_successor, t2_path + [t2_successor]))
+    print("frontier:", t2_frontier)
+print("rng seed:", 0)
+print("best costs:", t2_best_cost)
+print("UCS pop order:", t2_pop_order)
+print("UCS path:", t2_ucs_path)
+print("UCS goal cost:", t2_best_cost["G"])
+assert t2_ucs_path == ["S", "A", "C", "G"]
+assert np.isclose(t2_best_cost["G"], 5.0)
+
+t2_fig, t2_ax = plt.subplots(figsize=(7, 3.5))
+for t2_src, t2_edges in t2_graph.items():
+    for t2_dst, t2_edge_cost in t2_edges:
+        t2_x0, t2_y0 = t2_positions[t2_src]
+        t2_x1, t2_y1 = t2_positions[t2_dst]
+        t2_ax.annotate("", xy=(t2_x1, t2_y1), xytext=(t2_x0, t2_y0), arrowprops={"arrowstyle": "->", "color": "gray"})
+        t2_ax.text((t2_x0 + t2_x1) / 2.0, (t2_y0 + t2_y1) / 2.0, str(t2_edge_cost), color="darkred")
+for t2_node, t2_pos in t2_positions.items():
+    t2_ax.scatter(t2_pos[0], t2_pos[1], s=700, color="white", edgecolor="black")
+    t2_ax.text(t2_pos[0], t2_pos[1], t2_node, ha="center", va="center")
+t2_ax.plot([t2_positions[n][0] for n in t2_ucs_path], [t2_positions[n][1] for n in t2_ucs_path], color="seagreen", linewidth=3, label="cost 5 path")
+t2_ax.axis("off")
+t2_ax.set_title("UCS chooses the cheapest cumulative cost")
+t2_ax.legend()
+plt.show()
+```
+▶ What you'll see: UCS pops states in nondecreasing g-cost and chooses S-A-C-G with total cost 5 over the shorter-looking S-B-G cost 6.
+
+### ✍️ Toy 3 · A* priority f = g + h on a tiny grid
+
+A* adds a heuristic estimate h to the past cost g. With Manhattan distance on a four-neighbor grid, h is consistent and guides the search toward the goal.
+
+```python
+import numpy as np
+import matplotlib.pyplot as plt
+
+t3_rng = np.random.default_rng(0)  # -> reproducible generator seeded with 0
+t3_rows = 3  # -> grid has three rows
+t3_cols = 4  # -> grid has four columns
+t3_start = (0, 0)  # -> top-left start
+t3_goal = (2, 3)  # -> bottom-right-ish goal
+t3_walls = {(1, 1)}  # -> one blocked cell
+t3_moves = [(0, 1), (1, 0), (0, -1), (-1, 0)]  # -> right, down, left, up
+def t3_h(state):
+    return abs(t3_goal[0] - state[0]) + abs(t3_goal[1] - state[1])
+def t3_neighbors(state):
+    t3_result = []
+    for t3_dr, t3_dc in t3_moves:
+        t3_next = (state[0] + t3_dr, state[1] + t3_dc)
+        t3_inside = 0 <= t3_next[0] < t3_rows and 0 <= t3_next[1] < t3_cols
+        if t3_inside and t3_next not in t3_walls:
+            t3_result.append(t3_next)
+    return t3_result
+t3_consistent = True  # -> stays True after checking every edge
+t3_states = [(r, c) for r in range(t3_rows) for c in range(t3_cols) if (r, c) not in t3_walls]  # -> eleven open grid cells
+for t3_state in t3_states:
+    for t3_successor in t3_neighbors(t3_state):
+        t3_consistent = t3_consistent and t3_h(t3_state) <= 1.0 + t3_h(t3_successor)
+t3_frontier = [(t3_h(t3_start), 0.0, t3_start, [t3_start])]  # -> [(f, g, state, path)]
+t3_best_g = {t3_start: 0.0}  # -> best known past costs
+t3_explored = set()  # -> popped states
+t3_pop_order = []  # -> records (state, g, h, f)
+t3_astar_path = None  # -> final path
+while t3_frontier:
+    t3_index = min(range(len(t3_frontier)), key=lambda j: (t3_frontier[j][0], t3_frontier[j][1]))
+    t3_f, t3_g, t3_state, t3_path = t3_frontier.pop(t3_index)
+    print("A* pop:", t3_state, "g:", t3_g, "h:", t3_h(t3_state), "f:", t3_f)
+    if t3_state in t3_explored:
+        print("skip stale state:", t3_state)
+        continue
+    t3_explored.add(t3_state)
+    t3_pop_order.append((t3_state, t3_g, t3_h(t3_state), t3_f))
+    if t3_state == t3_goal:
+        t3_astar_path = t3_path
+        break
+    for t3_successor in t3_neighbors(t3_state):
+        t3_new_g = t3_g + 1.0
+        t3_new_f = t3_new_g + t3_h(t3_successor)
+        print("  push", t3_successor, "g:", t3_new_g, "h:", t3_h(t3_successor), "f:", t3_new_f)
+        if t3_new_g < t3_best_g.get(t3_successor, float("inf")):
+            t3_best_g[t3_successor] = t3_new_g
+            t3_frontier.append((t3_new_f, t3_new_g, t3_successor, t3_path + [t3_successor]))
+print("rng seed:", 0)
+print("open states:", t3_states)
+print("heuristic consistent?:", t3_consistent)
+print("A* pop order:", t3_pop_order)
+print("A* path:", t3_astar_path)
+print("A* path cost:", t3_best_g[t3_goal])
+assert t3_consistent
+assert t3_astar_path == [(0, 0), (0, 1), (0, 2), (0, 3), (1, 3), (2, 3)]
+assert np.isclose(t3_best_g[t3_goal], 5.0)
+
+t3_grid = np.zeros((t3_rows, t3_cols))  # -> visualization grid
+t3_grid[1, 1] = 1.0  # -> mark the wall
+t3_fig, t3_ax = plt.subplots(figsize=(5.5, 3.5))
+t3_ax.imshow(t3_grid, cmap="Greys", vmin=0.0, vmax=1.0)
+for t3_state in t3_states:
+    t3_ax.text(t3_state[1], t3_state[0], f"h={t3_h(t3_state)}", ha="center", va="center", color="purple")
+t3_path_rows = [state[0] for state in t3_astar_path]
+t3_path_cols = [state[1] for state in t3_astar_path]
+t3_ax.plot(t3_path_cols, t3_path_rows, color="seagreen", linewidth=3, marker="o")
+t3_ax.set_xticks(range(t3_cols))
+t3_ax.set_yticks(range(t3_rows))
+t3_ax.set_title("A* labels cells by h and follows low f = g + h")
+plt.show()
+```
+▶ What you'll see: each pop prints g, h, and f, and the final path has cost 5 while the heuristic consistency check is true.
+
+### ✍️ Toy 4 · Heuristic admissibility and consistency check
+
+A heuristic is admissible when it never overestimates the true remaining cost. Consistency is the edge-by-edge triangle inequality h(s) <= cost + h(s').
+
+```python
+import numpy as np
+import matplotlib.pyplot as plt
+
+t4_rng = np.random.default_rng(0)  # -> reproducible generator seeded with 0
+t4_states = np.array([(r, c) for r in range(3) for c in range(3)])  # -> nine grid states
+t4_goal = np.array([2, 2])  # -> goal coordinate
+t4_true_costs = np.abs(t4_states - t4_goal).sum(axis=1)  # -> [4, 3, 2, 3, 2, 1, 2, 1, 0]
+t4_good_h = np.maximum(np.abs(t4_states[:, 0] - t4_goal[0]), np.abs(t4_states[:, 1] - t4_goal[1]))  # -> [2, 2, 2, 2, 1, 1, 2, 1, 0]
+t4_bad_h = t4_good_h + 1  # -> [3, 3, 3, 3, 2, 2, 3, 2, 1]
+t4_good_admissible_mask = t4_good_h <= t4_true_costs  # -> all True
+t4_bad_admissible_mask = t4_bad_h <= t4_true_costs  # -> some False
+t4_good_consistent = True  # -> stays True for four-neighbor unit-cost edges
+for t4_state, t4_h_value in zip(t4_states, t4_good_h):
+    for t4_move in np.array([[0, 1], [1, 0], [0, -1], [-1, 0]]):
+        t4_next = t4_state + t4_move
+        t4_inside = np.all((0 <= t4_next) & (t4_next < 3))
+        if t4_inside:
+            t4_next_index = int(t4_next[0] * 3 + t4_next[1])
+            t4_good_consistent = t4_good_consistent and t4_h_value <= 1 + t4_good_h[t4_next_index]
+print("rng seed:", 0)
+print("states:", t4_states.tolist())
+print("goal:", t4_goal.tolist())
+print("true remaining costs:", t4_true_costs.tolist())
+print("good heuristic:", t4_good_h.tolist())
+print("bad heuristic:", t4_bad_h.tolist())
+print("good admissible mask:", t4_good_admissible_mask.tolist())
+print("bad admissible mask:", t4_bad_admissible_mask.tolist())
+print("good heuristic consistent?:", t4_good_consistent)
+assert np.all(t4_good_admissible_mask)
+assert not np.all(t4_bad_admissible_mask)
+assert t4_good_consistent
+
+t4_fig, t4_axes = plt.subplots(1, 2, figsize=(7, 3.2))
+t4_axes[0].imshow(t4_true_costs.reshape(3, 3), cmap="Blues")
+t4_axes[0].set_title("true cost-to-go")
+t4_axes[1].imshow(t4_good_h.reshape(3, 3), cmap="Greens")
+t4_axes[1].set_title("admissible h")
+for t4_ax, t4_values in zip(t4_axes, [t4_true_costs, t4_good_h]):
+    for t4_state, t4_value in zip(t4_states, t4_values):
+        t4_ax.text(t4_state[1], t4_state[0], str(int(t4_value)), ha="center", va="center")
+    t4_ax.set_xticks(range(3))
+    t4_ax.set_yticks(range(3))
+plt.tight_layout()
+plt.show()
+```
+▶ What you'll see: the good heuristic table is always below the true cost table and passes the consistency check, while the bad heuristic overestimates near the goal.
+
+### ✍️ Toy 5 · Hill-climbing choice and simulated-annealing accept probability
+
+Hill climbing only takes improving moves. Simulated annealing can accept a worse move with probability exp(delta / temperature), where delta is the change in objective.
+
+```python
+import numpy as np
+import matplotlib.pyplot as plt
+
+t5_rng = np.random.default_rng(0)  # -> reproducible generator seeded with 0
+t5_states = np.arange(8)  # -> eight discrete states
+t5_objective = np.array([1.0, 3.0, 4.0, 6.0, 5.0, 7.0, 4.0, 2.0])  # -> objective value for each state
+t5_current = 3  # -> start at a local peak with value 6
+t5_neighbors = np.array([t5_current - 1, t5_current + 1])  # -> [2, 4]
+t5_neighbor_values = t5_objective[t5_neighbors]  # -> [4.0, 5.0]
+t5_best_neighbor = t5_neighbors[int(np.argmax(t5_neighbor_values))]  # -> 4
+t5_hill_delta = t5_objective[t5_best_neighbor] - t5_objective[t5_current]  # -> -1.0
+t5_hill_accept = t5_hill_delta > 0.0  # -> False
+t5_temperature = 2.0  # -> annealing temperature
+t5_proposed = t5_best_neighbor  # -> 4
+t5_anneal_delta = t5_objective[t5_proposed] - t5_objective[t5_current]  # -> -1.0
+t5_accept_probability = np.exp(t5_anneal_delta / t5_temperature) if t5_anneal_delta < 0.0 else 1.0  # -> 0.6065
+t5_uniform_draw = t5_rng.random()  # -> 0.6370
+t5_anneal_accept = t5_uniform_draw < t5_accept_probability  # -> False
+print("rng seed:", 0)
+print("states:", t5_states.tolist())
+print("objective:", t5_objective.tolist())
+print("current state:", int(t5_current))
+print("neighbors:", t5_neighbors.tolist())
+print("neighbor values:", t5_neighbor_values.tolist())
+print("best neighbor:", int(t5_best_neighbor))
+print("hill-climbing delta:", float(t5_hill_delta))
+print("hill climbing accepts?:", bool(t5_hill_accept))
+print("temperature:", t5_temperature)
+print("annealing proposed state:", int(t5_proposed))
+print("annealing delta:", float(t5_anneal_delta))
+print("accept probability:", round(float(t5_accept_probability), 4))
+print("uniform draw:", round(float(t5_uniform_draw), 4))
+print("simulated annealing accepts?:", bool(t5_anneal_accept))
+assert not t5_hill_accept
+assert np.isclose(t5_accept_probability, np.exp(-0.5))
+assert not t5_anneal_accept
+
+t5_fig, t5_ax = plt.subplots(figsize=(6, 3.5))
+t5_ax.plot(t5_states, t5_objective, marker="o", color="black")
+t5_ax.scatter([t5_current], [t5_objective[t5_current]], s=140, color="gold", edgecolor="black", label="current")
+t5_ax.scatter(t5_neighbors, t5_neighbor_values, s=120, color="salmon", edgecolor="black", label="neighbors")
+t5_ax.set_title("Hill climbing rejects downhill moves; annealing may sample them")
+t5_ax.set_xlabel("state")
+t5_ax.set_ylabel("objective")
+t5_ax.legend()
+plt.show()
+```
+▶ What you'll see: hill climbing refuses the downhill move from value 6 to 5, while simulated annealing computes a 0.6065 chance but rejects it because the seeded draw is 0.6370.
+
+
 ## 0. Step-by-Step Worked Example — Start Here (Beginner Friendly)
 
 > 🧑‍🎓 **New to this topic? Start here.** This is a gentle, fully runnable walkthrough that
