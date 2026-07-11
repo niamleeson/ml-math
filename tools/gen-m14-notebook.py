@@ -1000,6 +1000,33 @@ plt.ylim(0.5,0.85); plt.ylabel("pair AUC"); plt.title("on hard pairs, cross (joi
 print("dual: embed once, index, ANN-search millions.  cross: O(pairs) -> rerank hundreds only.")
 """)
 
+md(r"""
+### How the dual encoder is trained (toy)
+
+The dual encoder is trained **contrastively**: pull a query toward its **positive**, push it away
+from **negatives**, using the **InfoNCE** loss (Step 6). Here is the smallest possible version —
+one query, one positive, one negative, as 2-D unit vectors — where the model **starts wrong**
+(the negative scores higher) and a few gradient steps fix it. Watch the query vector move.
+""")
+code(r"""
+def sm2(z): z = np.array(z, float); z = z - z.max(); e = np.exp(z); return e/e.sum()
+q = np.array([1.0, 0.25]); p = np.array([0.6, 0.9]); n = np.array([1.0, 0.15])   # query, positive, negative
+q, p, n = (v/np.linalg.norm(v) for v in (q, p, n))
+tau, lr = 0.2, 0.5
+print(f"start: score(q,pos)=dot={q@p:.3f}   score(q,neg)=dot={q@n:.3f}   (neg wins -> WRONG)\n")
+print("loss = InfoNCE(1 pos, 1 neg) = -log( softmax([s_pos, s_neg]/tau)[pos] )")
+for step in range(4):
+    sp, sn = q@p, q@n
+    probs = sm2([sp/tau, sn/tau]); loss = -np.log(probs[0])
+    print(f"  step {step}: s_pos={sp:.3f} s_neg={sn:.3f} prob(pos)={probs[0]:.3f} loss={loss:.3f}")
+    # gradient step on q: move TOWARD p by (1-prob_pos), AWAY from n by prob_neg
+    q = q + (lr/tau) * ((1-probs[0])*p - probs[1]*n)
+    q = q/np.linalg.norm(q)
+print(f"\nend:   score(q,pos)={q@p:.3f}  score(q,neg)={q@n:.3f}   (pos now wins -> FIXED)")
+print("-> training moved the QUERY VECTOR toward its positive and away from the negative.")
+print("   (real training does this for the encoder WEIGHTS that produce the vectors, over a whole batch.)")
+""")
+
 # ---------------------------------------------------------------- cross-encoder mechanism
 md(r"""
 ## Step 4 · Inside a cross-encoder — how the "score" is actually produced
@@ -1105,6 +1132,36 @@ b = cross_by_hand(["remote","data"], ["onsite","data"])
 print(f"score(A)={a:.3f} > score(B)={b:.3f}")
 print("the doc's remote/onsite token flows through self-attention into EVERY token including")
 print("[CLS], shifting dim0, so the head reads a different number. No two vectors compared.")
+""")
+
+md(r"""
+### How the cross-encoder head is trained (toy)
+
+The cross-encoder outputs **one score per pair**, so it's trained as **classification**, not
+InfoNCE. The usual loss is **binary cross-entropy (BCE)** on relevant/not-relevant labels — the
+same loss our `Cross` model used in Step 3. Toy: two labelled pairs (their `[CLS]` readouts
+differ mainly in **dim0**, the "relevance" signal). BCE tunes the head `w` so it learns to
+weight dim0 — positive scores rise, negative scores fall.
+""")
+code(r"""
+def sigmoid(x): return 1/(1+np.exp(-x))
+pos_r = np.array([0.9, 0.5]); neg_r = np.array([0.2, 0.5])    # [CLS] readouts (differ in dim0)
+w = np.array([0.3, 0.3]); b = 0.0; lr = 1.0                   # the head starts un-tuned
+labelled = [(pos_r, 1), (neg_r, 0)]                           # 1 = match, 0 = non-match
+print(f"readout(pos)={pos_r}  readout(neg)={neg_r}   (dim0 is the discriminating signal)")
+print("loss = BCE = -[ y*log(p) + (1-y)*log(1-p) ],  p = sigmoid(dot(w, readout) + b)\n")
+for step in range(6):
+    gw = np.zeros(2); gb = 0.0; total = 0.0
+    for r, y in labelled:
+        pr = sigmoid(w@r + b)
+        total += -(y*np.log(pr) + (1-y)*np.log(1-pr))
+        gw += (pr - y)*r; gb += (pr - y)                     # dL/dw = (p-y)*readout,  dL/db = (p-y)
+    sp, sn = w@pos_r + b, w@neg_r + b
+    print(f"  step {step}: w={w.round(3)} score(pos)={sp:.3f} score(neg)={sn:.3f} gap={sp-sn:+.3f} BCE={total:.3f}")
+    w = w - lr*gw; b = b - lr*gb                             # gradient descent tunes w (and b)
+print(f"\nend: w={w.round(3)}  b={b:.3f}")
+print("-> w[0] grew (it learned dim0 = relevance); positive scores rose, negatives fell, gap widened.")
+print("   the SAME gradients also flow back into the transformer that produced the readouts.")
 """)
 
 # ---------------------------------------------------------------- retrieve -> rerank
