@@ -1,5 +1,150 @@
 # ML Metrics: Classification & Regression
-> **Source:** CS 229 · **Category:** Metric · **Type:** 🧮 Numeric · [↑ Full reference](../../ai-ml-cheatsheets.md)
+> **Source:** CS 229 · **Category:** Metric · **Type:** 💻 Colab · [↑ Full reference](../../ai-ml-cheatsheets.md)
+> 📓 This section is written as a runnable notebook; an `.ipynb` will be generated from it. [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](#)
+
+## 0. Step-by-Step Worked Example — Start Here (Beginner Friendly)
+
+> 🧑‍🎓 **New to this topic? Start here.** This is a gentle, fully runnable walkthrough that
+> builds up *every* idea in this lesson one tiny step at a time. Each step **prints** the
+> numbers it computes and **draws a picture** so you can *see* what is happening. Run the
+> cells in order from top to bottom. Nothing here needs the internet or any downloaded data.
+
+### The Big Picture — What You'll Learn
+
+In plain terms, here is what the steps below will show you:
+
+- A **confusion matrix** just *counts* four outcomes (TP, FP, FN, TN) once you pick a threshold.
+- **Precision, recall, and F1** are simple fractions of those four counts.
+- Sliding the **threshold** trades recall for precision — the **ROC** and **PR** curves draw that trade-off.
+- On **imbalanced** data, **accuracy lies**: a model that always says "negative" can look 95% accurate and catch nothing.
+
+**What we will build, step by step:**
+1. **Confusion matrix** — turn scores into predictions at a threshold and count the four outcomes.
+2. **Precision / recall / F1** — compute each as a fraction of those counts, by hand.
+3. **Threshold sweep** — recount at many thresholds to draw the ROC and PR curves.
+4. **The imbalance trap** — see accuracy look great while recall is zero.
+
+### Step 0 — Set up our tools
+
+We import NumPy (arrays + counting) and Matplotlib (pictures). We fix a random **seed** so the
+printed numbers are reproducible, and we define a tiny `log()` helper so every output line is
+clearly labeled.
+
+```python
+import numpy as np                       # NumPy: arrays, boolean masks, and counts.
+import matplotlib.pyplot as plt          # Matplotlib: draw the confusion matrix, ROC, and PR curves.
+
+np.random.seed(0)                         # Fix the seed so every run prints the SAME numbers.
+plt.rcParams["figure.figsize"] = (7, 4)   # Use a comfortable default plot size.
+
+
+def log(label, value):                    # A tiny logger so each printed line explains itself.
+    print(f"[{label}] {value}")           # Format is: [what this is] the value.
+
+log("setup", "tools ready — NumPy + Matplotlib imported, seed fixed to 0")
+```
+▶ What you'll see: one line confirming the tools are ready.
+
+### Step 1 — Confusion matrix: count four outcomes at a threshold
+
+A classifier outputs a **score** (how confident it is that an example is positive). To turn scores
+into yes/no predictions we pick a **threshold**: score ≥ threshold → predict positive. Then we
+compare each prediction to the truth and drop it into one of four buckets: **TP** (true positive),
+**FP** (false positive), **FN** (false negative), **TN** (true negative).
+
+```python
+y_true = np.array([1, 1, 1, 1, 0, 0, 0, 0])                  # 8 examples: first 4 are truly positive, last 4 truly negative.
+scores = np.array([0.90, 0.80, 0.60, 0.40, 0.70, 0.35, 0.20, 0.10])  # the model's confidence for each example.
+threshold = 0.5                                              # predict "positive" when score >= 0.5.
+y_pred = (scores >= threshold).astype(int)                   # turn scores into 0/1 predictions.
+log("y_true", y_true.tolist())
+log("scores", scores.tolist())
+log("y_pred @ 0.5", y_pred.tolist())                          # note example 4 (score 0.40) is now a MISS, and example 5 (0.70) a false alarm.
+
+TP = int(np.sum((y_true == 1) & (y_pred == 1)))              # truly positive AND predicted positive.
+FP = int(np.sum((y_true == 0) & (y_pred == 1)))              # truly negative BUT predicted positive (false alarm).
+FN = int(np.sum((y_true == 1) & (y_pred == 0)))              # truly positive BUT predicted negative (a miss).
+TN = int(np.sum((y_true == 0) & (y_pred == 0)))              # truly negative AND predicted negative.
+log("TP (hit)", TP); log("FP (false alarm)", FP); log("FN (miss)", FN); log("TN (correct reject)", TN)
+assert (TP, FP, FN, TN) == (3, 1, 1, 3)                       # pin the counts so the rest of the lesson is trustworthy.
+
+cm = np.array([[TN, FP], [FN, TP]])                          # arrange the four counts as a 2x2 grid.
+plt.figure(figsize=(3.6, 3.4)); plt.imshow(cm, cmap="Blues")
+for i in range(2):
+    for j in range(2):
+        plt.text(j, i, cm[i, j], ha="center", va="center", fontsize=14)
+plt.xticks([0, 1], ["pred -", "pred +"]); plt.yticks([0, 1], ["true -", "true +"])
+plt.title("confusion matrix @ threshold 0.5"); plt.tight_layout(); plt.show()
+```
+▶ What you'll see: the four counts printed (TP=3, FP=1, FN=1, TN=3) and a 2×2 heatmap of them.
+
+### Step 2 — Precision, recall, F1: fractions of those four counts
+
+Every classification metric is just a fraction of the four counts above.
+**Precision** = "of the ones I *flagged*, how many were right?" **Recall** = "of the ones that were
+*truly positive*, how many did I catch?" **F1** blends the two (their harmonic mean).
+
+```python
+precision = TP / (TP + FP)                                   # of everything predicted positive, the fraction truly positive.
+log("precision = TP / (TP + FP)", f"{TP} / {TP + FP} = {precision}")
+recall = TP / (TP + FN)                                      # of everything truly positive, the fraction we caught.
+log("recall = TP / (TP + FN)", f"{TP} / {TP + FN} = {recall}")
+f1 = 2 * precision * recall / (precision + recall)           # harmonic mean: punishes a big gap between P and R.
+log("F1 = 2*P*R/(P+R)", round(f1, 4))
+accuracy = (TP + TN) / len(y_true)                           # fraction of ALL examples classified correctly.
+log("accuracy = (TP + TN) / N", accuracy)
+assert abs(precision - 0.75) < 1e-9 and abs(recall - 0.75) < 1e-9
+```
+▶ What you'll see: precision 0.75, recall 0.75, F1 0.75, accuracy 0.75 — each traced back to the counts.
+
+### Step 3 — Threshold sweep: draw the ROC and PR curves
+
+The threshold isn't fixed — sliding it changes the four counts, and therefore every metric. Lower
+the threshold and you catch more positives (recall ↑) but raise false alarms (precision ↓). If we
+recount at **many** thresholds we can plot the whole trade-off: the **ROC** curve (true-positive
+rate vs false-positive rate) and the **PR** curve (precision vs recall).
+
+```python
+thresholds = np.linspace(0, 1, 11)                          # try 11 thresholds from 0.0 to 1.0.
+roc_pts, pr_pts = [], []
+for t in thresholds:
+    p = (scores >= t).astype(int)                           # predictions at THIS threshold.
+    tp = np.sum((y_true == 1) & (p == 1)); fp = np.sum((y_true == 0) & (p == 1))
+    fn = np.sum((y_true == 1) & (p == 0)); tn = np.sum((y_true == 0) & (p == 0))
+    tpr = tp / (tp + fn) if (tp + fn) else 0.0              # true-positive rate = recall.
+    fpr = fp / (fp + tn) if (fp + tn) else 0.0              # false-positive rate = false alarms among true negatives.
+    prec = tp / (tp + fp) if (tp + fp) else 1.0             # precision at this threshold.
+    roc_pts.append((fpr, tpr)); pr_pts.append((tpr, prec))
+roc_pts = np.array(roc_pts); pr_pts = np.array(pr_pts)
+log("first ROC points (fpr, tpr)", np.round(roc_pts[:4], 2).tolist())
+
+fig, ax = plt.subplots(1, 2, figsize=(9, 3.6))
+ax[0].plot(roc_pts[:, 0], roc_pts[:, 1], "-o"); ax[0].plot([0, 1], [0, 1], "--", color="gray")
+ax[0].set_title("ROC"); ax[0].set_xlabel("false-positive rate"); ax[0].set_ylabel("true-positive rate")
+ax[1].plot(pr_pts[:, 0], pr_pts[:, 1], "-o")
+ax[1].set_title("Precision–Recall"); ax[1].set_xlabel("recall"); ax[1].set_ylabel("precision")
+plt.tight_layout(); plt.show()
+```
+▶ What you'll see: two curves — ROC bowing toward the top-left (good) and the precision–recall trade-off.
+
+### Step 4 — The imbalance trap (break case): accuracy lies
+
+Now the warning that matters most in practice. Suppose only **1 in 20** examples is positive (fraud,
+disease, a rare click). A lazy model that **always predicts "negative"** never catches the positive —
+yet it is right on all 19 negatives, so its **accuracy is 95%**. Accuracy looks great; the model is
+useless. **Recall** exposes it.
+
+```python
+y_true_imb = np.array([1] + [0] * 19)                       # 1 positive, 19 negatives (5% positive).
+pred_all_negative = np.zeros(20, dtype=int)                 # the lazy model: predict "negative" for everyone.
+accuracy_imb = np.mean(pred_all_negative == y_true_imb)     # right on all 19 negatives, wrong on the 1 positive.
+recall_imb = 0.0                                            # it caught 0 of the 1 true positives.
+log("imbalanced accuracy (always-negative)", accuracy_imb)  # 0.95 — looks excellent!
+log("imbalanced recall (always-negative)", recall_imb)      # 0.00 — catches nothing.
+assert accuracy_imb == 0.95 and recall_imb == 0.0
+print("Lesson: on imbalanced data, judge by precision/recall/F1 (or AUC), NOT accuracy.")
+```
+▶ What you'll see: accuracy 0.95 next to recall 0.00 — the single most important gotcha in this lesson.
 
 ## 1. Overview
 
