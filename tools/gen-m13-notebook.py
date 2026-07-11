@@ -82,28 +82,16 @@ def recall_of(fn, k=20): return float(np.mean([len(exact_topk(q, k) & fn(q, k)) 
 print(f"{N} items x {DIM} numbers  |  {len(Q)} queries  |  {DIM*4} bytes per vector")
 """)
 
-# =================================================================== PART A
-md("---\n# Part A · Why ANN, and how we grade it")
+md("---\n# Part 0 · 🧸 Toy Examples — trace each mechanic by hand")
 
 md(r"""
-## Step 2 · Exact search doesn't scale
-
-**Analogy.** Finding the closest coffee shop by walking to *every* shop in the city is correct
-but endless. Exact search does one comparison per item, so cost grows **linearly** — fine for
-thousands, hopeless for millions. We time it to feel the problem.
-""")
-code(r"""
-print("time to search ONE query as the pile grows:")
-for n in [10_000, 50_000, 200_000]:
-    Xn = rng.normal(0, 1, (n, 64)).astype(np.float32); qn = rng.normal(0, 1, 64).astype(np.float32)
-    t = time.perf_counter()
-    for _ in range(20): np.argsort(-(Xn @ qn))[:10]
-    print(f"  {n:>7,} items: {(time.perf_counter()-t)/20*1000:6.1f} ms/query")
-print("\n-> doubling items ~doubles time. At millions, ANN must scan a FRACTION instead.")
+Before the full pipeline, here is **one tiny, hand-traceable toy example per core mechanic** in
+this lesson. Each uses a handful of small numbers you can check by hand, prints every
+intermediate value, and draws a picture. The at-scale versions follow in Parts A–G.
 """)
 
 md(r"""
-## Step 3 · 🧸 Toy Example — recall@k by hand (the accuracy score)
+## 🧸 Toy 1 · recall@k by hand (the accuracy score)
 
 **recall@k = (of the true top-k, how many did the method return) / k.** 1.0 = found them all.
 Traced on a tiny 6-item example (item IDs), so you can check every fraction by hand.
@@ -124,11 +112,8 @@ plt.ylim(0, 1.05); plt.xlabel("k"); plt.ylabel("recall@k"); plt.title("recall@k 
 print("\nhigher recall = fewer misses. every method below is scored this way.")
 """)
 
-# =================================================================== PART B
-md("---\n# Part B · IVF — group items, search nearby groups (intuition)")
-
 md(r"""
-## Step 3.5 · 🧸 Toy Example — IVF assign & probe by hand
+## 🧸 Toy 2 · IVF assign & probe by hand
 
 Before the visual version, do IVF on **6 points** by hand. **Assign** each item to its nearest
 **cell center**; at query time, **probe** only the nearest cell and scan just its members —
@@ -155,6 +140,207 @@ plt.title("IVF: query probes only the nearest cell"); plt.legend(); plt.show()
 """)
 md("▶ What you'll see: items split `[0 0 0 1 1 1]`; the query probes cell 1 and scans only items "
    "3,4,5 — half the corpus skipped. Steps 4–6 scale this up on more points.")
+
+md(r"""
+## 🧸 Toy 3 · encode ONE vector by hand (before the real thing)
+
+Before we PQ the whole dataset, let's do **one** vector with tiny numbers you can trace by hand.
+PQ = **split** the vector into `m` chunks → each chunk has its own **codebook** of `k` codewords
+(each codeword is a k-means *average*) → **encode** = replace each chunk with the *index* of its
+nearest codeword. Here `m=2`, `k=4`. The codebooks are hand-set (normally learned) so every number
+is checkable.
+""")
+code(r"""
+# the ONE vector we compress (8 numbers)
+toy_x = np.array([1, 2, 1, 3,  8, 7, 9, 7])
+toy_subA, toy_subB = toy_x[:4], toy_x[4:]          # SPLIT -> A=[1 2 1 3], B=[8 7 9 7]
+print("chunk A:", toy_subA.tolist(), " chunk B:", toy_subB.tolist())
+
+# each subspace has its own codebook of 4 codewords (rows). Normally k-means averages; fixed here.
+toy_CA = np.array([[0,0,0,0],[1,2,1,2],[5,5,5,5],[2,1,2,1]])   # A0, A1, A2, A3
+toy_CB = np.array([[0,0,0,0],[3,3,3,3],[8,7,8,7],[7,8,7,8]])   # B0, B1, B2, B3
+
+# ENCODE chunk A: squared distance to each codeword, then keep the NEAREST index
+toy_dA = ((toy_CA - toy_subA)**2).sum(axis=1)      # -> [15, 1, 45, 7]   (A1 is nearest)
+toy_dB = ((toy_CB - toy_subB)**2).sum(axis=1)      # -> [243, 93, 1, 7]  (B2 is nearest)
+print("distances A -> A0..A3:", toy_dA.tolist())
+print("distances B -> B0..B3:", toy_dB.tolist())
+toy_iA, toy_iB = int(toy_dA.argmin()), int(toy_dB.argmin())    # -> 1, 2
+print("PQ code = (", toy_iA, ",", toy_iB, ")   # 2 tiny ints instead of 8 floats")
+assert (toy_iA, toy_iB) == (1, 2)
+
+# DECODE (lossy): look the indices back up in the codebooks
+toy_recon = np.concatenate([toy_CA[toy_iA], toy_CB[toy_iB]])   # -> [1 2 1 2 8 7 8 7]
+toy_err = float(np.linalg.norm(toy_x - toy_recon))            # -> 1.414 (quantization error)
+print("reconstruction:", toy_recon.tolist(), " original:", toy_x.tolist(), " error:", round(toy_err, 3))
+assert toy_recon.tolist() == [1, 2, 1, 2, 8, 7, 8, 7]
+
+fig, ax = plt.subplots(1, 2, figsize=(9, 3.2))
+ax[0].bar(range(4), toy_dA); ax[0].set_title("chunk A: distance to A0..A3 (min = A1)")
+ax[1].bar(range(4), toy_dB); ax[1].set_title("chunk B: distance to B0..B3 (min = B2)")
+for a in ax: a.set_xlabel("codeword index"); a.set_ylabel("squared distance")
+plt.tight_layout(); plt.show()
+""")
+md("▶ What you'll see: distances `[15, 1, 45, 7]` and `[243, 93, 1, 7]` → nearest codewords **A1** and "
+   "**B2** → code **(1, 2)**, which decodes to `[1,2,1,2,8,7,8,7]` (close to the original, off by the "
+   "quantization error 1.41). Below, Step 7 does exactly this at scale with `m=8`, `k=256`.")
+
+md(r"""
+## 🧸 Toy 4 · residual encoding by hand
+
+Before doing it at scale, see *why* residuals help. Take one item and its cell **centroid**;
+the **residual** `r = item − centroid` is what's left after IVF already told us roughly where the
+item is. Because the residual is **small**, the SAME codebook budget approximates it far better.
+""")
+code(r"""
+res_x = np.array([8.2, 7.9, 9.1, 8.0])            # an item that lives near the (8,8,8,8) cell
+res_c = np.array([8.0, 8.0, 8.0, 8.0])            # its coarse centroid (from IVF)
+res_r = res_x - res_c                             # -> [ 0.2 -0.1  1.1  0.0]  (the leftover)
+print("item:", res_x.tolist(), " centroid:", res_c.tolist(), " residual:", np.round(res_r, 2).tolist())
+print("||item|| =", round(float(np.linalg.norm(res_x)), 2),
+      " vs  ||residual|| =", round(float(np.linalg.norm(res_r)), 2))   # -> 16.63 vs 1.12
+assert np.linalg.norm(res_r) < np.linalg.norm(res_x)   # residual is ~15x shorter -> easier to code accurately
+
+plt.figure(figsize=(5, 3)); x = np.arange(4)
+plt.bar(x - 0.2, res_x, 0.4, label="raw item (big)")
+plt.bar(x + 0.2, res_r, 0.4, label="residual (small)")
+plt.title("residual = item - centroid (much smaller to encode)"); plt.legend(); plt.show()
+""")
+md("▶ What you'll see: the item has norm ~16.6 but its residual only ~1.1 — coding the small "
+   "residual is why IVF-PQ is far more accurate than plain PQ for the same bytes.")
+
+md(r"""
+## 🧸 Toy 5 · ADC by hand (score without decompressing)
+
+This is the speed trick, by hand. For a query, **precompute a table** of the distance from each
+query **chunk** to each **codeword** (done once). Then any stored item's distance is just a few
+**table lookups + adds** using its code — no vector is ever rebuilt. We verify it equals the
+direct distance to the reconstruction.
+""")
+code(r"""
+adc_qA = np.array([1, 2, 1, 2]); adc_qB = np.array([8, 7, 8, 7])     # the query, split into 2 chunks
+adc_CA = np.array([[0,0,0,0],[1,2,1,2],[5,5,5,5],[2,1,2,1]])         # chunk-A codebook (A0..A3)
+adc_CB = np.array([[0,0,0,0],[3,3,3,3],[8,7,8,7],[7,8,7,8]])         # chunk-B codebook (B0..B3)
+
+# precompute the lookup tables ONCE: distance from each query chunk to each codeword
+adc_LUTA = ((adc_CA - adc_qA)**2).sum(1)         # -> [10, 0, 50, 4]
+adc_LUTB = ((adc_CB - adc_qB)**2).sum(1)         # -> [226, 82, 0, 4]
+print("LUT_A:", adc_LUTA.tolist(), " LUT_B:", adc_LUTB.tolist())
+
+item_code = (3, 1)                               # a stored item, already PQ-coded as (A3, B1)
+adc_dist = adc_LUTA[item_code[0]] + adc_LUTB[item_code[1]]   # -> 4 + 82 = 86  (2 lookups + 1 add!)
+print("ADC distance (lookups + add):", adc_dist)
+
+# check it EQUALS the direct distance to the item's reconstruction (but we never built that at query time)
+recon = np.concatenate([adc_CA[item_code[0]], adc_CB[item_code[1]]])   # [2 1 2 1 3 3 3 3]
+direct = int(((np.concatenate([adc_qA, adc_qB]) - recon)**2).sum())    # -> 86
+print("direct distance to reconstruction:", direct)
+assert adc_dist == direct == 86
+
+plt.figure(figsize=(6, 3))
+plt.bar(["A0","A1","A2","A3"], adc_LUTA, alpha=0.7, label="LUT_A")
+plt.bar(["B0","B1","B2","B3"], adc_LUTB, alpha=0.7, label="LUT_B")
+plt.title("ADC tables: item (3,1) -> LUT_A[3] + LUT_B[1] = 86"); plt.ylabel("distance"); plt.legend(); plt.show()
+""")
+md("▶ What you'll see: two small tables, then item `(3,1)`'s distance = `LUT_A[3] + LUT_B[1] = "
+   "4 + 82 = 86`, exactly the direct distance — but computed with just 2 lookups and an add. Step "
+   "12 does this over the whole probed cell.")
+
+md(r"""
+## 🧸 Toy 6 · greedy graph walk by hand
+
+HNSW **walks a graph** toward the query: from where you are, hop to the neighbor **closest to the
+query**; stop when no neighbor is closer. Trace it on a 5-node line graph where each node knows
+its immediate neighbors.
+""")
+code(r"""
+hnsw_pos = {0:[0,0], 1:[1,1], 2:[3,3], 3:[5,5], 4:[6,6]}     # node positions
+hnsw_adj = {0:[1], 1:[0,2], 2:[1,3], 3:[2,4], 4:[3]}         # who each node links to
+hnsw_q = np.array([6.2, 5.9])                                # the query (near node 4)
+dist = lambda n: float(np.linalg.norm(np.array(hnsw_pos[n]) - hnsw_q))
+
+cur = 0; path = [0]                                          # start at the far end, node 0
+while True:
+    nbr = min(hnsw_adj[cur], key=dist)                      # neighbor closest to the query
+    if dist(nbr) < dist(cur):                              # only move if it gets us closer
+        cur = nbr; path.append(cur)
+    else:
+        break
+print("greedy path:", path)                                 # -> [0, 1, 2, 3, 4]
+print("distance to query at each hop:", [round(dist(n), 2) for n in path])   # -> [8.56, 7.14, 4.32, 1.5, 0.22]
+assert path[-1] == 4                                        # walked to the node nearest the query
+
+plt.figure(figsize=(5, 4))
+for a, bs in hnsw_adj.items():
+    for b in bs: plt.plot(*zip(hnsw_pos[a], hnsw_pos[b]), "-", color="lightgray", zorder=1)
+xs = [hnsw_pos[n][0] for n in path]; ys = [hnsw_pos[n][1] for n in path]
+plt.plot(xs, ys, "-o", color="red", label="greedy path", zorder=3)
+plt.scatter(*hnsw_q, marker="*", s=300, c="gold", edgecolor="k", label="query", zorder=4)
+plt.title("HNSW greedy walk: hop to the closer neighbor"); plt.legend(); plt.show()
+""")
+md("▶ What you'll see: the walk `[0,1,2,3,4]` with distance dropping every hop (8.56 → 0.22) until "
+   "it reaches the query's nearest node. Steps 14–18 add the layers and the real insertion rule.")
+
+md(r"""
+## 🧸 Toy 7 · why parallel error hurts MIPS (by hand)
+
+ScaNN's insight: when you rank by **inner product** (MIPS), a quantization error **along** the
+data vector (parallel) distorts the score, but an error **perpendicular** (orthogonal) barely
+does. Split one error into those two parts by hand and see which one moves the inner product.
+""")
+code(r"""
+aniso_x  = np.array([3.0, 0.0])                  # a data vector (points along +x)
+aniso_qz = np.array([2.6, 0.5])                  # its quantized version
+aniso_err = aniso_qz - aniso_x                   # -> [-0.4, 0.5]  total error
+u = aniso_x / np.linalg.norm(aniso_x)            # unit direction of the data vector
+aniso_par  = np.dot(aniso_err, u) * u            # -> [-0.4, 0.0]  error ALONG x (parallel)
+aniso_orth = aniso_err - aniso_par               # -> [ 0.0, 0.5]  error perpendicular
+print("parallel err:", np.round(aniso_par, 2).tolist(), " len", round(float(np.linalg.norm(aniso_par)), 2))
+print("orthogonal err:", np.round(aniso_orth, 2).tolist(), " len", round(float(np.linalg.norm(aniso_orth)), 2))
+
+# a MIPS query pointing along x: only the PARALLEL error changes the inner product
+q_mips = np.array([1.0, 0.0])
+err_from_parallel = abs(np.dot(aniso_par, q_mips))     # -> 0.4
+err_from_orthogonal = abs(np.dot(aniso_orth, q_mips))  # -> 0.0
+print("inner-product error from parallel part:", round(err_from_parallel, 2))
+print("inner-product error from orthogonal part:", round(err_from_orthogonal, 2))
+assert err_from_parallel > err_from_orthogonal          # parallel error is what MIPS 'feels'
+
+plt.figure(figsize=(4.5, 4)); ax = plt.gca()
+ax.annotate("", xy=aniso_x, xytext=(0,0), arrowprops=dict(arrowstyle="->", color="black"))
+ax.annotate("", xy=aniso_qz, xytext=(0,0), arrowprops=dict(arrowstyle="->", color="blue"))
+ax.annotate("", xy=aniso_qz, xytext=aniso_x, arrowprops=dict(arrowstyle="->", color="red"))
+ax.text(*aniso_x, " x"); ax.text(*aniso_qz, " quantized")
+ax.set_xlim(-0.5, 3.5); ax.set_ylim(-0.5, 1.5); ax.set_title("error split: parallel (matters) vs orthogonal"); plt.show()
+""")
+md("▶ What you'll see: total error splits into parallel `[-0.4, 0]` and orthogonal `[0, 0.5]`; for "
+   "an x-aligned MIPS query only the parallel part (0.4) shifts the score. Step 19–20 build a loss "
+   "that penalizes parallel error more.")
+
+# =================================================================== PART A
+md("---\n# Part A · Why ANN, and how we grade it")
+
+md(r"""
+## Step 2 · Exact search doesn't scale
+
+**Analogy.** Finding the closest coffee shop by walking to *every* shop in the city is correct
+but endless. Exact search does one comparison per item, so cost grows **linearly** — fine for
+thousands, hopeless for millions. We time it to feel the problem.
+""")
+code(r"""
+print("time to search ONE query as the pile grows:")
+for n in [10_000, 50_000, 200_000]:
+    Xn = rng.normal(0, 1, (n, 64)).astype(np.float32); qn = rng.normal(0, 1, 64).astype(np.float32)
+    t = time.perf_counter()
+    for _ in range(20): np.argsort(-(Xn @ qn))[:10]
+    print(f"  {n:>7,} items: {(time.perf_counter()-t)/20*1000:6.1f} ms/query")
+print("\n-> doubling items ~doubles time. At millions, ANN must scan a FRACTION instead.")
+""")
+
+
+# =================================================================== PART B
+md("---\n# Part B · IVF — group items, search nearby groups (intuition)")
+
 
 md(r"""
 ## Step 4 · Split items into cells
@@ -221,50 +407,6 @@ print("\n-> nprobe=2 already hits ~0.94 recall scanning only ~3% of items. That'
 # =================================================================== PART C
 md("---\n# Part C · PQ — squash a vector into a few bytes (intuition)")
 
-md(r"""
-## Step 6.5 · 🧸 Toy Example — encode ONE vector by hand (before the real thing)
-
-Before we PQ the whole dataset, let's do **one** vector with tiny numbers you can trace by hand.
-PQ = **split** the vector into `m` chunks → each chunk has its own **codebook** of `k` codewords
-(each codeword is a k-means *average*) → **encode** = replace each chunk with the *index* of its
-nearest codeword. Here `m=2`, `k=4`. The codebooks are hand-set (normally learned) so every number
-is checkable.
-""")
-code(r"""
-# the ONE vector we compress (8 numbers)
-toy_x = np.array([1, 2, 1, 3,  8, 7, 9, 7])
-toy_subA, toy_subB = toy_x[:4], toy_x[4:]          # SPLIT -> A=[1 2 1 3], B=[8 7 9 7]
-print("chunk A:", toy_subA.tolist(), " chunk B:", toy_subB.tolist())
-
-# each subspace has its own codebook of 4 codewords (rows). Normally k-means averages; fixed here.
-toy_CA = np.array([[0,0,0,0],[1,2,1,2],[5,5,5,5],[2,1,2,1]])   # A0, A1, A2, A3
-toy_CB = np.array([[0,0,0,0],[3,3,3,3],[8,7,8,7],[7,8,7,8]])   # B0, B1, B2, B3
-
-# ENCODE chunk A: squared distance to each codeword, then keep the NEAREST index
-toy_dA = ((toy_CA - toy_subA)**2).sum(axis=1)      # -> [15, 1, 45, 7]   (A1 is nearest)
-toy_dB = ((toy_CB - toy_subB)**2).sum(axis=1)      # -> [243, 93, 1, 7]  (B2 is nearest)
-print("distances A -> A0..A3:", toy_dA.tolist())
-print("distances B -> B0..B3:", toy_dB.tolist())
-toy_iA, toy_iB = int(toy_dA.argmin()), int(toy_dB.argmin())    # -> 1, 2
-print("PQ code = (", toy_iA, ",", toy_iB, ")   # 2 tiny ints instead of 8 floats")
-assert (toy_iA, toy_iB) == (1, 2)
-
-# DECODE (lossy): look the indices back up in the codebooks
-toy_recon = np.concatenate([toy_CA[toy_iA], toy_CB[toy_iB]])   # -> [1 2 1 2 8 7 8 7]
-toy_err = float(np.linalg.norm(toy_x - toy_recon))            # -> 1.414 (quantization error)
-print("reconstruction:", toy_recon.tolist(), " original:", toy_x.tolist(), " error:", round(toy_err, 3))
-assert toy_recon.tolist() == [1, 2, 1, 2, 8, 7, 8, 7]
-
-fig, ax = plt.subplots(1, 2, figsize=(9, 3.2))
-ax[0].bar(range(4), toy_dA); ax[0].set_title("chunk A: distance to A0..A3 (min = A1)")
-ax[1].bar(range(4), toy_dB); ax[1].set_title("chunk B: distance to B0..B3 (min = B2)")
-for a in ax: a.set_xlabel("codeword index"); a.set_ylabel("squared distance")
-plt.tight_layout(); plt.show()
-""")
-md("▶ What you'll see: distances `[15, 1, 45, 7]` and `[243, 93, 1, 7]` → nearest codewords **A1** and "
-   "**B2** → code **(1, 2)**, which decodes to `[1,2,1,2,8,7,8,7]` (close to the original, off by the "
-   "quantization error 1.41). Below, Step 7 does exactly this at scale with `m=8`, `k=256`.")
-
 
 md(r"""
 ## Step 7 · Chop each vector into pieces
@@ -328,29 +470,6 @@ Plain PQ in Part C quantized the **raw** vectors — crude. Real **IVF-PQ** make
 We build all three now.
 """)
 
-md(r"""
-## Step 10.5 · 🧸 Toy Example — residual encoding by hand
-
-Before doing it at scale, see *why* residuals help. Take one item and its cell **centroid**;
-the **residual** `r = item − centroid` is what's left after IVF already told us roughly where the
-item is. Because the residual is **small**, the SAME codebook budget approximates it far better.
-""")
-code(r"""
-res_x = np.array([8.2, 7.9, 9.1, 8.0])            # an item that lives near the (8,8,8,8) cell
-res_c = np.array([8.0, 8.0, 8.0, 8.0])            # its coarse centroid (from IVF)
-res_r = res_x - res_c                             # -> [ 0.2 -0.1  1.1  0.0]  (the leftover)
-print("item:", res_x.tolist(), " centroid:", res_c.tolist(), " residual:", np.round(res_r, 2).tolist())
-print("||item|| =", round(float(np.linalg.norm(res_x)), 2),
-      " vs  ||residual|| =", round(float(np.linalg.norm(res_r)), 2))   # -> 16.63 vs 1.12
-assert np.linalg.norm(res_r) < np.linalg.norm(res_x)   # residual is ~15x shorter -> easier to code accurately
-
-plt.figure(figsize=(5, 3)); x = np.arange(4)
-plt.bar(x - 0.2, res_x, 0.4, label="raw item (big)")
-plt.bar(x + 0.2, res_r, 0.4, label="residual (small)")
-plt.title("residual = item - centroid (much smaller to encode)"); plt.legend(); plt.show()
-""")
-md("▶ What you'll see: the item has norm ~16.6 but its residual only ~1.1 — coding the small "
-   "residual is why IVF-PQ is far more accurate than plain PQ for the same bytes.")
 
 md(r"""
 ## Step 11 · Residual encoding — code the leftover, not the raw vector
@@ -375,42 +494,6 @@ print(f"  residual PQ (item - centroid): {np.linalg.norm(X - X_resid,  axis=1).m
 print("\nsame 8 bytes/item, but coding the small residual is far more accurate.")
 """)
 
-md(r"""
-## Step 11.5 · 🧸 Toy Example — ADC by hand (score without decompressing)
-
-This is the speed trick, by hand. For a query, **precompute a table** of the distance from each
-query **chunk** to each **codeword** (done once). Then any stored item's distance is just a few
-**table lookups + adds** using its code — no vector is ever rebuilt. We verify it equals the
-direct distance to the reconstruction.
-""")
-code(r"""
-adc_qA = np.array([1, 2, 1, 2]); adc_qB = np.array([8, 7, 8, 7])     # the query, split into 2 chunks
-adc_CA = np.array([[0,0,0,0],[1,2,1,2],[5,5,5,5],[2,1,2,1]])         # chunk-A codebook (A0..A3)
-adc_CB = np.array([[0,0,0,0],[3,3,3,3],[8,7,8,7],[7,8,7,8]])         # chunk-B codebook (B0..B3)
-
-# precompute the lookup tables ONCE: distance from each query chunk to each codeword
-adc_LUTA = ((adc_CA - adc_qA)**2).sum(1)         # -> [10, 0, 50, 4]
-adc_LUTB = ((adc_CB - adc_qB)**2).sum(1)         # -> [226, 82, 0, 4]
-print("LUT_A:", adc_LUTA.tolist(), " LUT_B:", adc_LUTB.tolist())
-
-item_code = (3, 1)                               # a stored item, already PQ-coded as (A3, B1)
-adc_dist = adc_LUTA[item_code[0]] + adc_LUTB[item_code[1]]   # -> 4 + 82 = 86  (2 lookups + 1 add!)
-print("ADC distance (lookups + add):", adc_dist)
-
-# check it EQUALS the direct distance to the item's reconstruction (but we never built that at query time)
-recon = np.concatenate([adc_CA[item_code[0]], adc_CB[item_code[1]]])   # [2 1 2 1 3 3 3 3]
-direct = int(((np.concatenate([adc_qA, adc_qB]) - recon)**2).sum())    # -> 86
-print("direct distance to reconstruction:", direct)
-assert adc_dist == direct == 86
-
-plt.figure(figsize=(6, 3))
-plt.bar(["A0","A1","A2","A3"], adc_LUTA, alpha=0.7, label="LUT_A")
-plt.bar(["B0","B1","B2","B3"], adc_LUTB, alpha=0.7, label="LUT_B")
-plt.title("ADC tables: item (3,1) -> LUT_A[3] + LUT_B[1] = 86"); plt.ylabel("distance"); plt.legend(); plt.show()
-""")
-md("▶ What you'll see: two small tables, then item `(3,1)`'s distance = `LUT_A[3] + LUT_B[1] = "
-   "4 + 82 = 86`, exactly the direct distance — but computed with just 2 lookups and an add. Step "
-   "12 does this over the whole probed cell.")
 
 md(r"""
 ## Step 12 · ADC — score compressed items with lookup tables (no decompression)
@@ -465,40 +548,6 @@ print("\nADC-only was ~0.79 (quantization ceiling); the exact rerank lifts it to
 # =================================================================== PART E
 md("---\n# Part E · HNSW — walk a graph, then BUILD the real one")
 
-md(r"""
-## Step 13.5 · 🧸 Toy Example — greedy graph walk by hand
-
-HNSW **walks a graph** toward the query: from where you are, hop to the neighbor **closest to the
-query**; stop when no neighbor is closer. Trace it on a 5-node line graph where each node knows
-its immediate neighbors.
-""")
-code(r"""
-hnsw_pos = {0:[0,0], 1:[1,1], 2:[3,3], 3:[5,5], 4:[6,6]}     # node positions
-hnsw_adj = {0:[1], 1:[0,2], 2:[1,3], 3:[2,4], 4:[3]}         # who each node links to
-hnsw_q = np.array([6.2, 5.9])                                # the query (near node 4)
-dist = lambda n: float(np.linalg.norm(np.array(hnsw_pos[n]) - hnsw_q))
-
-cur = 0; path = [0]                                          # start at the far end, node 0
-while True:
-    nbr = min(hnsw_adj[cur], key=dist)                      # neighbor closest to the query
-    if dist(nbr) < dist(cur):                              # only move if it gets us closer
-        cur = nbr; path.append(cur)
-    else:
-        break
-print("greedy path:", path)                                 # -> [0, 1, 2, 3, 4]
-print("distance to query at each hop:", [round(dist(n), 2) for n in path])   # -> [8.56, 7.14, 4.32, 1.5, 0.22]
-assert path[-1] == 4                                        # walked to the node nearest the query
-
-plt.figure(figsize=(5, 4))
-for a, bs in hnsw_adj.items():
-    for b in bs: plt.plot(*zip(hnsw_pos[a], hnsw_pos[b]), "-", color="lightgray", zorder=1)
-xs = [hnsw_pos[n][0] for n in path]; ys = [hnsw_pos[n][1] for n in path]
-plt.plot(xs, ys, "-o", color="red", label="greedy path", zorder=3)
-plt.scatter(*hnsw_q, marker="*", s=300, c="gold", edgecolor="k", label="query", zorder=4)
-plt.title("HNSW greedy walk: hop to the closer neighbor"); plt.legend(); plt.show()
-""")
-md("▶ What you'll see: the walk `[0,1,2,3,4]` with distance dropping every hop (8.56 → 0.22) until "
-   "it reaches the query's nearest node. Steps 14–18 add the layers and the real insertion rule.")
 
 md(r"""
 ## Step 14 · Intuition — a navigable graph you walk
@@ -693,41 +742,6 @@ print("\nthat's a REAL HNSW: exponential layers, heuristic neighbor selection, t
 # =================================================================== PART F
 md("---\n# Part F · Build REAL ScaNN — anisotropic quantization")
 
-md(r"""
-## Step 18.5 · 🧸 Toy Example — why parallel error hurts MIPS (by hand)
-
-ScaNN's insight: when you rank by **inner product** (MIPS), a quantization error **along** the
-data vector (parallel) distorts the score, but an error **perpendicular** (orthogonal) barely
-does. Split one error into those two parts by hand and see which one moves the inner product.
-""")
-code(r"""
-aniso_x  = np.array([3.0, 0.0])                  # a data vector (points along +x)
-aniso_qz = np.array([2.6, 0.5])                  # its quantized version
-aniso_err = aniso_qz - aniso_x                   # -> [-0.4, 0.5]  total error
-u = aniso_x / np.linalg.norm(aniso_x)            # unit direction of the data vector
-aniso_par  = np.dot(aniso_err, u) * u            # -> [-0.4, 0.0]  error ALONG x (parallel)
-aniso_orth = aniso_err - aniso_par               # -> [ 0.0, 0.5]  error perpendicular
-print("parallel err:", np.round(aniso_par, 2).tolist(), " len", round(float(np.linalg.norm(aniso_par)), 2))
-print("orthogonal err:", np.round(aniso_orth, 2).tolist(), " len", round(float(np.linalg.norm(aniso_orth)), 2))
-
-# a MIPS query pointing along x: only the PARALLEL error changes the inner product
-q_mips = np.array([1.0, 0.0])
-err_from_parallel = abs(np.dot(aniso_par, q_mips))     # -> 0.4
-err_from_orthogonal = abs(np.dot(aniso_orth, q_mips))  # -> 0.0
-print("inner-product error from parallel part:", round(err_from_parallel, 2))
-print("inner-product error from orthogonal part:", round(err_from_orthogonal, 2))
-assert err_from_parallel > err_from_orthogonal          # parallel error is what MIPS 'feels'
-
-plt.figure(figsize=(4.5, 4)); ax = plt.gca()
-ax.annotate("", xy=aniso_x, xytext=(0,0), arrowprops=dict(arrowstyle="->", color="black"))
-ax.annotate("", xy=aniso_qz, xytext=(0,0), arrowprops=dict(arrowstyle="->", color="blue"))
-ax.annotate("", xy=aniso_qz, xytext=aniso_x, arrowprops=dict(arrowstyle="->", color="red"))
-ax.text(*aniso_x, " x"); ax.text(*aniso_qz, " quantized")
-ax.set_xlim(-0.5, 3.5); ax.set_ylim(-0.5, 1.5); ax.set_title("error split: parallel (matters) vs orthogonal"); plt.show()
-""")
-md("▶ What you'll see: total error splits into parallel `[-0.4, 0]` and orthogonal `[0, 0.5]`; for "
-   "an x-aligned MIPS query only the parallel part (0.4) shifts the score. Step 19–20 build a loss "
-   "that penalizes parallel error more.")
 
 md(r"""
 ## Step 19 · The ScaNN insight — not all quantization error is equal (for MIPS)
