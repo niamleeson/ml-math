@@ -83,6 +83,742 @@ Qte, Ite, tpt = make(1500, 2)
 print("data ready:", len(Q), "train pairs,", len(Qte), "test pairs,", T, "topics")
 """)
 
+md("---\n# Part 0 · ✍️ Toy Examples — trace each mechanic by hand")
+
+md(r"""
+Before the full notebook, here is **one tiny, hand-traceable toy example for every computational
+mechanic** in this lesson — synthetic positive pairs, pooling, normalization, self-attention,
+role prefixes, positive/negative pairs, dual vs cross scoring, retrieve→rerank, InfoNCE,
+temperature, in-batch negatives, training pressure, collapse, hard-negative mining, fine-tuning,
+and held-out metrics. Each toy uses only `numpy` + `matplotlib`, prints every intermediate value,
+pins the result with an `assert`, and draws exactly one picture.
+""")
+
+md(r"""
+## ✍️ Toy 1 · synthetic positives share topic + taste
+
+The setup cell makes each query and its positive item from the same hidden **topic center** plus
+the same **taste** vector, then adds tiny noise. That is why the positive item is closer than a
+different-topic item.
+""")
+code(r"""
+t1_topic = np.array([[0., 0.], [4., 0.], [0., 4.]])                         # -> 3 hidden topic centers
+t1_tp = np.array([0, 0, 1, 1, 2, 2])                                         # -> 6 pairs, two per topic
+t1_taste = np.array([[.2,.1],[-.1,.2],[.1,-.2],[-.2,.1],[.1,.2],[-.2,-.1]])  # -> one taste per pair
+t1_base = t1_topic[t1_tp] + t1_taste                                         # -> shared clean pair location
+t1_q_noise = np.array([[.1,0.],[0.,-.1],[.1,.1],[0.,.1],[-.1,0.],[.1,0.]])   # -> tiny query noise
+t1_i_noise = np.array([[0.,.1],[-.1,0.],[0.,-.1],[.1,0.],[0.,.1],[-.1,0.]])  # -> tiny item noise
+t1_Q = t1_base + t1_q_noise                                                  # -> noisy query vectors
+t1_I = t1_base + t1_i_noise                                                  # -> noisy positive item vectors
+t1_neg_idx = np.array([2, 3, 4, 5, 0, 1])                                    # -> different-topic negatives
+t1_pos_d = ((t1_Q - t1_I)**2).sum(1)                                         # -> [0.02,0.02,0.05,0.02,0.02,0.04]
+t1_neg_d = ((t1_Q - t1_I[t1_neg_idx])**2).sum(1)                             # -> much larger different-topic distances
+print("topic id per pair:", t1_tp.tolist())
+print("base = topic + taste:\n", np.round(t1_base, 2))
+print("query vectors:\n", np.round(t1_Q, 2))
+print("positive item vectors:\n", np.round(t1_I, 2))
+print("positive squared distances:", np.round(t1_pos_d, 2).tolist())
+print("different-topic squared distances:", np.round(t1_neg_d, 2).tolist())
+assert np.all(t1_pos_d < t1_neg_d)
+
+plt.figure(figsize=(5, 4))
+plt.scatter(t1_Q[:,0], t1_Q[:,1], marker="*", s=160, c="gold", edgecolor="k", label="queries")
+plt.scatter(t1_I[:,0], t1_I[:,1], s=80, c=t1_tp, cmap="viridis", label="positive items")
+for t1_j in range(6):
+    plt.plot([t1_Q[t1_j,0], t1_I[t1_j,0]], [t1_Q[t1_j,1], t1_I[t1_j,1]], color="gray", lw=1)
+plt.title("synthetic pairs: same topic + taste -> nearby positives"); plt.legend(); plt.show()
+""")
+md("▶ What you'll see: every query is connected to a nearby positive, while the different-topic "
+   "distance is much larger. Step 1 scales this recipe to thousands of reusable pairs.")
+
+md(r"""
+## ✍️ Toy 2 · mean-pool token vectors, then L2-normalize
+
+A sentence encoder gets one vector per token, **averages** them into one sentence vector, then
+L2-normalizes it so the length is exactly 1.
+""")
+code(r"""
+t2_tokens = ["senior", "data", "role", "remote"]                            # -> 4 tokens
+t2_vecs = np.array([[2.,0.], [0.,2.], [1.,1.], [1.,-1.]])                   # -> 4 tiny token vectors
+t2_pooled = t2_vecs.mean(0)                                                  # -> [1.0, 0.5]
+t2_len = np.linalg.norm(t2_pooled)                                           # -> 1.1180339887
+t2_sent = t2_pooled / t2_len                                                 # -> [0.894, 0.447]
+print("tokens:", t2_tokens)
+print("token vectors:\n", t2_vecs)
+print("mean pool:", np.round(t2_pooled, 3).tolist())
+print("pooled length:", round(float(t2_len), 3))
+print("normalized sentence vector:", np.round(t2_sent, 3).tolist())
+print("normalized length:", round(float(np.linalg.norm(t2_sent)), 3))
+assert np.allclose(np.linalg.norm(t2_sent), 1.0)
+
+plt.figure(figsize=(5, 3))
+plt.bar(["pooled x","pooled y","norm x","norm y"], [t2_pooled[0], t2_pooled[1], t2_sent[0], t2_sent[1]], color=["gray","gray","green","green"])
+plt.title("pool first, then normalize to unit length"); plt.ylabel("value"); plt.show()
+""")
+md("▶ What you'll see: four token vectors average to `[1.0, 0.5]`, then normalization turns that "
+   "into a unit-length sentence embedding `[0.894, 0.447]`.")
+
+md(r"""
+## ✍️ Toy 3 · cosine ranking after normalization
+
+Once vectors have length 1, the dot product is the **cosine similarity**. Retrieval ranks items by
+that cosine score.
+""")
+code(r"""
+t3_q = np.array([1., 1.])                                                    # -> query direction
+t3_docs = np.array([[1.,1.], [2.,0.], [0.,2.], [1.,-1.], [-1.,0.], [-1.,-1.]]) # -> 6 item vectors
+t3_qn = t3_q / np.linalg.norm(t3_q)                                          # -> [0.707,0.707]
+t3_dn = t3_docs / np.linalg.norm(t3_docs, axis=1, keepdims=True)             # -> unit item vectors
+t3_scores = t3_dn @ t3_qn                                                    # -> [1.000,0.707,0.707,0.000,-0.707,-1.000]
+t3_order = np.argsort(-t3_scores)                                            # -> [0,1,2,3,4,5]
+t3_top3 = t3_order[:3].tolist()                                              # -> [0,1,2]
+print("normalized query:", np.round(t3_qn, 3).tolist())
+print("normalized docs:\n", np.round(t3_dn, 3))
+print("cosine scores:", np.round(t3_scores, 3).tolist())
+print("ranking best to worst:", t3_order.tolist())
+print("top-3:", t3_top3)
+assert t3_top3 == [0, 1, 2]
+
+plt.figure(figsize=(5, 3))
+plt.bar(range(6), t3_scores, color=["green" if t3_j in t3_top3 else "gray" for t3_j in range(6)])
+plt.xlabel("doc id"); plt.ylabel("cosine to query"); plt.title("normalized dot product ranks docs"); plt.show()
+""")
+md("▶ What you'll see: the doc pointing exactly with the query scores `1.0`, the half-aligned docs "
+   "score `0.707`, and opposite docs fall below zero.")
+
+md(r"""
+## ✍️ Toy 4 · self-attention = dot → softmax → weighted blend
+
+Self-attention updates a token by measuring similarity to every token, softmaxing those scores,
+then taking a weighted average of all token vectors.
+""")
+code(r"""
+t4_names = ["remote", "data", "onsite", "analyst"]                           # -> 4 tokens
+t4_M = np.array([[1.,0.], [0.,1.], [-1.,0.], [0.,1.]])                       # -> 2-D token vectors
+t4_logits = t4_M[0] @ t4_M.T                                                  # -> [1,0,-1,0]
+t4_exp = np.exp(t4_logits - t4_logits.max())                                  # -> [1.000,0.368,0.135,0.368]
+t4_w = t4_exp / t4_exp.sum()                                                  # -> [0.534,0.197,0.072,0.197]
+t4_new_remote = (t4_w[:, None] * t4_M).sum(0)                                 # -> [0.462,0.393]
+t4_all_logits = t4_M @ t4_M.T                                                 # -> 4x4 token-token similarities
+t4_all_w = np.exp(t4_all_logits - t4_all_logits.max(1, keepdims=True))        # -> unnormalized row weights
+t4_all_w = t4_all_w / t4_all_w.sum(1, keepdims=True)                          # -> every row sums to 1
+t4_all_new = t4_all_w @ t4_M                                                   # -> all 4 tokens updated
+print("tokens:", t4_names)
+print("token vectors:\n", t4_M)
+print("remote dot each token:", t4_logits.tolist())
+print("remote attention weights:", np.round(t4_w, 3).tolist(), "sum =", round(float(t4_w.sum()), 3))
+print("new remote vector:", np.round(t4_new_remote, 3).tolist())
+print("full updated token matrix:\n", np.round(t4_all_new, 3))
+assert np.allclose(t4_w.sum(), 1.0) and np.allclose(t4_new_remote, [0.462117, 0.393224], atol=1e-5)
+
+plt.figure(figsize=(5, 3))
+plt.bar(t4_names, t4_w, color="purple")
+plt.ylabel("attention weight from 'remote'"); plt.title("softmax weights sum to 1"); plt.show()
+""")
+md("▶ What you'll see: `remote` pays most attention to itself, a little to the data-like tokens, "
+   "and barely to the opposite `onsite`, producing a blended contextual vector.")
+
+md(r"""
+## ✍️ Toy 5 · query/passage role prefix shifts the same words
+
+E5-style prefixes add a small role signal before normalization. The **same words** can therefore
+produce slightly different query-form and passage-form vectors.
+""")
+code(r"""
+t5_base = np.array([1., 1.])                                                  # -> pooled words before role prefix
+t5_q_shift = np.array([.5, 0.])                                                # -> query role bias
+t5_p_shift = np.array([0., .5])                                                # -> passage role bias
+t5_q_raw = t5_base + t5_q_shift                                                # -> [1.5,1.0]
+t5_p_raw = t5_base + t5_p_shift                                                # -> [1.0,1.5]
+t5_q_vec = t5_q_raw / np.linalg.norm(t5_q_raw)                                 # -> [0.832,0.555]
+t5_p_vec = t5_p_raw / np.linalg.norm(t5_p_raw)                                 # -> [0.555,0.832]
+t5_cos = t5_q_vec @ t5_p_vec                                                   # -> 0.923
+print("same pooled words:", t5_base.tolist())
+print("query raw:", t5_q_raw.tolist(), "-> normalized", np.round(t5_q_vec, 3).tolist())
+print("passage raw:", t5_p_raw.tolist(), "-> normalized", np.round(t5_p_vec, 3).tolist())
+print("cos(query-form, passage-form):", round(float(t5_cos), 3))
+assert not np.allclose(t5_q_vec, t5_p_vec) and t5_cos > 0.9
+
+plt.figure(figsize=(4, 4))
+plt.arrow(0, 0, t5_q_vec[0], t5_q_vec[1], head_width=.04, color="blue", length_includes_head=True, label="query")
+plt.arrow(0, 0, t5_p_vec[0], t5_p_vec[1], head_width=.04, color="green", length_includes_head=True, label="passage")
+plt.xlim(0, 1); plt.ylim(0, 1); plt.legend(); plt.title("role prefix nudges the final unit vector"); plt.show()
+""")
+md("▶ What you'll see: query and passage vectors remain close, but they are not identical — the "
+   "role prefix nudges the direction before normalization.")
+
+md(r"""
+## ✍️ Toy 6 · build positive and hard-negative pairs
+
+For pair training, each query gets one labeled positive and one **same-topic different item** as a
+hard negative. The labels become `1` for positives and `0` for negatives.
+""")
+code(r"""
+t6_topics = np.array([0, 0, 1, 1, 2, 2])                                      # -> item topic ids
+t6_Q = np.array([[0.,0.], [.2,.1], [4.,0.], [4.2,.1], [0.,4.], [.1,4.2]])     # -> 6 query vectors
+t6_I = np.array([[.1,0.], [.3,.1], [4.1,.1], [3.9,0.], [.1,3.9], [0.,4.1]])   # -> 6 positive items
+t6_neg = np.array([1, 0, 3, 2, 5, 4])                                         # -> same-topic other item per query
+t6_q_idx = np.concatenate([np.arange(6), np.arange(6)])                       # -> [0,1,2,3,4,5,0,1,2,3,4,5]
+t6_i_idx = np.concatenate([np.arange(6), t6_neg])                             # -> positives then hard negatives
+t6_y = np.concatenate([np.ones(6), np.zeros(6)])                              # -> [1,1,1,1,1,1,0,0,0,0,0,0]
+print("topics:", t6_topics.tolist())
+print("negative item picked for each query:", t6_neg.tolist())
+print("pair query ids:", t6_q_idx.tolist())
+print("pair item ids :", t6_i_idx.tolist())
+print("labels        :", t6_y.astype(int).tolist())
+print("negative topics:", t6_topics[t6_neg].tolist(), "(same as query topics)")
+assert np.array_equal(t6_topics[t6_neg], t6_topics) and t6_y[:6].sum() == 6 and t6_y[6:].sum() == 0
+
+plt.figure(figsize=(5, 4))
+plt.scatter(t6_Q[:,0], t6_Q[:,1], marker="*", s=150, c="gold", edgecolor="k", label="queries")
+plt.scatter(t6_I[:,0], t6_I[:,1], s=80, c=t6_topics, cmap="viridis", label="items")
+plt.plot([t6_Q[0,0], t6_I[0,0]], [t6_Q[0,1], t6_I[0,1]], color="green", lw=2, label="q0 positive")
+plt.plot([t6_Q[0,0], t6_I[t6_neg[0],0]], [t6_Q[0,1], t6_I[t6_neg[0],1]], color="red", lw=2, ls="--", label="q0 hard neg")
+plt.title("positive pair plus same-topic hard negative"); plt.legend(fontsize=8); plt.show()
+""")
+md("▶ What you'll see: the second half of the pair table swaps in same-topic but different items, "
+   "creating hard negatives with label `0`.")
+
+md(r"""
+## ✍️ Toy 7 · dual encoder score = precomputed item vector dot query vector
+
+A dual encoder can precompute every item vector once. At query time, scoring is just a dot product
+against those stored vectors.
+""")
+code(r"""
+t7_q = np.array([1., .5])                                                     # -> one query embedding
+t7_items = np.array([[1.,0.], [0.,1.], [1.,1.], [-1.,0.], [0.,-1.], [2.,1.]]) # -> 6 precomputed item embeddings
+t7_qn = t7_q / np.linalg.norm(t7_q)                                           # -> [0.894,0.447]
+t7_in = t7_items / np.linalg.norm(t7_items, axis=1, keepdims=True)            # -> normalized stored item vectors
+t7_scores = t7_in @ t7_qn                                                     # -> [0.894,0.447,0.949,-0.894,-0.447,1.000]
+t7_order = np.argsort(-t7_scores)                                             # -> [5,2,0,1,4,3]
+print("query vector:", np.round(t7_qn, 3).tolist())
+print("precomputed item vectors:\n", np.round(t7_in, 3))
+print("dual dot-product scores:", np.round(t7_scores, 3).tolist())
+print("ranking:", t7_order.tolist())
+assert int(t7_order[0]) == 5 and np.isclose(t7_scores[5], 1.0)
+
+plt.figure(figsize=(5, 3))
+plt.bar(range(6), t7_scores, color=["green" if t7_j == t7_order[0] else "gray" for t7_j in range(6)])
+plt.xlabel("item id"); plt.ylabel("dual score"); plt.title("dual scoring uses stored item vectors"); plt.show()
+""")
+md("▶ What you'll see: item 5 has the same direction as the query, so the precomputed-vector dot "
+   "product ranks it first without reading query and item jointly.")
+
+md(r"""
+## ✍️ Toy 8 · cross score depends on the query–item pair
+
+A cross-style scorer can use **interaction features** such as `query * item`. The same item can get
+a different score for a different query, so there is no reusable standalone item score.
+""")
+code(r"""
+t8_docs = np.array([[1.,0.], [0.,1.], [1.,1.], [-1.,0.], [0.,-1.], [2.,0.]])  # -> 6 docs
+t8_qA = np.array([1., 0.])                                                    # -> query A asks for x
+t8_qB = np.array([0., 1.])                                                    # -> query B asks for y
+t8_inter_A = t8_docs * t8_qA                                                  # -> pair interactions for query A
+t8_inter_B = t8_docs * t8_qB                                                  # -> pair interactions for query B
+t8_score_A = t8_inter_A.sum(1) + .1 * t8_docs.sum(1)                          # -> [1.1,0.1,1.2,-1.1,-0.1,2.2]
+t8_score_B = t8_inter_B.sum(1) + .1 * t8_docs.sum(1)                          # -> [0.1,1.1,1.2,-0.1,-1.1,0.2]
+t8_top_A = int(np.argmax(t8_score_A))                                         # -> 5
+t8_top_B = int(np.argmax(t8_score_B))                                         # -> 2
+print("docs:\n", t8_docs)
+print("query A interactions:\n", t8_inter_A)
+print("query B interactions:\n", t8_inter_B)
+print("cross scores for query A:", np.round(t8_score_A, 2).tolist(), "top", t8_top_A)
+print("cross scores for query B:", np.round(t8_score_B, 2).tolist(), "top", t8_top_B)
+assert t8_top_A == 5 and t8_top_B == 2
+
+plt.figure(figsize=(6, 3))
+t8_x = np.arange(6)
+plt.bar(t8_x - .18, t8_score_A, .36, label="query A")
+plt.bar(t8_x + .18, t8_score_B, .36, label="query B")
+plt.xlabel("doc id"); plt.ylabel("joint score"); plt.legend(); plt.title("cross scores change with the query"); plt.show()
+""")
+md("▶ What you'll see: changing only the query changes the interaction columns and flips the top "
+   "document, which is why cross-encoder scores cannot be precomputed per item.")
+
+md(r"""
+## ✍️ Toy 9 · glued sequence → attention → [CLS] readout → head score
+
+Inside a cross-encoder, query and doc tokens are glued into one sequence. Full self-attention lets
+doc tokens flow into `[CLS]`, and a tiny head reads a single score from that `[CLS]` vector.
+""")
+code(r"""
+t9_tok = {"remote":np.array([1.,0.]), "data":np.array([0.,1.]), "onsite":np.array([-1.,0.]), "[SEP]":np.array([0.,0.])} # -> 2-D tokens
+t9_q = ["remote", "data"]                                                     # -> query tokens
+t9_docA = ["remote", "data"]                                                   # -> matching doc tokens
+t9_docB = ["onsite", "data"]                                                   # -> opposing doc tokens
+t9_head = np.array([1., 0.])                                                    # -> read remote-ness from [CLS]
+def t9_score(t9_doc):
+    t9_seq = ["[CLS]"] + t9_q + ["[SEP]"] + t9_doc                              # -> glued sequence length 6
+    t9_cls0 = np.array([.5, .5])                                                # -> mean of query token directions
+    t9_V = np.array([t9_cls0] + [t9_tok[t9_w] for t9_w in t9_seq[1:]])          # -> token matrix
+    t9_logits = t9_V @ t9_V.T                                                   # -> full token-token dot matrix
+    t9_E = np.exp(t9_logits - t9_logits.max(1, keepdims=True))                 # -> row-stable exponentials
+    t9_A = t9_E / t9_E.sum(1, keepdims=True)                                    # -> attention rows sum to 1
+    t9_new = t9_A @ t9_V                                                        # -> every token updated
+    t9_readout = t9_new[0]                                                      # -> updated [CLS]
+    t9_s = t9_head @ t9_readout                                                 # -> scalar score
+    print("sequence:", t9_seq)
+    print("[CLS] logits:", np.round(t9_logits[0], 3).tolist())
+    print("[CLS] attention:", np.round(t9_A[0], 3).tolist())
+    print("updated tokens:\n", np.round(t9_new, 3))
+    print("[CLS] readout:", np.round(t9_readout, 3).tolist(), "score:", round(float(t9_s), 3), "\n")
+    return float(t9_s)
+t9_sA = t9_score(t9_docA)                                                       # -> matching doc score
+t9_sB = t9_score(t9_docB)                                                       # -> opposing doc score
+print("score docA:", round(t9_sA, 3), "score docB:", round(t9_sB, 3))
+assert t9_sA > t9_sB
+
+plt.figure(figsize=(4.5, 3))
+plt.bar(["remote doc", "onsite doc"], [t9_sA, t9_sB], color=["green", "red"])
+plt.ylabel("[CLS] head score"); plt.title("doc tokens change the cross-encoder readout"); plt.show()
+""")
+md("▶ What you'll see: the matching doc pushes positive remote signal into `[CLS]`, while the "
+   "`onsite` doc lowers it, so the head emits a smaller score.")
+
+md(r"""
+## ✍️ Toy 10 · retrieve first, then rerank the short list
+
+The dual encoder cheaply retrieves a top-K candidate set. The cross-encoder only re-scores that
+short list, then re-sorts it.
+""")
+code(r"""
+t10_true = 1                                                                  # -> true item id for this query
+t10_dual_scores = np.array([.92, .88, .70, .40, .10, .05])                    # -> first-stage scores for 6 items
+t10_topK = np.argsort(-t10_dual_scores)[:3]                                   # -> [0,1,2]
+t10_dual_rank = int(np.where(t10_topK == t10_true)[0][0] + 1)                 # -> 2
+t10_cross_scores = np.array([.60, .95, .55])                                  # -> cross scores for items [0,1,2]
+t10_rerank_local = np.argsort(-t10_cross_scores)                              # -> [1,0,2] local positions
+t10_reranked = t10_topK[t10_rerank_local]                                     # -> [1,0,2] item ids
+t10_cross_rank = int(np.where(t10_reranked == t10_true)[0][0] + 1)            # -> 1
+print("dual scores over all 6:", t10_dual_scores.tolist())
+print("dual topK item ids:", t10_topK.tolist(), "true rank:", t10_dual_rank)
+print("cross scores on topK:", dict(zip(t10_topK.tolist(), t10_cross_scores.tolist())))
+print("reranked item ids:", t10_reranked.tolist(), "true rank:", t10_cross_rank)
+assert t10_dual_rank == 2 and t10_cross_rank == 1 and t10_reranked[0] == t10_true
+
+plt.figure(figsize=(5, 3))
+plt.bar(["dual rank", "after rerank"], [t10_dual_rank, t10_cross_rank], color=["gray", "green"])
+plt.gca().invert_yaxis(); plt.ylabel("rank of true item (lower is better)"); plt.title("rerank pulls the true item upward"); plt.show()
+""")
+md("▶ What you'll see: the dual stage puts the true item second inside the top-3, then cross "
+   "re-scoring moves it to rank 1.")
+
+md(r"""
+## ✍️ Toy 11 · MRR and hit@1 from ranks
+
+Retrieve→rerank is summarized with ranking metrics. **MRR** averages reciprocal rank; **hit@1**
+counts how often the true item is first.
+""")
+code(r"""
+t11_orders = np.array([[0,1,2,3,4,5], [0,1,2,3,4,5], [0,1,3,2,4,5], [3,0,1,2,4,5], [0,1,2,3,5,4], [0,1,5,2,3,4]]) # -> 6 rankings
+t11_true = np.array([0, 1, 2, 3, 4, 5])                                      # -> true item per query
+t11_ranks = np.array([np.where(t11_orders[t11_i] == t11_true[t11_i])[0][0] + 1 for t11_i in range(6)]) # -> [1,2,4,1,6,3]
+t11_rr = 1.0 / t11_ranks                                                      # -> [1,.5,.25,1,.167,.333]
+t11_mrr = t11_rr.mean()                                                       # -> 0.542
+t11_hit1 = np.mean(t11_ranks == 1)                                            # -> 0.333
+print("rankings:\n", t11_orders)
+print("true ids:", t11_true.tolist())
+print("true-item ranks:", t11_ranks.tolist())
+print("reciprocal ranks:", np.round(t11_rr, 3).tolist())
+print("MRR:", round(float(t11_mrr), 3), "hit@1:", round(float(t11_hit1), 3))
+assert np.all(t11_ranks == np.array([1,2,4,1,6,3])) and np.isclose(t11_hit1, 2/6)
+
+plt.figure(figsize=(4.5, 3))
+plt.bar(["MRR", "hit@1"], [t11_mrr, t11_hit1], color=["blue", "green"])
+plt.ylim(0, 1); plt.title("ranking metrics from true-item positions"); plt.show()
+""")
+md("▶ What you'll see: rank 1 contributes `1.0`, rank 2 contributes `0.5`, and rank 6 contributes "
+   "only `0.167`; hit@1 is just the fraction of ranks equal to 1.")
+
+md(r"""
+## ✍️ Toy 12 · InfoNCE softmax loss for one positive and negatives
+
+InfoNCE turns scores into a softmax probability for the positive, then uses `-log(probability)` as
+the loss.
+""")
+code(r"""
+t12_scores = np.array([2., 1., 0., -1.])                                      # -> positive first, then 3 negatives
+t12_z = t12_scores - t12_scores.max()                                         # -> [0,-1,-2,-3]
+t12_exp = np.exp(t12_z)                                                       # -> [1.000,0.368,0.135,0.050]
+t12_prob = t12_exp / t12_exp.sum()                                            # -> [0.644,0.237,0.087,0.032]
+t12_loss = -np.log(t12_prob[0])                                               # -> 0.440
+print("scores:", t12_scores.tolist())
+print("shifted scores:", t12_z.tolist())
+print("exp:", np.round(t12_exp, 3).tolist())
+print("softmax probabilities:", np.round(t12_prob, 3).tolist())
+print("positive probability:", round(float(t12_prob[0]), 3))
+print("InfoNCE loss:", round(float(t12_loss), 3))
+assert np.isclose(t12_prob[0], 0.643914, atol=1e-5) and np.isclose(t12_loss, 0.44019, atol=1e-5)
+
+plt.figure(figsize=(5, 3))
+plt.bar(["positive", "neg1", "neg2", "neg3"], t12_prob, color=["green", "gray", "gray", "gray"])
+plt.ylabel("softmax probability"); plt.title("InfoNCE makes the positive win the softmax"); plt.show()
+""")
+md("▶ What you'll see: the positive gets probability about `0.644`; the loss is `-log(0.644)`, so "
+   "training tries to push that probability toward 1.")
+
+md(r"""
+## ✍️ Toy 13 · temperature sharpens or softens the same scores
+
+Temperature divides the scores before softmax. A lower `τ` makes the same score gap look bigger.
+""")
+code(r"""
+t13_scores = np.array([2., 1., 0., -1.])                                      # -> same scores as Toy 12
+t13_tau = np.array([1.0, .5, .25])                                             # -> three temperatures
+t13_probs = []
+for t13_t in t13_tau:
+    t13_z = t13_scores / t13_t                                                # -> scores scaled by tau
+    t13_z = t13_z - t13_z.max()                                                # -> stable shifted scores
+    t13_p = np.exp(t13_z) / np.exp(t13_z).sum()                                # -> row softmax
+    t13_probs.append(t13_p[0])                                                 # -> positive probability
+t13_probs = np.array(t13_probs)                                                # -> [0.644,0.865,0.982]
+print("scores:", t13_scores.tolist())
+print("temperatures:", t13_tau.tolist())
+print("positive probabilities:", np.round(t13_probs, 3).tolist())
+assert np.all(np.diff(t13_probs) > 0) and t13_probs[-1] > 0.98
+
+plt.figure(figsize=(5, 3))
+plt.plot(t13_tau, t13_probs, "o-", color="purple")
+plt.gca().invert_xaxis(); plt.xlabel("temperature tau (lower -> sharper)"); plt.ylabel("positive probability")
+plt.title("lower tau magnifies the score gap"); plt.show()
+""")
+md("▶ What you'll see: with identical raw scores, lowering `τ` moves the positive probability from "
+   "about `0.64` to about `0.98`.")
+
+md(r"""
+## ✍️ Toy 14 · in-batch negatives are the off-diagonal of a score matrix
+
+For `B` matched query–item pairs, the diagonal entries are positives. Every off-diagonal entry is
+a free in-batch negative.
+""")
+code(r"""
+t14_Q = np.array([[1.,0.], [0.,1.], [-1.,0.], [0.,-1.], [1.,1.], [-1.,1.]])   # -> 6 query vectors
+t14_P = np.array([[1.,.1], [.1,1.], [-1.,.1], [.1,-1.], [1.,.8], [-.8,1.]])   # -> 6 paired positive vectors
+t14_Qn = t14_Q / np.linalg.norm(t14_Q, axis=1, keepdims=True)                # -> normalized queries
+t14_Pn = t14_P / np.linalg.norm(t14_P, axis=1, keepdims=True)                # -> normalized positives
+t14_S = t14_Qn @ t14_Pn.T                                                     # -> 6x6 cosine score matrix
+t14_diag = np.diag(t14_S)                                                     # -> positive scores
+t14_off = t14_S[~np.eye(6, dtype=bool)]                                       # -> 30 in-batch negatives
+print("score matrix S = Q @ P.T:\n", np.round(t14_S, 2))
+print("diagonal positives:", np.round(t14_diag, 2).tolist())
+print("off-diagonal mean:", round(float(t14_off.mean()), 3))
+print("InfoNCE labels:", list(range(6)), "(pick the diagonal column)")
+assert t14_diag.mean() > t14_off.mean() and len(t14_off) == 30
+
+plt.figure(figsize=(4.8, 4))
+plt.imshow(t14_S, cmap="viridis", vmin=-1, vmax=1)
+for t14_j in range(6):
+    plt.gca().add_patch(plt.Rectangle((t14_j-.5, t14_j-.5), 1, 1, fill=False, edgecolor="red", lw=2))
+plt.colorbar(fraction=0.046); plt.xlabel("item j"); plt.ylabel("query i"); plt.title("diagonal positives, off-diagonal negatives"); plt.show()
+""")
+md("▶ What you'll see: the red diagonal is high because those are matched pairs; all other cells "
+   "are negatives supplied for free by the batch.")
+
+md(r"""
+## ✍️ Toy 15 · matrix rows become cross-entropy losses
+
+InfoNCE on a batch is cross-entropy row by row: softmax each row, then take `-log` of the diagonal
+probability.
+""")
+code(r"""
+t15_S = np.array([[2., 0., 0.], [0., 2., 1.], [1., 0., 2.]])                 # -> 3 query x 3 item scores
+t15_tau = 1.0                                                                 # -> no scaling for hand math
+t15_Z = t15_S / t15_tau                                                       # -> same matrix
+t15_Z = t15_Z - t15_Z.max(1, keepdims=True)                                  # -> stable row shift
+t15_E = np.exp(t15_Z)                                                         # -> row exponentials
+t15_P = t15_E / t15_E.sum(1, keepdims=True)                                  # -> row softmax probabilities
+t15_losses = -np.log(np.diag(t15_P))                                          # -> per-query losses
+t15_loss = t15_losses.mean()                                                  # -> batch mean loss
+print("score matrix:\n", t15_S)
+print("row softmax:\n", np.round(t15_P, 3))
+print("diagonal probabilities:", np.round(np.diag(t15_P), 3).tolist())
+print("per-query losses:", np.round(t15_losses, 3).tolist())
+print("batch InfoNCE loss:", round(float(t15_loss), 3))
+assert t15_losses[1] > t15_losses[0] and np.isclose(t15_loss, t15_losses.mean())
+
+plt.figure(figsize=(4.5, 3))
+plt.bar(["row0", "row1", "row2"], t15_losses, color=["green", "red", "orange"])
+plt.ylabel("-log diagonal prob"); plt.title("harder rows have larger loss"); plt.show()
+""")
+md("▶ What you'll see: row 1 has an extra high off-diagonal score, so its diagonal probability is "
+   "lower and its loss is higher.")
+
+md(r"""
+## ✍️ Toy 16 · one InfoNCE update pushes away a hard negative
+
+For one query, the softmax gradient points toward the probability-weighted average item minus the
+positive item. A small update increases the positive-vs-hard-negative gap.
+""")
+code(r"""
+t16_q = np.array([1., 0.])                                                     # -> current query vector
+t16_items = np.array([[1.,0.], [.8,.6]])                                      # -> positive then hard negative
+t16_scores = t16_items @ t16_q                                                 # -> [1.0,0.8]
+t16_p = np.exp(t16_scores - t16_scores.max())                                 # -> [1.000,0.819]
+t16_p = t16_p / t16_p.sum()                                                    # -> [0.550,0.450]
+t16_grad = t16_p @ t16_items - t16_items[0]                                   # -> [-0.090,0.270]
+t16_lr = .5                                                                    # -> small learning rate
+t16_q_new = t16_q - t16_lr * t16_grad                                         # -> [1.045,-0.135]
+t16_q_new = t16_q_new / np.linalg.norm(t16_q_new)                             # -> [0.992,-0.128]
+t16_new_scores = t16_items @ t16_q_new                                        # -> [0.992,0.717]
+t16_gap_before = t16_scores[0] - t16_scores[1]                                # -> 0.200
+t16_gap_after = t16_new_scores[0] - t16_new_scores[1]                         # -> 0.275
+print("old scores [positive, hard neg]:", np.round(t16_scores, 3).tolist())
+print("softmax probabilities:", np.round(t16_p, 3).tolist())
+print("gradient wrt query:", np.round(t16_grad, 3).tolist())
+print("updated query:", np.round(t16_q_new, 3).tolist())
+print("new scores [positive, hard neg]:", np.round(t16_new_scores, 3).tolist())
+print("score gap before:", round(float(t16_gap_before), 3), "after:", round(float(t16_gap_after), 3))
+assert t16_gap_after > t16_gap_before
+
+plt.figure(figsize=(4.5, 3))
+plt.bar(["before gap", "after gap"], [t16_gap_before, t16_gap_after], color=["gray", "green"])
+plt.ylabel("positive score - hard negative score"); plt.title("one update widens the contrastive gap"); plt.show()
+""")
+md("▶ What you'll see: the hard negative gets enough probability to create a gradient, and one "
+   "small update widens the positive-minus-negative score gap.")
+
+md(r"""
+## ✍️ Toy 17 · alignment and uniformity catch representation collapse
+
+Contrastive learning needs **alignment** (matched pairs close) and **uniformity** (all embeddings
+spread out). A collapsed space can align positives but has terrible uniformity.
+""")
+code(r"""
+t17_angles = np.linspace(0, 2*np.pi, 6, endpoint=False)                       # -> 6 directions around a circle
+t17_Q_good = np.c_[np.cos(t17_angles), np.sin(t17_angles)]                    # -> spread query embeddings
+t17_P_good = np.c_[np.cos(t17_angles + .15), np.sin(t17_angles + .15)]        # -> nearby positives
+t17_Q_bad = np.tile(np.array([[1., 0.]]), (6, 1))                             # -> collapsed queries
+t17_P_bad = np.tile(np.array([[.99, .01]]), (6, 1))                           # -> collapsed positives
+t17_P_bad = t17_P_bad / np.linalg.norm(t17_P_bad, axis=1, keepdims=True)      # -> unit collapsed positives
+t17_align_good = ((t17_Q_good - t17_P_good)**2).sum(1).mean()                 # -> small positive-pair distance
+t17_align_bad = ((t17_Q_bad - t17_P_bad)**2).sum(1).mean()                    # -> tiny positive-pair distance
+t17_all_good = np.vstack([t17_Q_good, t17_P_good])                            # -> 12 spread embeddings
+t17_all_bad = np.vstack([t17_Q_bad, t17_P_bad])                               # -> 12 collapsed embeddings
+t17_off_good = (t17_all_good @ t17_all_good.T)[~np.eye(12, dtype=bool)].mean() # -> low average off-diagonal cosine
+t17_off_bad = (t17_all_bad @ t17_all_bad.T)[~np.eye(12, dtype=bool)].mean()    # -> near 1.0 collapsed cosine
+print("good alignment distance:", round(float(t17_align_good), 3))
+print("collapsed alignment distance:", round(float(t17_align_bad), 6))
+print("good off-diagonal cosine mean:", round(float(t17_off_good), 3))
+print("collapsed off-diagonal cosine mean:", round(float(t17_off_bad), 3))
+assert t17_align_bad < t17_align_good and t17_off_bad > 0.99 and t17_off_good < 0.1
+
+plt.figure(figsize=(5, 3))
+plt.bar(["good\noffdiag cos", "collapsed\noffdiag cos"], [t17_off_good, t17_off_bad], color=["green", "red"])
+plt.ylabel("mean off-diagonal cosine"); plt.title("collapse = aligned but not uniform"); plt.show()
+""")
+md("▶ What you'll see: collapsed positives are close, but every vector also points the same way; "
+   "uniformity exposes the failure.")
+
+md(r"""
+## ✍️ Toy 18 · triplet margin loss
+
+Triplet loss is zero only when the positive score beats the negative score by at least the margin.
+Hard negatives close to the positive keep the loss positive.
+""")
+code(r"""
+t18_pos = 3.0                                                                  # -> positive score
+t18_negs = np.array([0.2, 2.8, 3.2])                                          # -> easy, hard, worse-than-positive negatives
+t18_margin = .5                                                                # -> required safety gap
+t18_raw = t18_margin + t18_negs - t18_pos                                     # -> [-2.3,0.3,0.7]
+t18_loss = np.maximum(0.0, t18_raw)                                           # -> [0.0,0.3,0.7]
+print("positive score:", t18_pos)
+print("negative scores:", t18_negs.tolist())
+print("margin + neg - pos:", np.round(t18_raw, 2).tolist())
+print("triplet losses:", np.round(t18_loss, 2).tolist())
+assert np.allclose(t18_loss, [0.0, 0.3, 0.7])
+
+plt.figure(figsize=(5, 3))
+plt.bar(["easy", "hard", "too high"], t18_loss, color=["gray", "orange", "red"])
+plt.ylabel("triplet loss"); plt.title("only close/high negatives create loss"); plt.show()
+""")
+md("▶ What you'll see: the easy negative has zero loss, while the hard negative still violates the "
+   "margin and therefore creates training pressure.")
+
+md(r"""
+## ✍️ Toy 19 · a hard negative steals softmax probability
+
+In a softmax, a high-scoring negative puts a large term in the denominator. That lowers the
+positive probability and raises the loss.
+""")
+code(r"""
+t19_with_scores = np.array([3.0, 0.2, 2.8])                                  # -> positive, easy neg, hard neg
+t19_without_scores = np.array([3.0, 0.2])                                     # -> positive, easy neg only
+t19_with_exp = np.exp(t19_with_scores - t19_with_scores.max())                # -> exponentials with hard neg
+t19_without_exp = np.exp(t19_without_scores - t19_without_scores.max())       # -> exponentials without hard neg
+t19_with_p = t19_with_exp / t19_with_exp.sum()                                # -> [0.532,0.032,0.436]
+t19_without_p = t19_without_exp / t19_without_exp.sum()                       # -> [0.943,0.057]
+t19_with_loss = -np.log(t19_with_p[0])                                        # -> 0.632
+t19_without_loss = -np.log(t19_without_p[0])                                  # -> 0.059
+print("scores WITH hard:", t19_with_scores.tolist())
+print("probabilities WITH hard:", np.round(t19_with_p, 3).tolist(), "loss", round(float(t19_with_loss), 3))
+print("scores WITHOUT hard:", t19_without_scores.tolist())
+print("probabilities WITHOUT hard:", np.round(t19_without_p, 3).tolist(), "loss", round(float(t19_without_loss), 3))
+assert t19_with_p[0] < t19_without_p[0] and t19_with_loss > t19_without_loss
+
+plt.figure(figsize=(5, 3))
+plt.bar(["positive", "easy neg", "hard neg"], t19_with_p, color=["green", "gray", "red"])
+plt.ylabel("softmax probability"); plt.title("hard negative competes in the denominator"); plt.show()
+""")
+md("▶ What you'll see: adding the hard negative drops the positive probability from about `0.94` "
+   "to about `0.53`, keeping the loss and gradient high.")
+
+md(r"""
+## ✍️ Toy 20 · mine hard negatives by retrieving top non-positives
+
+Mining starts with the current model: score the corpus, rank it, remove the labeled positive, and
+keep high-ranked non-positives as candidate hard negatives.
+""")
+code(r"""
+t20_q = np.array([1., 0.])                                                     # -> one query embedding
+t20_corp = np.array([[1.,0.], [.95,.1], [.8,.6], [0.,1.], [-1.,0.], [-.2,-1.]]) # -> 6 corpus embeddings
+t20_corp = t20_corp / np.linalg.norm(t20_corp, axis=1, keepdims=True)          # -> normalized corpus
+t20_pos_id = 0                                                                 # -> labeled positive id
+t20_scores = t20_corp @ t20_q                                                  # -> cosine retrieval scores
+t20_ranked = np.argsort(-t20_scores)                                           # -> [0,1,2,3,5,4]
+t20_candidates = [int(t20_r) for t20_r in t20_ranked[:4] if t20_r != t20_pos_id] # -> [1,2,3]
+print("scores:", np.round(t20_scores, 3).tolist())
+print("ranked ids:", t20_ranked.tolist())
+print("labeled positive:", t20_pos_id)
+print("top non-positives kept as candidate hard negatives:", t20_candidates)
+assert t20_candidates == [1, 2, 3]
+
+plt.figure(figsize=(5, 3))
+plt.bar(range(6), t20_scores, color=["green" if t20_j == t20_pos_id else ("red" if t20_j in t20_candidates else "gray") for t20_j in range(6)])
+plt.xlabel("corpus id"); plt.ylabel("current-model score"); plt.title("mine top-ranked non-positives"); plt.show()
+""")
+md("▶ What you'll see: ids 1, 2, and 3 are not labeled positive but rank near the top, so they are "
+   "candidate hard negatives.")
+
+md(r"""
+## ✍️ Toy 21 · filter likely false negatives with a margin
+
+Some mined candidates score almost the same as the positive; they may be unlabeled true matches.
+The margin rule drops candidates within `margin` of the positive score.
+""")
+code(r"""
+t21_ids = np.array([1, 2, 3, 4, 5])                                           # -> mined non-positive ids
+t21_scores = np.array([.99, .86, .60, .20, -.10])                             # -> candidate scores
+t21_pos_score = 1.00                                                           # -> labeled positive score
+t21_margin = .05                                                               # -> false-negative safety margin
+t21_threshold = t21_pos_score - t21_margin                                    # -> 0.95
+t21_drop_mask = t21_scores >= t21_threshold                                   # -> [True,False,False,False,False]
+t21_dropped = t21_ids[t21_drop_mask].tolist()                                 # -> [1]
+t21_kept = t21_ids[~t21_drop_mask].tolist()                                   # -> [2,3,4,5]
+print("positive score:", t21_pos_score, "margin:", t21_margin, "threshold:", t21_threshold)
+print("candidate ids:", t21_ids.tolist())
+print("candidate scores:", t21_scores.tolist())
+print("dropped as false-negative risk:", t21_dropped)
+print("kept hard negatives:", t21_kept)
+assert t21_dropped == [1] and t21_kept == [2, 3, 4, 5]
+
+plt.figure(figsize=(5, 3))
+plt.bar(t21_ids, t21_scores, color=["gold" if t21_j in t21_dropped else "red" for t21_j in t21_ids])
+plt.axhline(t21_threshold, color="black", ls="--", label="drop threshold")
+plt.xlabel("candidate id"); plt.ylabel("score"); plt.legend(); plt.title("filter candidates too close to the positive"); plt.show()
+""")
+md("▶ What you'll see: candidate 1 is so close to the positive that it is dropped, while lower "
+   "scoring candidates are kept as safer hard negatives.")
+
+md(r"""
+## ✍️ Toy 22 · hard-negative training improves fine-grained recall
+
+Easy negatives separate broad topics, but hard negatives sharpen within-topic distinctions. Compare
+two tiny score matrices with recall@1 and recall@3.
+""")
+code(r"""
+t22_easy = np.array([[.80,.70,.10,0,0,0], [.75,.70,.10,0,0,0], [0,0,.60,.65,.20,0], [0,0,.62,.70,.10,0], [0,0,0,0,.55,.60], [0,0,0,0,.58,.62]]) # -> some within-topic swaps
+t22_hard = np.array([[.90,.50,.10,0,0,0], [.45,.88,.10,0,0,0], [0,0,.87,.50,.20,0], [0,0,.40,.86,.10,0], [0,0,0,0,.84,.40], [0,0,0,0,.35,.83]]) # -> diagonals sharpened
+def t22_recall_at(t22_S, t22_k):
+    t22_hits = [t22_i in np.argsort(-t22_S[t22_i])[:t22_k] for t22_i in range(6)] # -> one hit flag per query
+    print(f"  hit flags @ {t22_k}:", t22_hits)
+    return float(np.mean(t22_hits))
+t22_easy_r1 = t22_recall_at(t22_easy, 1)                                      # -> 0.500
+t22_hard_r1 = t22_recall_at(t22_hard, 1)                                      # -> 1.000
+t22_easy_r3 = t22_recall_at(t22_easy, 3)                                      # -> 1.000
+t22_hard_r3 = t22_recall_at(t22_hard, 3)                                      # -> 1.000
+print("easy-neg score matrix:\n", t22_easy)
+print("hard-neg score matrix:\n", t22_hard)
+print("recall@1 easy vs hard:", t22_easy_r1, t22_hard_r1)
+print("recall@3 easy vs hard:", t22_easy_r3, t22_hard_r3)
+assert t22_easy_r1 == 0.5 and t22_hard_r1 == 1.0 and t22_easy_r3 == 1.0
+
+plt.figure(figsize=(5, 3))
+plt.bar(["easy r@1", "hard r@1", "easy r@3", "hard r@3"], [t22_easy_r1, t22_hard_r1, t22_easy_r3, t22_hard_r3], color=["gray","green","gray","green"])
+plt.ylim(0, 1.05); plt.ylabel("recall"); plt.title("hard negatives fix the fine top-1 mistakes"); plt.show()
+""")
+md("▶ What you'll see: recall@3 was already perfect, but hard-negative training fixes the close "
+   "within-topic swaps and lifts recall@1 from `0.5` to `1.0`.")
+
+md(r"""
+## ✍️ Toy 23 · fine-tuning rounds reshape the vectors
+
+Fine-tuning starts from a pretrained space, then repeated hard-negative rounds move positives
+closer to the query and hard negatives farther away.
+""")
+code(r"""
+t23_q = np.array([1., 0.])                                                     # -> fixed query direction for the trace
+t23_p0 = np.array([.8, .6])                                                     # -> positive initially okay
+t23_h0 = np.array([.9, .436])                                                   # -> hard negative initially scores higher
+t23_p0 = t23_p0 / np.linalg.norm(t23_p0)                                       # -> [0.800,0.600]
+t23_h0 = t23_h0 / np.linalg.norm(t23_h0)                                       # -> [0.900,0.436]
+t23_p1 = t23_p0 + .5 * t23_q                                                   # -> pull positive toward query
+t23_h1 = t23_h0 - .5 * t23_q                                                   # -> push hard negative away from query
+t23_p1 = t23_p1 / np.linalg.norm(t23_p1)                                      # -> [0.908,0.419]
+t23_h1 = t23_h1 / np.linalg.norm(t23_h1)                                      # -> [0.676,0.737]
+t23_p2 = t23_p1 + .5 * t23_q                                                   # -> second positive pull
+t23_h2 = t23_h1 - .5 * t23_q                                                   # -> second hard-negative push
+t23_p2 = t23_p2 / np.linalg.norm(t23_p2)                                      # -> [0.958,0.285]
+t23_h2 = t23_h2 / np.linalg.norm(t23_h2)                                      # -> [0.232,0.973]
+t23_pos_scores = np.array([t23_q @ t23_p0, t23_q @ t23_p1, t23_q @ t23_p2])   # -> [0.800,0.908,0.958]
+t23_hard_scores = np.array([t23_q @ t23_h0, t23_q @ t23_h1, t23_q @ t23_h2])  # -> [0.900,0.676,0.232]
+print("positive vectors by round:\n", np.round(np.vstack([t23_p0, t23_p1, t23_p2]), 3))
+print("hard-negative vectors by round:\n", np.round(np.vstack([t23_h0, t23_h1, t23_h2]), 3))
+print("positive scores:", np.round(t23_pos_scores, 3).tolist())
+print("hard-negative scores:", np.round(t23_hard_scores, 3).tolist())
+print("score gaps:", np.round(t23_pos_scores - t23_hard_scores, 3).tolist())
+assert t23_pos_scores[-1] > t23_pos_scores[0] and t23_hard_scores[-1] < t23_hard_scores[0]
+
+plt.figure(figsize=(5, 3))
+plt.plot([0,1,2], t23_pos_scores, "o-", color="green", label="positive")
+plt.plot([0,1,2], t23_hard_scores, "o-", color="red", label="hard negative")
+plt.xlabel("fine-tuning round"); plt.ylabel("score to query"); plt.legend(); plt.title("rounds increase positive-vs-hard gap"); plt.show()
+""")
+md("▶ What you'll see: the positive score rises while the hard-negative score falls across rounds, "
+   "mimicking the geometry change in the fine-tuning loop.")
+
+md(r"""
+## ✍️ Toy 24 · nDCG rewards relevant items near the top
+
+Recall asks whether relevant items appeared; **nDCG** also rewards putting high-relevance items
+early by discounting lower ranks with `1/log2(rank+1)`.
+""")
+code(r"""
+t24_ranked = ["d1", "d2", "d3", "d4", "d5", "d6"]                            # -> model ranking
+t24_rel = np.array([0., 2., 0., 1., 0., 1.])                                  # -> graded relevance in that order
+t24_discount = 1 / np.log2(np.arange(2, 8))                                   # -> [1.000,0.631,0.500,0.431,0.387,0.356]
+t24_gain = t24_rel * t24_discount                                             # -> discounted gains
+t24_dcg = t24_gain.sum()                                                       # -> 2.049
+t24_ideal_rel = np.sort(t24_rel)[::-1]                                        # -> [2,1,1,0,0,0]
+t24_idcg = (t24_ideal_rel * t24_discount).sum()                               # -> 3.131
+t24_ndcg = t24_dcg / t24_idcg                                                  # -> 0.654
+print("ranking:", t24_ranked)
+print("relevance:", t24_rel.astype(int).tolist())
+print("discounts:", np.round(t24_discount, 3).tolist())
+print("discounted gains:", np.round(t24_gain, 3).tolist())
+print("DCG:", round(float(t24_dcg), 3))
+print("ideal relevance:", t24_ideal_rel.astype(int).tolist(), "IDCG:", round(float(t24_idcg), 3))
+print("nDCG:", round(float(t24_ndcg), 3))
+assert np.isclose(t24_ndcg, 0.654, atol=0.001)
+
+plt.figure(figsize=(4.5, 3))
+plt.bar(["DCG", "IDCG"], [t24_dcg, t24_idcg], color=["blue", "green"])
+plt.ylabel("discounted gain"); plt.title("nDCG = DCG / ideal DCG"); plt.show()
+""")
+md("▶ What you'll see: the best item is at rank 2, so DCG is below the ideal ordering; nDCG is the "
+   "normalized ratio, about `0.654`.")
+
 # =================================================================== PART A
 md("---\n# Part A · Encoders & the contrastive objective")
 
