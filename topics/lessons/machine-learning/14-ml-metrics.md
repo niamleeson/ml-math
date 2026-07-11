@@ -2,7 +2,7 @@
 > **Source:** CS 229 · **Category:** Metric · **Type:** 💻 Colab · [↑ Full reference](../../ai-ml-cheatsheets.md)
 > 📓 This section is written as a runnable notebook; an `.ipynb` will be generated from it. [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](#)
 
-## 0. 🧸 Toy Example — Step-by-Step Worked Example (Start Here, Beginner Friendly)
+## 0. ✍️ Toy Example — Step-by-Step Worked Example (Start Here, Beginner Friendly)
 
 > 🧑‍🎓 **New to this topic? Start here.** This is a gentle, fully runnable walkthrough that
 > builds up *every* idea in this lesson one tiny step at a time. Each step **prints** the

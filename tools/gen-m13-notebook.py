@@ -82,7 +82,7 @@ def recall_of(fn, k=20): return float(np.mean([len(exact_topk(q, k) & fn(q, k)) 
 print(f"{N} items x {DIM} numbers  |  {len(Q)} queries  |  {DIM*4} bytes per vector")
 """)
 
-md("---\n# Part 0 · 🧸 Toy Examples — trace each mechanic by hand")
+md("---\n# Part 0 · ✍️ Toy Examples — trace each mechanic by hand")
 
 md(r"""
 Before the full pipeline, here is **one tiny, hand-traceable toy example for every mechanic** in
@@ -93,7 +93,7 @@ at-scale versions follow in Parts A–G.
 """)
 
 md(r"""
-## 🧸 Toy 1 · exact top-k by hand (the baseline every method approximates)
+## ✍️ Toy 1 · exact top-k by hand (the baseline every method approximates)
 
 **Exact search** = measure the distance from the query to *every* item, sort, and keep the `k`
 smallest. That's the CORRECT answer ANN tries to reproduce cheaply — and the thing recall@k
@@ -123,7 +123,7 @@ md("▶ What you'll see: distances to all 6 items, then the exact top-3 `[3, 4, 
    "tries to return this set while touching far fewer than all N items. Step 2 shows why that matters at scale.")
 
 md(r"""
-## 🧸 Toy 2 · recall@k by hand (the accuracy score)
+## ✍️ Toy 2 · recall@k by hand (the accuracy score)
 
 **recall@k = (of the true top-k, how many did the method return) / k.** 1.0 = found them all.
 Traced on a tiny 6-item example (item IDs), so you can check every fraction by hand.
@@ -145,7 +145,7 @@ print("\nhigher recall = fewer misses. every method below is scored this way.")
 """)
 
 md(r"""
-## 🧸 Toy 3 · IVF assign & probe by hand
+## ✍️ Toy 3 · IVF assign & probe by hand
 
 Before the visual version, do IVF on **6 points** by hand. **Assign** each item to its nearest
 **cell center**; at query time, **probe** only the nearest cell and scan just its members —
@@ -174,7 +174,7 @@ md("▶ What you'll see: items split `[0 0 0 1 1 1]`; the query probes cell 1 an
    "3,4,5 — half the corpus skipped. Steps 4–6 scale this up on more points.")
 
 md(r"""
-## 🧸 Toy 4 · PQ codebook build by hand (make the crayon box)
+## ✍️ Toy 4 · PQ codebook build by hand (make the crayon box)
 
 Before you can *encode* (Toy 5), you must **build the codebook** — the set of representative
 "crayons." For one subspace that's just **k-means over the sub-vectors**: each codeword becomes the
@@ -201,7 +201,7 @@ md("▶ What you'll see: the 2 codewords settle to the clump averages `[1.33,1.3
    "in one pass. Step 8 does this per subspace with `k=256` codewords.")
 
 md(r"""
-## 🧸 Toy 5 · encode ONE vector by hand (before the real thing)
+## ✍️ Toy 5 · encode ONE vector by hand (before the real thing)
 
 Before we PQ the whole dataset, let's do **one** vector with tiny numbers you can trace by hand.
 PQ = **split** the vector into `m` chunks → each chunk has its own **codebook** of `k` codewords
@@ -245,7 +245,7 @@ md("▶ What you'll see: distances `[15, 1, 45, 7]` and `[243, 93, 1, 7]` → ne
    "quantization error 1.41). Below, Step 7 does exactly this at scale with `m=8`, `k=256`.")
 
 md(r"""
-## 🧸 Toy 6 · residual encoding by hand
+## ✍️ Toy 6 · residual encoding by hand
 
 Before doing it at scale, see *why* residuals help. Take one item and its cell **centroid**;
 the **residual** `r = item − centroid` is what's left after IVF already told us roughly where the
@@ -269,7 +269,7 @@ md("▶ What you'll see: the item has norm ~16.6 but its residual only ~1.1 — 
    "residual is why IVF-PQ is far more accurate than plain PQ for the same bytes.")
 
 md(r"""
-## 🧸 Toy 7 · ADC by hand (score without decompressing)
+## ✍️ Toy 7 · ADC by hand (score without decompressing)
 
 This is the speed trick, by hand. For a query, **precompute a table** of the distance from each
 query **chunk** to each **codeword** (done once). Then any stored item's distance is just a few
@@ -306,7 +306,7 @@ md("▶ What you'll see: two small tables, then item `(3,1)`'s distance = `LUT_A
    "12 does this over the whole probed cell.")
 
 md(r"""
-## 🧸 Toy 8 · greedy graph walk by hand
+## ✍️ Toy 8 · greedy graph walk by hand
 
 HNSW **walks a graph** toward the query: from where you are, hop to the neighbor **closest to the
 query**; stop when no neighbor is closer. Trace it on a 5-node line graph where each node knows
@@ -341,7 +341,7 @@ md("▶ What you'll see: the walk `[0,1,2,3,4]` with distance dropping every hop
    "it reaches the query's nearest node. Steps 14–18 add the layers and the real insertion rule.")
 
 md(r"""
-## 🧸 Toy 9 · HNSW layer assignment by hand (the "H")
+## ✍️ Toy 9 · HNSW layer assignment by hand (the "H")
 
 The **H** in HNSW is *Hierarchical*: each node gets a **top layer** from
 `level = floor(-ln(u) · mL)` with `mL = 1/ln(M)` and `u` uniform in (0,1]. Big draws are rare, so
@@ -367,7 +367,7 @@ md("▶ What you'll see: only tiny `u` reach high layers, so the counts shrink e
    "(`~3500, ~450, ~40, ~8`). That pyramid is what Step 15 builds — the upper layers are long-range highways.")
 
 md(r"""
-## 🧸 Toy 10 · HNSW neighbor heuristic by hand (Algorithm 4)
+## ✍️ Toy 10 · HNSW neighbor heuristic by hand (Algorithm 4)
 
 When wiring a new node, HNSW does **not** just keep the `M` nearest candidates — that clusters all
 your links in one direction. The heuristic keeps a candidate only if it is **closer to the new node
@@ -402,7 +402,7 @@ md("▶ What you'll see: candidate 2 is dropped because it sits nearer to the ke
    "base — a redundant twin — leaving the diverse set `[1, 4, 3]`. Step 16 applies this exact rule.")
 
 md(r"""
-## 🧸 Toy 11 · why parallel error hurts MIPS (by hand)
+## ✍️ Toy 11 · why parallel error hurts MIPS (by hand)
 
 ScaNN's insight: when you rank by **inner product** (MIPS), a quantization error **along** the
 data vector (parallel) distorts the score, but an error **perpendicular** (orthogonal) barely
@@ -438,7 +438,7 @@ md("▶ What you'll see: total error splits into parallel `[-0.4, 0]` and orthog
    "that penalizes parallel error more.")
 
 md(r"""
-## 🧸 Toy 12 · ScaNN η-weighted assignment by hand (the decision flip)
+## ✍️ Toy 12 · ScaNN η-weighted assignment by hand (the decision flip)
 
 Toy 11 showed *why* parallel error hurts MIPS. Here is the actual **decision**: given one vector and
 two candidate codewords, plain k-means picks the one with smaller **total** error, but the
@@ -476,7 +476,7 @@ md("▶ What you'll see: plain loss favours A (total 0.09 < 0.16) but anisotropi
    "error is orthogonal (harmless to MIPS) while A's is parallel. Step 20 runs this over the corpus.")
 
 md(r"""
-## 🧸 Toy 13 · hybrid dense + lexical by hand (keyword pins the exact item)
+## ✍️ Toy 13 · hybrid dense + lexical by hand (keyword pins the exact item)
 
 Dense vectors capture *meaning* but can miss an **exact** token (a SKU, a rare name). Hybrid search
 **adds a keyword-match bonus** to the dense score. On an exact-SKU query, dense alone ranks the right
