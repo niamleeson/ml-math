@@ -236,94 +236,224 @@ md(r"""
 ---
 # Part B · LoRA makes fine-tuning cheaper
 
-## Step 6 Toy example · LoRA trainable parameter count
+## Step 6a Toy example · Why PEFT/LoRA exists
 
-**LoRA** means **Low-Rank Adaptation**. Instead of training a huge `1000 × 1000` weight, keep that weight frozen and train two skinny matrices. The lesson count is:
+**PEFT** means **parameter-efficient fine-tuning**: adapt a model while training only a small number of new parameters.
 
-`A(1000×8) + B(8×1000) = 16,000` trainable numbers, versus `1,000,000` full weights.
+Why this matters:
+
+- Full fine-tuning must store a **gradient + optimizer state** for **every** weight.
+- Full fine-tuning must save a full adapted model copy per task.
+- LoRA's key insight: many useful task **adaptations** have low intrinsic **rank**, so the update can be forced into a tiny subspace.
+
+Definitions:
+
+- **Freeze** = keep a weight fixed; do not update it during training.
+- **Rank** = how many independent directions a matrix update can express.
+- **Outer product** = one column times one row; for example `[1, 2]^T @ [3, 4] = [[3, 4], [6, 8]]`.
+""")
+
+md(r"""
+## Step 6b Toy example · Frozen pretrained layer
+
+Start with one tiny pretrained layer. The layer weight `W` stays **FROZEN**. A full fine-tune would train a free `3 × 3` update matrix `ΔW`, which is `9` trainable numbers in this toy layer.
 """)
 code(r"""
-full_params = 1000 * 1000
-lora_params = 1000 * 8 + 8 * 1000
-ratio = lora_params / full_params
-log("full weight params", full_params)
-log("LoRA params = 1000*8 + 8*1000", lora_params)
-log("LoRA ratio", f"{ratio:.3f} = {100*ratio:.1f}%")
-assert abs(ratio - 0.016) < 1e-12
+W_lora = np.array([[2.0, 0.0, 1.0],
+                   [0.0, 3.0, 0.0],
+                   [1.0, 0.0, 2.0]])
+x_lora = np.array([1.0, 2.0, 1.0])
+y_base = W_lora @ x_lora
+W_lora_before_training = W_lora.copy()
 
-plt.bar(["full trainable W", "LoRA trainable A+B"], [full_params, lora_params], color=["#de2d26", "#756bb1"])
+log("W frozen", W_lora.astype(int).tolist())
+log("x", x_lora.astype(int).tolist())
+log("y = W @ x", y_base.astype(int).tolist())
+log("full fine-tune delta params", "3*3 = 9 free trainable numbers")
+log("LoRA promise", "W stays frozen; only small adapter matrices train")
+assert np.allclose(y_base, [3.0, 6.0, 3.0])
+assert np.allclose(W_lora, [[2, 0, 1], [0, 3, 0], [1, 0, 2]])
+""")
+
+md(r"""
+## Step 6c Toy example · LoRA factorizes the update
+
+LoRA does not train a free full-size `ΔW`. It trains two skinny matrices and builds
+
+`delta_W = (alpha/r) * B @ A`
+
+Here `r = 1`, `alpha = 2`, so `scale = alpha/r = 2`. Matrix `A` is the down-projection into the rank-1 adapter space, and `B` is the up-projection back to the layer's output size.
+""")
+code(r"""
+r_lora = 1
+alpha_lora = 2.0
+scale_lora = alpha_lora / r_lora
+A_lora = np.array([[0.5, 1.0, -0.5]])      # 1 x 3 down-projection
+B_lora = np.array([[1.0], [0.0], [2.0]])   # 3 x 1 up-projection
+
+BA_lora = B_lora @ A_lora
+delta_W_lora = scale_lora * BA_lora
+W_effective_lora = W_lora + delta_W_lora
+y_bigmatrix = W_effective_lora @ x_lora
+
+log("rank r", r_lora)
+log("alpha", alpha_lora)
+log("scale = alpha/r", scale_lora)
+log("A down-projection shape", A_lora.shape)
+log("A", A_lora.tolist())
+log("B up-projection shape", B_lora.shape)
+log("B", B_lora.tolist())
+log("B @ A rank-1 outer product", BA_lora.tolist())
+log("delta_W = scale * B @ A", delta_W_lora.astype(int).tolist())
+log("W_eff = W + delta_W", W_effective_lora.astype(int).tolist())
+log("y' = W_eff @ x", y_bigmatrix.astype(int).tolist())
+assert np.allclose(BA_lora, [[0.5, 1.0, -0.5], [0.0, 0.0, 0.0], [1.0, 2.0, -1.0]])
+assert np.allclose(delta_W_lora, [[1.0, 2.0, -1.0], [0.0, 0.0, 0.0], [2.0, 4.0, -2.0]])
+assert np.allclose(W_effective_lora, [[3.0, 2.0, 0.0], [0.0, 3.0, 0.0], [3.0, 4.0, 0.0]])
+assert np.allclose(y_bigmatrix, [7.0, 6.0, 11.0])
+assert np.linalg.matrix_rank(BA_lora) == 1
+
+fig, axes = plt.subplots(1, 3, figsize=(9, 3))
+for ax, mat, title in zip(axes, [BA_lora, delta_W_lora, W_effective_lora], ["B @ A", "delta_W", "W_eff"]):
+    im = ax.imshow(mat, cmap="coolwarm", vmin=-2, vmax=4)
+    ax.set_title(title)
+    ax.set_xticks(range(3)); ax.set_yticks(range(3))
+    for i in range(mat.shape[0]):
+        for j in range(mat.shape[1]):
+            ax.text(j, i, f"{mat[i,j]:.1f}", ha="center", va="center")
+fig.suptitle("Toy example — LoRA builds a structured low-rank update")
+plt.colorbar(im, ax=axes.ravel().tolist(), fraction=0.046)
+plt.show()
+""")
+
+md(r"""
+## Step 6d Toy example · Efficient path without building the big matrix
+
+At training or serving time, LoRA can compute the same output as:
+
+`y' = W @ x + scale * B @ (A @ x)`
+
+Read it left to right: squeeze the input down to `r` dimensions, expand it back, then add the frozen layer output. The extra cost is roughly proportional to the small rank `r`.
+""")
+code(r"""
+Ax_lora = A_lora @ x_lora
+ax_scalar = float(Ax_lora[0])
+adapter_delta_efficient = scale_lora * (B_lora @ Ax_lora)
+y_efficient = y_base + adapter_delta_efficient
+
+log("frozen path W @ x", y_base.astype(int).tolist())
+log("A @ x", Ax_lora.tolist())
+log("Ax as scalar", ax_scalar)
+log("scale * B @ (A @ x)", adapter_delta_efficient.astype(int).tolist())
+log("efficient y'", y_efficient.astype(int).tolist())
+log("big-matrix y'", y_bigmatrix.astype(int).tolist())
+assert np.allclose(Ax_lora, [2.0])
+assert np.allclose(adapter_delta_efficient, [4.0, 0.0, 8.0])
+assert np.allclose(y_efficient, y_bigmatrix)
+""")
+
+md(r"""
+## Step 6e Toy example · Parameter count savings
+
+For a `d × k` layer, full fine-tuning a free update costs `d*k` parameters. LoRA with rank `r` costs `r*(d+k)` parameters because it stores `A` and `B` instead of a full `delta_W`.
+""")
+code(r"""
+full_delta_toy = W_lora.size
+lora_params_toy = A_lora.size + B_lora.size
+log("toy full delta_W params", full_delta_toy)
+log("toy LoRA(r=1) params = A + B", lora_params_toy)
+assert full_delta_toy == 9
+assert lora_params_toy == 6
+
+d = 1000
+k = 1000
+full_params = d * k
+ranks = [4, 8, 16]
+lora_params_by_rank = [r * (d + k) for r in ranks]
+percent_by_rank = [100 * p / full_params for p in lora_params_by_rank]
+log("formula full", "d*k")
+log("formula LoRA", "r*(d+k)")
+log("d=k=1000 full params", f"{full_params:,}")
+for r, params, pct in zip(ranks, lora_params_by_rank, percent_by_rank):
+    log(f"d=k=1000, r={r}", f"{params:,} params = {pct:.1f}%")
+assert lora_params_by_rank == [8000, 16000, 32000]
+assert np.allclose(percent_by_rank, [0.8, 1.6, 3.2])
+
+labels = ["full\ndelta W"] + [f"LoRA\nr={r}" for r in ranks]
+values = [full_params] + lora_params_by_rank
+plt.bar(labels, values, color=["#de2d26", "#bcbddc", "#756bb1", "#54278f"])
 plt.yscale("log")
 plt.ylabel("trainable parameters (log scale)")
-plt.title("Toy example — LoRA trains 1.6% as many parameters")
-for i, v in enumerate([full_params, lora_params]):
+plt.title("Toy example — LoRA keeps only tiny adapter matrices")
+for i, v in enumerate(values):
     plt.text(i, v * 1.25, f"{v:,}", ha="center")
 plt.show()
 """)
 
 md(r"""
-## Step 7 Toy example · LoRA's low-rank update matrix
+## Step 6f Toy example · Initialization starts as a no-op
 
-In this notebook we write the effective weight as:
-
-`W_effective = W_frozen + B @ A`
-
-The full matrix `B @ A` can be large, but it is made from skinny pieces, so it has low rank. Low rank means it can only move weights in a limited number of directions.
+A common LoRA trick is to initialize `B` to zeros. Then `B @ A = 0`, so the adapter initially changes nothing: `W_eff == W` and `y' == y`. This helps resist catastrophic forgetting at the start of training.
 """)
 code(r"""
-W_frozen_tiny = np.array([[1.0, 0.0, 0.0, 0.0],
-                          [0.0, 1.0, 0.0, 0.0],
-                          [0.0, 0.0, 1.0, 0.0]])
-A_tiny = np.array([[ 0.20, -0.10, 0.00, 0.10],
-                   [ 0.05,  0.10, 0.20, -0.05]])      # rank dimension x input
-B_tiny = np.array([[ 0.30, -0.20],
-                   [ 0.10,  0.40],
-                   [-0.20,  0.20]])                    # output x rank dimension
-lora_update = B_tiny @ A_tiny
-W_effective_tiny = W_frozen_tiny + lora_update
-log("A tiny shape", A_tiny.shape)
-log("B tiny shape", B_tiny.shape)
-log("B @ A low-rank update", np.round(lora_update, 3).tolist())
-log("W_effective = W_frozen + B@A", np.round(W_effective_tiny, 3).tolist())
-log("rank(B@A)", int(np.linalg.matrix_rank(lora_update)))
-assert np.linalg.matrix_rank(lora_update) <= 2
+B_init = np.zeros_like(B_lora)
+A_init = A_lora.copy()
+delta_W_init = scale_lora * (B_init @ A_init)
+W_eff_init = W_lora + delta_W_init
+y_init = W_eff_init @ x_lora
 
-fig, ax = plt.subplots()
-im = ax.imshow(lora_update, cmap="coolwarm")
-ax.set_title("Toy example — B @ A is a low-rank update")
-ax.set_xlabel("input dimension")
-ax.set_ylabel("output dimension")
-for i in range(lora_update.shape[0]):
-    for j in range(lora_update.shape[1]):
-        ax.text(j, i, f"{lora_update[i,j]:.2f}", ha="center", va="center")
-plt.colorbar(im, ax=ax, fraction=0.046)
-plt.show()
+log("B initialized to zeros", B_init.astype(int).tolist())
+log("delta_W at init", delta_W_init.astype(int).tolist())
+log("W_eff_init", W_eff_init.astype(int).tolist())
+log("y' at init", y_init.astype(int).tolist())
+log("original y", y_base.astype(int).tolist())
+assert np.allclose(delta_W_init, np.zeros_like(W_lora))
+assert np.allclose(W_eff_init, W_lora)
+assert np.allclose(y_init, y_base)
 """)
 
 md(r"""
-## Step 8 Toy example · LoRA changes the output without changing the frozen weight
+## Step 6g Toy example · One training step updates only A and B
 
-Good for: adapting a big model when you cannot afford full-FT.  
-Watch out for: LoRA still needs good data, and the rank is a capacity limit.
+Now hand-trace one gradient step. The frozen layer `W` does **not** move. Only `A` and `B` receive gradients.
 """)
 code(r"""
-x_lora = np.array([1.0, -1.0, 0.5, 2.0])
-base_out = W_frozen_tiny @ x_lora
-adapted_out = W_effective_tiny @ x_lora
-delta_out = adapted_out - base_out
-log("input x", x_lora.tolist())
-log("base output W_frozen @ x", np.round(base_out, 3).tolist())
-log("adapter delta (B@A) @ x", np.round(delta_out, 3).tolist())
-log("adapted output W_effective @ x", np.round(adapted_out, 3).tolist())
+g = np.array([1.0, 0.0, -1.0])
+ax = float((A_lora @ x_lora)[0])
+btg = float((B_lora.T @ g)[0])
+dB_lora = scale_lora * g.reshape(-1, 1) * ax
+dA_lora = scale_lora * btg * x_lora.reshape(1, -1)
+lr_lora = 0.1
+B_new = B_lora - lr_lora * dB_lora
+A_new = A_lora - lr_lora * dA_lora
 
-xs = np.arange(len(base_out))
-width = 0.35
-plt.bar(xs - width/2, base_out, width, label="frozen W", color="#9ecae1")
-plt.bar(xs + width/2, adapted_out, width, label="W + LoRA", color="#756bb1")
-plt.xticks(xs, [f"out{i}" for i in xs])
-plt.ylabel("output value")
-plt.title("Toy example — LoRA nudges the frozen layer's output")
-plt.legend()
-plt.show()
+log("g = dL/dy'", g.astype(int).tolist())
+log("A @ x scalar", ax)
+log("B.T @ g scalar", btg)
+log("dL/dB = scale*g*(Ax)", dB_lora.astype(int).ravel().tolist())
+log("dL/dA = scale*(B.T@g)*x", dA_lora.astype(int).ravel().tolist())
+log("learning rate", lr_lora)
+log("B_new", np.round(B_new.ravel(), 3).tolist())
+log("A_new", np.round(A_new.ravel(), 3).tolist())
+log("W after adapter step", W_lora.astype(int).tolist())
+assert np.allclose(dB_lora.ravel(), [4.0, 0.0, -4.0])
+assert np.allclose(dA_lora.ravel(), [-2.0, -4.0, -2.0])
+assert np.allclose(B_new.ravel(), [0.6, 0.0, 2.4])
+assert np.allclose(A_new.ravel(), [0.7, 1.4, -0.3])
+assert np.allclose(W_lora, W_lora_before_training)
+assert np.allclose(W_lora, [[2, 0, 1], [0, 3, 0], [1, 0, 2]])
+""")
+
+md(r"""
+## Step 6h Toy example · LoRA wrap-up notes
+
+- **MERGE at inference:** compute `W_eff = W + (alpha/r)BA` once, then the served model has zero added adapter latency.
+- **One base, many adapters:** keep one frozen pretrained model and swap tiny task adapters in and out.
+- **Typical placement:** LoRA is often placed on attention `Q` and `V` matrices.
+- **QLoRA:** keep the frozen base quantized, while training higher-precision adapters.
+
+Good for: cheap task adaptation, many task-specific variants, and smaller training memory.  
+Watch out for: rank too small can underfit, rank too large loses savings, `alpha` interacts with learning rate, and LoRA usually nudges behavior rather than adding brand-new knowledge from nowhere.
 """)
 
 # =================================================================== PART C
