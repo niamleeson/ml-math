@@ -22,6 +22,8 @@ Two sub-lessons:
 - **M19.1 The RAG pipeline** — retrieve, rerank, generate, measure recall, and check faithfulness.
 - **M19.2 Query understanding** — NL→structured intent/slots with confidence gates and fallback.
 
+<p class="cur-colab"><a class="cur-colab-btn" href="https://colab.research.google.com/github/niamleeson/ml-math/blob/main/afp/notebooks/M19-query-understanding.ipynb" target="_blank" rel="noopener">▶ Open the runnable RAG & query-understanding notebook (retrieve→augment→generate with grounding, plus NL→structured intent/slots, confidence scoring, and a low-confidence fallback) in Google Colab</a></p>
+
 ---
 
 ## M19.1 · The RAG pipeline

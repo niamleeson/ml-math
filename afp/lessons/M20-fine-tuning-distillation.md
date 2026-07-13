@@ -20,6 +20,8 @@ Two sub-lessons:
 - **M20.1 Fine-tune vs prompt vs distill + PEFT/LoRA** — choosing the adaptation tool.
 - **M20.2 Distillation & running a classifier** — teacher/student training and the classifier pipeline.
 
+<p class="cur-colab"><a class="cur-colab-btn" href="https://colab.research.google.com/github/niamleeson/ml-math/blob/main/afp/notebooks/M20-finetune-distillation.ipynb" target="_blank" rel="noopener">▶ Open the runnable fine-tuning & distillation notebook (head/LoRA fine-tune, temperature soft labels, the KL distillation loss, and the choose-and-run recipe) in Google Colab</a></p>
+
 ---
 
 ## M20.1 · Fine-tune vs prompt vs distill + PEFT/LoRA

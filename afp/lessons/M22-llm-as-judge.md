@@ -21,6 +21,8 @@ Two sub-lessons:
 - **M22.1 Designing a judge & measuring agreement** — rubric, human truth, and agreement metrics.
 - **M22.2 Detecting & correcting judge bias** — swap-order tests, bias numbers, debiasing, and calibration.
 
+<p class="cur-colab"><a class="cur-colab-btn" href="https://colab.research.google.com/github/niamleeson/ml-math/blob/main/afp/notebooks/M22-llm-as-judge.ipynb" target="_blank" rel="noopener">▶ Open the runnable LLM-as-judge notebook (rubric scoring, human-agreement / Cohen's kappa, position/verbosity/self-preference bias, and judge calibration) in Google Colab</a></p>
+
 ---
 
 ## M22.1 · Designing a judge & measuring agreement

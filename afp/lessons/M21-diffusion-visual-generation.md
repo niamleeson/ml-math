@@ -20,6 +20,8 @@ Two sub-lessons:
 - **M21.1 Forward & reverse diffusion** — the noise schedule and denoising target.
 - **M21.2 Conditioning, guidance & latent/text-to-image** — text control, CFG, latent diffusion, and video.
 
+<p class="cur-colab"><a class="cur-colab-btn" href="https://colab.research.google.com/github/niamleeson/ml-math/blob/main/afp/notebooks/M21-diffusion.ipynb" target="_blank" rel="noopener">▶ Open the runnable diffusion notebook (forward/reverse denoising, a tiny trained denoiser, conditioning, and classifier-free guidance) in Google Colab</a></p>
+
 ---
 
 ## M21.1 · Forward & reverse diffusion

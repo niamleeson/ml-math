@@ -20,6 +20,8 @@ Two sub-lessons:
 - **M17.1 Self-attention** — Q/K/V, scaled dot-product attention, and multi-head attention.
 - **M17.2 Transformer blocks and model families** — positions, masks, residual blocks, and encoder vs decoder choice.
 
+<p class="cur-colab"><a class="cur-colab-btn" href="https://colab.research.google.com/github/niamleeson/ml-math/blob/main/afp/notebooks/M17-transformers.ipynb" target="_blank" rel="noopener">▶ Open the runnable transformer notebook (self-attention by hand, causal mask, positional encoding, multi-head, FFN, and a tiny decoder-only generation loop) in Google Colab</a></p>
+
 ---
 
 ## M17.1 · Self-attention
