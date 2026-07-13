@@ -168,6 +168,57 @@ Gaussian noise `eps`. As `alpha_bar_t` shrinks, the original point matters less 
 more.
 """)
 
+md(r"""
+## Forward process · Toy example: WHY the one-shot shortcut is valid
+
+You might expect that reaching `x_t` requires adding noise `t` times in a row. It does not, because of
+**one fact: the variances of independent Gaussians add.** Add two independent noises with standard
+deviations 0.6 and 0.8 and you get a *single* Gaussian with std `sqrt(0.6^2 + 0.8^2) = 1.0`. Two random
+kicks merge into one.
+
+Compose two single steps (`x_t = sqrt(alpha_t) x_{t-1} + sqrt(1-alpha_t) eps_t`, and
+`alpha_bar_t = alpha_1 * ... * alpha_t`):
+
+`x_2 = sqrt(alpha_1 alpha_2) x_0 + [ sqrt(alpha_2(1-alpha_1)) eps_1 + sqrt(1-alpha_2) eps_2 ]`
+
+The bracket is two independent noises; their variances add to
+`alpha_2(1-alpha_1) + (1-alpha_2) = 1 - alpha_1 alpha_2`. So the bracket collapses to
+`sqrt(1-alpha_bar_2) eps`, and the signal coefficient is `sqrt(alpha_bar_2)` — exactly the shortcut. Below
+we check this both algebraically and with 20000 random draws.
+""")
+code(r"""
+# variances of independent Gaussians ADD -> two noise kicks become one
+a1, a2 = 0.9, 0.8                      # alpha_1, alpha_2 (fraction of signal kept each step)
+noise1_coef = np.sqrt(a2 * (1 - a1))   # coefficient on eps_1 after step 2
+noise2_coef = np.sqrt(1 - a2)          # coefficient on eps_2
+combined_std = np.sqrt(noise1_coef**2 + noise2_coef**2)   # variances add
+
+ab2 = a1 * a2                          # alpha_bar_2
+shortcut_noise_coef = np.sqrt(1 - ab2)
+shortcut_signal_coef = np.sqrt(ab2)
+
+log("noise-1 coef (on eps_1)", round(float(noise1_coef), 3))               # -> 0.283
+log("noise-2 coef (on eps_2)", round(float(noise2_coef), 3))               # -> 0.447
+log("combined std of the two noises", round(float(combined_std), 3))       # -> 0.529
+log("shortcut noise coef sqrt(1-alpha_bar_2)", round(float(shortcut_noise_coef), 3))   # -> 0.529
+log("shortcut signal coef sqrt(alpha_bar_2)", round(float(shortcut_signal_coef), 3))   # -> 0.849
+assert abs(combined_std - shortcut_noise_coef) < 1e-9
+
+# empirical check: adding noise twice matches the one-shot spread
+demo_rng = np.random.RandomState(0)
+n_samples_demo = 20000
+two_step = noise1_coef * demo_rng.normal(size=n_samples_demo) + noise2_coef * demo_rng.normal(size=n_samples_demo)
+one_shot = shortcut_noise_coef * demo_rng.normal(size=n_samples_demo)
+log("empirical std two-step", round(float(two_step.std()), 3))   # -> ~0.529
+log("empirical std one-shot", round(float(one_shot.std()), 3))   # -> ~0.529
+assert abs(two_step.std() - one_shot.std()) < 0.03
+
+plt.hist(two_step, bins=50, alpha=0.6, density=True, label="add noise twice")
+plt.hist(one_shot, bins=50, alpha=0.6, density=True, label="one-shot shortcut")
+plt.title("Two noise steps merge into one (independent variances add)")
+plt.legend(); plt.grid(True, alpha=0.25); plt.show()
+""")
+
 code(r"""
 T = 60
 beta = np.linspace(0.001, 0.12, T)
@@ -330,6 +381,38 @@ plt.legend(); equal_axes(plt.gca()); plt.show()
 """)
 
 md(r"""
+## Epsilon prediction · Toy example: predicting noise = pointing back to clean data (the "score")
+
+Why is "predict the noise" the right target? Because the noise direction is (up to a known scale) the
+**score** — the direction that increases data likelihood fastest. From the forward formula,
+`x_t - sqrt(alpha_bar_t) x_0 = sqrt(1-alpha_bar_t) eps`, calculus gives:
+
+`score = grad_x log p(x_t)  ≈  - eps / sqrt(1 - alpha_bar_t)`.
+
+The noise `eps` points *away* from clean data; `-eps` points back toward it. Denoising is just repeatedly
+stepping in the score direction (uphill in likelihood).
+""")
+code(r"""
+eps_hat_demo = np.array([0.5, -0.3])                 # a predicted noise vector
+t_score = 40
+sig_score = float(np.sqrt(1 - alpha_bar[t_score]))
+score_vec = -eps_hat_demo / sig_score                # score = -eps / sqrt(1-alpha_bar_t)
+log("predicted eps", eps_hat_demo.tolist())                       # -> [0.5, -0.3]
+log("sqrt(1-alpha_bar_t)", round(sig_score, 3))
+log("score = -eps/sqrt(1-alpha_bar_t)", np.round(score_vec, 3).tolist())
+log("reading", "score points OPPOSITE to eps -> back toward clean data")
+
+plt.quiver(0, 0, eps_hat_demo[0], eps_hat_demo[1], angles="xy", scale_units="xy", scale=1,
+           color="tab:red", label="eps (toward noise)")
+plt.quiver(0, 0, score_vec[0], score_vec[1], angles="xy", scale_units="xy", scale=1,
+           color="tab:green", label="score = -eps/... (toward clean)")
+lim = 1.2 * max(np.abs(score_vec).max(), np.abs(eps_hat_demo).max())
+plt.xlim(-lim, lim); plt.ylim(-lim, lim)
+plt.title("Epsilon and the score point in opposite directions")
+plt.legend(); equal_axes(plt.gca()); plt.show()
+""")
+
+md(r"""
 ## Time matters · Toy example
 
 The same coordinate value can mean different things at different timesteps. That is why `t` is part
@@ -346,6 +429,40 @@ plt.plot(show_t, signal, "o-", label="signal weight sqrt(alpha_bar)")
 plt.plot(show_t, noise, "o-", label="noise weight sqrt(1-alpha_bar)")
 plt.title("The timestep tells the denoiser how much signal/noise to expect")
 plt.xlabel("t"); plt.ylabel("weight"); plt.legend(); plt.grid(True, alpha=0.25); plt.show()
+""")
+
+md(r"""
+## Time matters · Toy example: turning the step number into a vector (sinusoidal embedding)
+
+You cannot feed the raw integer `t` (like 700) straight into a network and expect it to mean much. Real
+diffusion models expand `t` into a **sinusoidal timestep embedding** — the same positional-encoding trick
+transformers use for position (see M17). Each dimension is a sine or cosine at a different frequency:
+
+`emb(t)[2i] = sin(t / 10000^(2i/d))`,  `emb(t)[2i+1] = cos(t / 10000^(2i/d))`.
+
+Low frequencies change slowly across `t` (coarse "how far along am I"); high frequencies change fast (fine
+detail). Stacking them lets the network read the noise level at several scales. (Our tiny MLP above used a
+simpler 3-number version for speed; the mechanism is identical.)
+""")
+code(r"""
+def sinusoidal_time_embedding(t, d=8):
+    t = np.asarray(t, dtype=float).reshape(-1, 1)
+    i = np.arange(d // 2)
+    freqs = 1.0 / (10000.0 ** (2 * i / d))     # one frequency per sin/cos pair -> [1, 0.1, 0.01, 0.001]
+    ang = t * freqs
+    return np.concatenate([np.sin(ang), np.cos(ang)], axis=1)
+
+for t in [2, 40, 700]:
+    emb = sinusoidal_time_embedding([t], d=8)[0]
+    log(f"embed(t={t})", np.round(emb, 3).tolist())   # t=2 -> [0.909,0.199,0.02,0.002, -0.416,0.98,1.0,1.0]
+
+ts = np.arange(0, 1000)
+E = sinusoidal_time_embedding(ts, d=8)
+plt.figure(figsize=(8, 3.2))
+for k in range(E.shape[1]):
+    plt.plot(ts, E[:, k], alpha=0.8)
+plt.title("Sinusoidal timestep embedding: each curve = one dimension at a different frequency")
+plt.xlabel("timestep t"); plt.ylabel("value"); plt.grid(True, alpha=0.25); plt.show()
 """)
 
 # ------------------------------------------------------------------- training
@@ -475,6 +592,44 @@ plt.legend(); equal_axes(plt.gca()); plt.show()
 """)
 
 md(r"""
+## Reverse process · WHERE that update formula comes from (a blend, not magic)
+
+The reverse mean is a **weighted average of two things you already have**: the model's estimate of the
+clean point `x0_hat`, and where you currently are, `x_t`:
+
+`mean = a * x0_hat + b * x_t`,
+`a = sqrt(alpha_bar_{t-1}) * beta_t / (1 - alpha_bar_t)`,
+`b = sqrt(alpha_t) * (1 - alpha_bar_{t-1}) / (1 - alpha_bar_t)`.
+
+The compact DDPM update `mean = (1/sqrt(alpha_t)) (x_t - (beta_t/sqrt(1-alpha_bar_t)) eps_hat)` is *exactly*
+this blend once you substitute `x0_hat = (x_t - sqrt(1-alpha_bar_t) eps_hat)/sqrt(alpha_bar_t)`. Each step
+also adds a little noise of size `sigma_t = sqrt((1-alpha_bar_{t-1})/(1-alpha_bar_t) * beta_t)` (except the
+last step). Intuition: **guess the clean point, move partway there, sprinkle a little noise back.** Below we
+compute the mean both ways and confirm they match.
+""")
+code(r"""
+t_blend = 45
+x_blend = np.random.normal(size=(4, 2))
+eps_blend = denoiser.predict(make_uncond_features(x_blend, np.full(len(x_blend), t_blend)))
+
+a_t = alpha[t_blend]; b_t = beta[t_blend]; ab_t = alpha_bar[t_blend]; ab_prev = alpha_bar[t_blend - 1]
+x0_hat_blend = (x_blend - np.sqrt(1 - ab_t) * eps_blend) / np.sqrt(ab_t)   # estimate the clean point
+
+a_blend = np.sqrt(ab_prev) * b_t / (1 - ab_t)          # weight on x0_hat
+b_blend = np.sqrt(a_t) * (1 - ab_prev) / (1 - ab_t)    # weight on x_t
+mean_blend = a_blend * x0_hat_blend + b_blend * x_blend                    # blend form
+mean_compact = (x_blend - (b_t / np.sqrt(1 - ab_t)) * eps_blend) / np.sqrt(a_t)   # compact DDPM form
+sigma_t = np.sqrt((1 - ab_prev) / (1 - ab_t) * b_t)    # step noise size
+
+log("blend weights [a on x0_hat, b on x_t]", [round(float(a_blend), 3), round(float(b_blend), 3)])
+log("sigma_t (step noise size)", round(float(sigma_t), 4))
+log("mean via blend   (first row)", np.round(mean_blend[0], 4).tolist())
+log("mean via compact (first row)", np.round(mean_compact[0], 4).tolist())
+log("max abs difference between the two forms", float(np.abs(mean_blend - mean_compact).max()))  # -> ~0
+assert np.abs(mean_blend - mean_compact).max() < 1e-9
+""")
+
+md(r"""
 ## Reverse process · Toy example: sample step by step
 
 Now we repeat the reverse update from `t=59` down to `t=0`. The pictures show the same generated
@@ -543,6 +698,51 @@ for axt in ax:
 plt.tight_layout(); plt.show()
 """)
 
+md(r"""
+## Reverse process · Toy example: DDIM-style sampling in FEWER steps
+
+DDPM takes ~T sequential steps (slow — this is diffusion's main weakness). **DDIM** changes only the
+sampler (no retraining): it makes the reverse step **deterministic** (no added noise) and lets you **skip**
+timesteps. Each step: predict `x0_hat` from `eps_hat`, then re-noise *directly* to the next chosen timestep
+with the forward formula. Below we sample in 12 steps instead of T and compare.
+
+**Good for:** fast sampling and reproducible outputs (same start noise -> same sample).
+
+**Watch out for:** fully deterministic sampling reduces variety; too few steps lowers quality.
+""")
+code(r"""
+def sample_ddim(model, n=240, num_steps=12, seed=3):
+    rng = np.random.RandomState(seed)
+    x = rng.normal(size=(n, 2))
+    step_ts = np.linspace(T - 1, 0, num_steps + 1).round().astype(int)   # short, evenly spaced: T-1 -> 0
+    for t, t_next in zip(step_ts[:-1], step_ts[1:]):
+        eps_pred = model.predict(make_uncond_features(x, np.full(n, t)))
+        ab_t = alpha_bar[t]
+        x0_hat = (x - np.sqrt(1 - ab_t) * eps_pred) / np.sqrt(ab_t)       # estimate clean
+        if t_next == 0:
+            x = x0_hat                                                    # final step lands on the estimate
+        else:
+            ab_next = alpha_bar[t_next]
+            x = np.sqrt(ab_next) * x0_hat + np.sqrt(1 - ab_next) * eps_pred   # re-noise to t_next, NO randomness
+    return x
+
+ddim_gen = sample_ddim(denoiser, n=240, num_steps=12, seed=3)
+log("DDIM steps used", 12)
+log("DDPM steps used earlier", T)
+log("DDIM generated mean", np.round(ddim_gen.mean(axis=0), 3).tolist())
+log("real data mean", np.round(X.mean(axis=0), 3).tolist())
+mean_gap_ddim = float(np.linalg.norm(ddim_gen.mean(axis=0) - X.mean(axis=0)))
+log("DDIM mean gap vs real", round(mean_gap_ddim, 3))
+assert mean_gap_ddim < 1.2
+
+fig, ax = plt.subplots(1, 2, figsize=(10, 4))
+ax[0].scatter(generated[:,0], generated[:,1], c="tab:purple", s=12, alpha=0.7); ax[0].set_title(f"DDPM ({T} steps)")
+ax[1].scatter(ddim_gen[:,0], ddim_gen[:,1], c="tab:green", s=12, alpha=0.7); ax[1].set_title("DDIM (12 steps)")
+for axt in ax:
+    equal_axes(axt)
+plt.tight_layout(); plt.show()
+""")
+
 # ------------------------------------------------------------------- conditioning
 md(r"""
 ---
@@ -581,6 +781,46 @@ plt.scatter(X[:,0], X[:,1], c=y, cmap="coolwarm", s=18)
 plt.scatter(centers[:,0], centers[:,1], c="black", marker="X", s=160, label="class centers")
 plt.title("Conditioning target: class 0 left, class 1 right")
 plt.legend(); equal_axes(plt.gca()); plt.show()
+""")
+
+md(r"""
+## Conditioning · Toy example: cross-attention (how an image patch "reads" the prompt)
+
+In our toy the condition is a class label glued onto the input. Real text-to-image models inject the prompt
+with **cross-attention** (the same attention as in M17), where the **image provides queries** and the
+**text provides keys and values**. Q, K, V are not given — they are **learned linear projections** of the
+features: `Q = h_img·W_Q`, `K = h_text·W_K`, `V = h_text·W_V`. Scores are scaled by `sqrt(d)` before the
+softmax. Below, one image patch attends over two prompt words ("cat", "sky") and ends up listening mostly to
+the word it aligns with.
+""")
+code(r"""
+h_img = np.array([1.0, 0.0])                 # one image patch feature
+g_cat = np.array([2.0, 0.0])                 # text token "cat"
+g_sky = np.array([0.0, 2.0])                 # text token "sky"
+
+W_Q = np.array([[1.0, 0.0], [0.0, 1.0]])     # learned projections (fixed here for a clean hand-trace)
+W_K = np.array([[1.0, 1.0], [0.0, 1.0]])
+W_V = np.array([[1.0, 0.0], [0.0, 3.0]])
+d = 2
+
+q = h_img @ W_Q                              # -> [1, 0]
+k_cat, k_sky = g_cat @ W_K, g_sky @ W_K      # -> [2, 2], [0, 2]
+v_cat, v_sky = g_cat @ W_V, g_sky @ W_V      # -> [2, 0], [0, 6]
+log("query q", q.tolist())
+log("keys  [cat, sky]", [k_cat.tolist(), k_sky.tolist()])
+log("values[cat, sky]", [v_cat.tolist(), v_sky.tolist()])
+
+scores = np.array([q @ k_cat, q @ k_sky]) / np.sqrt(d)   # -> [1.414, 0]
+attn = np.exp(scores) / np.exp(scores).sum()             # softmax -> [0.804, 0.196]
+out = attn[0] * v_cat + attn[1] * v_sky                  # -> [1.608, 1.176]
+log("scaled scores [cat, sky]", np.round(scores, 3).tolist())
+log("attention weights [cat, sky]", np.round(attn, 3).tolist())
+log("attention output (info folded into the patch)", np.round(out, 3).tolist())
+assert attn[0] > attn[1]
+
+plt.bar(["cat", "sky"], attn, color=["tab:orange", "tab:blue"])
+plt.title("Cross-attention: how much this image patch listens to each prompt word")
+plt.ylabel("attention weight"); plt.grid(True, axis="y", alpha=0.25); plt.show()
 """)
 
 md(r"""
@@ -686,6 +926,23 @@ md(r"""
 
 **Watch out for:** too much guidance can reduce diversity or overshoot into strange samples.
 """)
+
+md(r"""
+## Classifier-free guidance · why is it called "classifier-FREE"?
+
+The predecessor was **classifier guidance**: train a *separate* classifier `p(class | x_t)` that works on
+noisy images, take its gradient (which points toward "looks more like this class"), and add it to each
+denoising step. The problem: you need an extra, noise-robust classifier, and its gradients are fragile.
+
+**Classifier-free** guidance gets the *same* push without any classifier, using Bayes' rule:
+
+`grad log p(c | x) = grad log p(x | c) - grad log p(x)`
+
+Those two terms are exactly the conditional and unconditional noise predictions (recall `eps ≈ -score`).
+So `eps_guided = eps_uncond + w (eps_cond - eps_uncond)` reproduces the classifier's steering using **only
+the diffusion model itself** — hence "classifier-free." This is *why* we trained the model with the label
+sometimes dropped (the unconditional branch): we need `eps_uncond` at every step.
+""")
 code(r"""
 x_guided_demo = np.array([[0.0, 0.0]])
 t_guided_demo = 35
@@ -767,7 +1024,11 @@ Our toy point is a tiny stand-in for an image. In real systems:
 
 - **Latent diffusion**: diffuse in a compressed **latent space** (a smaller learned representation),
   not directly in huge pixel space. This is faster.
-- **U-Net denoiser**: a neural network shaped for images; it predicts noise at many resolutions.
+- **U-Net denoiser**: an encoder that **downsamples** the image (grasping whole-scene structure) then a
+  decoder that **upsamples** back to full resolution, with **skip connections** that copy fine detail from
+  early to late layers — so it predicts noise using both coarse and fine features. Cross-attention layers
+  are inserted at several resolutions so the prompt influences both. (Newer systems replace the U-Net with a
+  transformer, "DiT", treating latent patches as tokens.)
 - **Text encoder / CLIP-style conditioning**: turns a prompt like "a red bicycle" into vectors that
   condition the denoiser.
 - **Video diffusion**: adds a time/temporal dimension, so the model must make frames that look good
@@ -805,19 +1066,59 @@ plt.show()
 """)
 
 md(r"""
+## Real-world mapping · Toy example: latent diffusion & the VAE (the "variational" part)
+
+Denoising raw pixels is expensive, so **latent diffusion** first compresses the image with a **VAE**
+(variational autoencoder) and runs the whole diffusion loop in that small **latent space**, then decodes
+back to pixels. "Variational" means the encoder outputs not a single point but the **mean and standard
+deviation of a Gaussian**; you sample `z = mu + sigma * eps` (the reparameterization trick), and a KL term
+keeps latents smooth and roughly standard-normal — exactly the prior diffusion starts from. The 4 "channels"
+of a `64x64x4` latent are learned feature maps, not RGB.
+""")
+code(r"""
+# reparameterization trick: encoder outputs (mu, sigma); sample z = mu + sigma*eps
+mu, sigma = 1.0, 0.5
+eps_vae = 0.4
+z = mu + sigma * eps_vae
+log("encoder (mu, sigma)", [mu, sigma])
+log("sampled latent z = mu + sigma*eps", round(z, 3))     # -> 1.2
+
+# why latent space: compute win for a 512x512 image compressed to a 64x64x4 latent
+pixels = 512 * 512 * 3
+latent = 64 * 64 * 4
+log("values to denoise in PIXEL space", pixels)           # -> 786432
+log("values to denoise in LATENT space", latent)          # -> 16384
+log("reduction factor", f"{pixels/latent:.0f}x fewer numbers per step")   # -> 48x
+assert pixels // latent == 48
+
+plt.bar(["pixel\n512x512x3", "latent\n64x64x4"], [pixels, latent], color=["tab:red", "tab:green"])
+plt.title("Latent diffusion denoises ~48x fewer numbers per step")
+plt.ylabel("values per denoising step"); plt.grid(True, axis="y", alpha=0.25); plt.show()
+""")
+
+md(r"""
 ---
 # Recap · The whole module as one chain
 
 1. Start with data: our toy 2D points stand in for images.
-2. **Forward / diffusion process:** data → add Gaussian noise with a schedule → nearly pure noise.
-3. **Training target:** train an epsilon predictor, `(x_t, t) → eps`, because knowing eps lets us
-   estimate the clean `x0`.
-4. **Reverse / denoising process:** start from `x_T ~ N(0,I)` and iteratively denoise back to `t=0`.
-5. **Conditioning:** add a label/prompt so generation can ask for a class or concept.
+2. **Forward / diffusion process:** data → add Gaussian noise with a schedule → nearly pure noise. The
+   one-shot shortcut `x_t = sqrt(alpha_bar_t) x_0 + sqrt(1-alpha_bar_t) eps` is valid because independent
+   variances add (many small kicks merge into one).
+3. **Training target:** train an epsilon predictor, `(x_t, t) → eps`, because knowing eps lets us estimate
+   the clean `x0`; predicting eps is (up to scale) predicting the **score**, the direction back to clean
+   data. The timestep enters as a **sinusoidal embedding**.
+4. **Reverse / denoising process:** start from `x_T ~ N(0,I)` and iteratively denoise back to `t=0`. Each
+   step is a **blend** of `x0_hat` and `x_t` plus a little noise `sigma_t` — the compact DDPM formula is
+   exactly that blend. **DDIM** makes the step deterministic and skips timesteps for fast sampling.
+5. **Conditioning:** add a label/prompt so generation can ask for a class or concept; real systems inject
+   text via **cross-attention** (image = queries, text = keys/values, from learned projections).
 6. **Classifier-free guidance:** combine unconditional and conditional predictions:
-   `eps_uncond + w*(eps_cond - eps_uncond)` to trade diversity for stronger prompt following.
-7. **Real world:** latent diffusion uses compressed image/video latents, a U-Net denoiser, and a
-   text encoder for prompts.
+   `eps_uncond + w*(eps_cond - eps_uncond)`. It reproduces a classifier's steering *without* a classifier
+   (Bayes rule), trading diversity for stronger prompt following — which is why the unconditional branch is
+   trained via label dropout.
+7. **Real world:** **latent diffusion** runs the loop in a compressed **VAE latent space** (`z = mu +
+   sigma*eps`, ~48x cheaper), with a **U-Net/DiT** denoiser and a text encoder for prompts; video adds a
+   time axis and temporal consistency.
 
 Final chain:
 
