@@ -157,9 +157,180 @@ steps are needed.
 """)
 
 md(r"""
+## Forward process · Step 0 · What are we actually doing?
+
+Forget images for a second. Picture **one single number** — say the brightness of one pixel, `x0 = 2.0`.
+The forward process just does this, over and over: **shrink the number a little, then add a little random
+noise.** Repeat ~1000 times and the original `2.0` is buried under randomness — it looks like static.
+
+Why bother destroying data? Because it hands us free practice problems: at every step we know exactly how
+much noise we added, so later we can train a network to *undo* one step. We are manufacturing "before and
+after noise" pairs.
+
+We will walk one number through the first few steps **by hand**, printing every intermediate value.
+""")
+
+md(r"""
+## Forward process · Step 1 · The per-step formula (one step, by hand)
+
+One noising step is:
+
+`x_t = sqrt(alpha_t) * x_(t-1)  +  sqrt(1 - alpha_t) * eps_t`
+
+Read each piece slowly:
+
+- `x_(t-1)` = the value we have right now (before this step).
+- `alpha_t` = the fraction of "signal power" we **keep** this step. If `beta_t = 0.1` (the noise we add),
+  then `alpha_t = 1 - beta_t = 0.9`.
+- `sqrt(alpha_t)` = the actual multiplier on the value. **Why the square root?** Because when you add two
+  numbers, their *variances* (spread²) add, not their sizes. Using square roots makes
+  `(sqrt(alpha_t))² + (sqrt(1-alpha_t))² = alpha_t + (1-alpha_t) = 1`, so the total spread stays ~1 the
+  whole time instead of blowing up.
+- `eps_t` = a fresh random noise number, drawn from the standard bell curve `N(0,1)` (mostly between -2 and 2).
+- `sqrt(1 - alpha_t)` = how strongly we mix that noise in.
+
+Let's do **step 1** with `x0 = 2.0`, `alpha_1 = 0.9`, and a drawn noise `eps_1 = -0.5`.
+""")
+code(r"""
+x0_demo = 2.0
+alpha_1 = 0.9          # keep fraction (beta_1 = 0.1)
+eps_1   = -0.5         # the fresh noise drawn for step 1
+
+signal_part = np.sqrt(alpha_1) * x0_demo       # sqrt(0.9) * 2.0
+noise_part  = np.sqrt(1 - alpha_1) * eps_1     # sqrt(0.1) * (-0.5)
+x1 = signal_part + noise_part
+
+log("sqrt(alpha_1)", round(float(np.sqrt(alpha_1)), 3))                 # -> 0.949
+log("signal_part = sqrt(alpha_1)*x0", round(float(signal_part), 3))     # -> 1.897
+log("sqrt(1-alpha_1)", round(float(np.sqrt(1 - alpha_1)), 3))           # -> 0.316
+log("noise_part = sqrt(1-alpha_1)*eps_1", round(float(noise_part), 3))  # -> -0.158
+log("x1 = signal_part + noise_part", round(float(x1), 3))               # -> 1.739
+""")
+
+md(r"""
+## Forward process · Step 2 · Keep going: steps 2, 3, 4
+
+Step 2 does the exact same thing, but now the input is `x1` instead of `x0`. Then step 3 uses `x2`, and
+step 4 uses `x3`. Each step uses its own fresh noise `eps_t`. We use a tiny 4-step schedule so you can
+follow every number:
+
+`alpha = [0.9, 0.8, 0.7, 0.6]`  (so `beta = [0.1, 0.2, 0.3, 0.4]` — a bit more noise each step)
+and drawn noises `eps = [-0.5, 1.2, -0.3, 0.8]`.
+
+Watch the "keep fraction" `sqrt(alpha_t)` shrink (0.949 → 0.894 → 0.837 → 0.775) while the noise mix
+`sqrt(1-alpha_t)` grows.
+""")
+code(r"""
+x0_demo = 2.0
+demo_alpha = np.array([0.9, 0.8, 0.7, 0.6])     # kept fraction each step
+eps_chain  = np.array([-0.5, 1.2, -0.3, 0.8])   # fresh noise at steps 1..4
+
+x = x0_demo
+history = [x0_demo]
+for t in range(4):
+    a = demo_alpha[t]; e = eps_chain[t]
+    signal_part = np.sqrt(a) * x           # keep sqrt(alpha) of the CURRENT value
+    noise_part  = np.sqrt(1 - a) * e       # add sqrt(1-alpha) of fresh noise
+    x = signal_part + noise_part
+    history.append(float(x))
+    log(f"step {t+1}", {
+        "sqrt(a)": round(float(np.sqrt(a)), 3),
+        "signal=sqrt(a)*prev": round(float(signal_part), 3),
+        "sqrt(1-a)": round(float(np.sqrt(1 - a)), 3),
+        "noise=sqrt(1-a)*eps": round(float(noise_part), 3),
+        f"x{t+1}": round(float(x), 3),
+    })
+
+x4_chain = float(x)
+log("clean start x0", x0_demo)                          # -> 2.0
+log("noisy x4 after 4 hand steps", round(x4_chain, 3))  # -> 1.735
+
+plt.plot(range(5), history, "-o")
+plt.axhline(0, color="gray", ls="--", alpha=0.5)
+for t, v in enumerate(history):
+    plt.text(t + 0.03, v + 0.03, f"x{t}={v:.2f}", fontsize=8)
+plt.title("One number pushed from clean (x0=2.0) toward noise over 4 steps")
+plt.xlabel("step t"); plt.ylabel("value"); plt.grid(True, alpha=0.25); plt.show()
+""")
+
+md(r"""
+## Forward process · Step 3 · alpha-bar: the shortcut that skips the loop
+
+Doing 4 steps by hand was already tedious; real models use ~1000. Nobody wants a 1000-step loop just to
+make one training example. The shortcut lets us **jump straight to step `t` in one line.**
+
+The trick is **`alpha_bar_t`** ("alpha-bar"), which is just **all the alphas multiplied together** up to
+step `t`:
+
+`alpha_bar_1 = 0.9`
+`alpha_bar_2 = 0.9 * 0.8 = 0.72`
+`alpha_bar_3 = 0.72 * 0.7 = 0.504`
+`alpha_bar_4 = 0.504 * 0.6 = 0.3024`
+
+Then the shortcut is: `x_t = sqrt(alpha_bar_t) * x0 + sqrt(1 - alpha_bar_t) * eps`, using **one** noise
+`eps` instead of four.
+
+**Careful — a subtle point:** the 4 hand-steps used 4 *different* noises; the shortcut uses 1. So they will
+not give the identical value for a *specific* set of draws — but the four small noises always bundle into
+exactly one equivalent noise. Below we find that single equivalent noise and confirm it reproduces the
+hand-chained `x4` exactly.
+""")
+code(r"""
+# alpha-bar = running product of the kept fractions (one multiply at a time)
+ab = 1.0
+for t in range(4):
+    ab = ab * demo_alpha[t]
+    log(f"alpha_bar_{t+1}", round(float(ab), 4))   # -> 0.9, 0.72, 0.504, 0.3024
+alpha_bar_4 = float(ab)
+
+signal_weight = np.sqrt(alpha_bar_4)               # sqrt(0.3024)
+noise_weight  = np.sqrt(1 - alpha_bar_4)           # sqrt(0.6976)
+log("shortcut signal weight sqrt(alpha_bar_4)", round(float(signal_weight), 3))   # -> 0.550
+log("shortcut noise  weight sqrt(1-alpha_bar_4)", round(float(noise_weight), 3))  # -> 0.835
+
+# the four noises (-0.5, 1.2, -0.3, 0.8) bundle into ONE equivalent noise:
+eps_effective = (x4_chain - signal_weight * x0_demo) / noise_weight
+x4_shortcut = signal_weight * x0_demo + noise_weight * eps_effective
+log("single equivalent noise", round(float(eps_effective), 3))          # -> 0.760
+log("shortcut x4 (one line, one noise)", round(float(x4_shortcut), 3))  # -> 1.735
+log("hand-chained x4 (four steps)", round(x4_chain, 3))                 # -> 1.735  (same!)
+assert abs(x4_shortcut - x4_chain) < 1e-9
+
+plt.bar(["signal weight\nsqrt(alpha_bar_4)", "noise weight\nsqrt(1-alpha_bar_4)"],
+        [signal_weight, noise_weight], color=["tab:green", "tab:red"])
+plt.title("By step 4 the noise weight has overtaken the signal weight")
+plt.ylabel("weight"); plt.grid(True, axis="y", alpha=0.25); plt.show()
+""")
+
+md(r"""
+## Forward process · Step 4 · Pseudocode (both ways)
+
+The same idea in plain-English pseudocode. The loop is the honest slow version; the shortcut is what code
+actually uses.
+
+```
+FORWARD, per-step (the honest slow way):
+    x = x0                                   # start clean
+    for t = 1, 2, ..., T:
+        eps = draw one number from N(0,1)    # fresh noise
+        x = sqrt(alpha_t) * x + sqrt(1 - alpha_t) * eps   # shrink signal, add noise
+    return x                                 # x_T, almost pure noise
+
+FORWARD, shortcut (one line, no loop):
+    alpha_bar_t = alpha_1 * alpha_2 * ... * alpha_t       # multiply kept fractions
+    eps = draw one number from N(0,1)
+    x_t = sqrt(alpha_bar_t) * x0 + sqrt(1 - alpha_bar_t) * eps
+    return x_t                               # jumps straight to step t
+```
+
+Both produce a sample with the same statistics; the shortcut just skips the loop. Now here is that shortcut
+written as the formal formula.
+""")
+
+md(r"""
 ## Forward process math
 
-The useful closed form is:
+Here is the shortcut you just built, written formally (the "closed form"):
 
 $$x_t = \sqrt{\bar{\alpha}_t}\,x_0 + \sqrt{1-\bar{\alpha}_t}\,\epsilon,\quad \epsilon \sim \mathcal{N}(0, I).$$
 
@@ -169,10 +340,10 @@ more.
 """)
 
 md(r"""
-## Forward process · Toy example: WHY the one-shot shortcut is valid
+## Forward process · Toy example: WHY those noises always bundle into one
 
-You might expect that reaching `x_t` requires adding noise `t` times in a row. It does not, because of
-**one fact: the variances of independent Gaussians add.** Add two independent noises with standard
+In Step 3 the four separate noises collapsed into a single equivalent noise. That is not luck — it always
+happens, because of **one fact: the variances of independent Gaussians add.** Add two independent noises with standard
 deviations 0.6 and 0.8 and you get a *single* Gaussian with std `sqrt(0.6^2 + 0.8^2) = 1.0`. Two random
 kicks merge into one.
 
