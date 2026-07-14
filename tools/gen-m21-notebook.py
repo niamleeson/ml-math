@@ -489,6 +489,80 @@ the clean point.
 **Watch out for:** the model must know `t`; a tiny amount of noise and a huge amount of noise need
 different denoising behavior.
 """)
+
+md(r"""
+## Epsilon prediction · Step 1 · The denoiser's one job
+
+We can now make noisy points. Time to build the thing that will eventually *generate*: a network whose only
+job is, **given a noisy point `x_t` and which step `t` it came from, guess the noise `eps` that was mixed
+in.** Call its guess `eps_hat`.
+
+We *always* know the right answer, because we drew `eps` ourselves when we noised the data. So training is
+plain supervised learning: show `(x_t, t)`, compare `eps_hat` to the true `eps`, nudge the weights.
+""")
+
+md(r"""
+## Epsilon prediction · Step 2 · From the noise back to the clean point (by hand)
+
+Why is guessing the noise useful? Because if you know the noise, you can **subtract it out** and recover the
+clean point. Rearrange the forward shortcut `x_t = sqrt(ab)*x0 + sqrt(1-ab)*eps` to solve for `x0`:
+
+`x0_hat = (x_t - sqrt(1 - alpha_bar_t) * eps_hat) / sqrt(alpha_bar_t)`
+
+Hand-trace: start from `x0 = 2.0`, noise it to a step where `alpha_bar_t = 0.64` using `eps = -0.5`, then
+recover `x0` from the noisy value.
+""")
+code(r"""
+x0_true = 2.0
+ab_c = 0.64                 # alpha_bar at this step
+eps_true_c = -0.5           # the noise we mixed in
+
+x_t_c = np.sqrt(ab_c) * x0_true + np.sqrt(1 - ab_c) * eps_true_c   # forward: 0.8*2 + 0.6*(-0.5)
+log("noised x_t", round(float(x_t_c), 3))                          # -> 1.3
+
+eps_hat_c = -0.5            # pretend the denoiser guessed the noise perfectly
+x0_hat_c = (x_t_c - np.sqrt(1 - ab_c) * eps_hat_c) / np.sqrt(ab_c) # (1.3 - 0.6*(-0.5))/0.8
+log("recovered x0_hat", round(float(x0_hat_c), 3))                 # -> 2.0  (back to the start!)
+assert abs(x0_hat_c - x0_true) < 1e-9
+""")
+
+md(r"""
+## Epsilon prediction · Step 3 · The loss, by hand (mean squared error)
+
+The denoiser will not be perfect, so we need a score for "how wrong was the guess." We use **mean squared
+error (MSE)**: subtract guess from truth, square it (so over- and under-guesses both count as positive),
+average over the numbers. Small MSE = good guess. Example: true `eps = [-0.5, 0.4]`, guess `eps_hat =
+[-0.3, 0.5]`.
+""")
+code(r"""
+eps_true_vec = np.array([-0.5, 0.4])
+eps_hat_vec  = np.array([-0.3, 0.5])
+errors = eps_hat_vec - eps_true_vec           # [0.2, 0.1]
+squared = errors ** 2                          # [0.04, 0.01]
+mse = squared.mean()                           # (0.04 + 0.01)/2
+log("errors (guess - truth)", errors.tolist())     # -> [0.2, 0.1]
+log("squared errors", squared.tolist())            # -> [0.04, 0.01]
+log("MSE (the loss)", round(float(mse), 4))         # -> 0.025
+""")
+
+md(r"""
+## Epsilon prediction · Step 4 · Training pseudocode
+
+```
+TRAIN the denoiser:
+    repeat many times:
+        x0  = a real data point
+        t   = pick a random step 1..T
+        eps = draw noise from N(0,1)
+        x_t = sqrt(alpha_bar_t)*x0 + sqrt(1-alpha_bar_t)*eps    # forward shortcut
+        eps_hat = denoiser(x_t, t)                              # the guess
+        loss = mean( (eps_hat - eps)^2 )                        # MSE (Step 3)
+        nudge denoiser weights to lower loss                    # gradient step
+```
+
+That is the entire training objective. Below we generate thousands of `(x_t, t) -> eps` pairs to fit a tiny
+network to.
+""")
 code(r"""
 def time_embed(t):
     u = np.asarray(t, dtype=float).reshape(-1, 1) / (T - 1)
@@ -739,6 +813,94 @@ unless we are at the final step.
 
 **Watch out for:** each step depends on the previous step, so bad predictions can compound.
 """)
+
+md(r"""
+## Reverse process · Step 0 · What are we doing now?
+
+Forward destroyed a number into noise. **Reverse walks the other way:** start from a pure-noise value `x_T`
+and repeatedly remove a little noise until a clean-looking value appears. The trained denoiser is our tool —
+at each step it guesses the noise, and we subtract a bit of it.
+
+We will do **one reverse step by hand**, reusing the forward toy: schedule `alpha = [0.9, 0.8, 0.7, 0.6]` so
+`alpha_bar = [0.9, 0.72, 0.504, 0.3024]`, and the noisy value we ended on, `x_4 = 1.735`.
+""")
+
+md(r"""
+## Reverse process · Step 1 · Guess the noise, estimate the clean point
+
+Feed `x_4` to the denoiser; say it guesses `eps_hat = 0.760` (the equivalent noise from forward Step 3). Use
+the same rearranged formula to get an estimate of the clean point:
+
+`x0_hat = (x_t - sqrt(1 - alpha_bar_t) * eps_hat) / sqrt(alpha_bar_t)`
+""")
+code(r"""
+x_4 = 1.735
+alpha_bar_4 = 0.3024
+eps_hat_r = 0.760
+
+x0_hat_r = (x_4 - np.sqrt(1 - alpha_bar_4) * eps_hat_r) / np.sqrt(alpha_bar_4)
+log("sqrt(1-alpha_bar_4)", round(float(np.sqrt(1 - alpha_bar_4)), 3))   # -> 0.835
+log("x0_hat (estimated clean point)", round(float(x0_hat_r), 3))        # -> 2.0  (recovers the start!)
+""")
+
+md(r"""
+## Reverse process · Step 2 · Don't jump all the way — take a small step
+
+`x0_hat` is only a guess; jumping straight to it would trust one noisy prediction completely. Instead we step
+**partway** from where we are (`x_4`) toward the clean estimate (`x0_hat`). The DDPM step's mean is a
+weighted blend:
+
+`mean = a * x0_hat + b * x_t`,
+`a = sqrt(alpha_bar_{t-1}) * beta_t / (1 - alpha_bar_t)`,
+`b = sqrt(alpha_t) * (1 - alpha_bar_{t-1}) / (1 - alpha_bar_t)`.
+
+Then add back a little fresh noise of size `sigma_t` (except on the very last step), which keeps generation
+varied. Hand-trace the step from `t=4` down to `t=3`:
+""")
+code(r"""
+alpha_4 = 0.6; beta_4 = 0.4
+alpha_bar_3 = 0.504
+
+r_a = np.sqrt(alpha_bar_3) * beta_4 / (1 - alpha_bar_4)          # weight on x0_hat
+r_b = np.sqrt(alpha_4) * (1 - alpha_bar_3) / (1 - alpha_bar_4)   # weight on x_4
+mean_x3 = r_a * x0_hat_r + r_b * x_4
+sigma_4 = np.sqrt((1 - alpha_bar_3) / (1 - alpha_bar_4) * beta_4)
+
+log("weight a on x0_hat", round(float(r_a), 3))       # -> 0.407
+log("weight b on x_4", round(float(r_b), 3))          # -> 0.551
+log("mean for x_3 (partway from 1.735 toward 2.0)", round(float(mean_x3), 3))  # -> 1.77
+log("sigma_4 (noise added back this step)", round(float(sigma_4), 3))          # -> 0.533
+log("so x_3 = 1.77 + 0.533 * z", "z is fresh N(0,1); z=0 on the final step")
+""")
+
+md(r"""
+## Reverse process · Step 3 · Repeat down to zero — pseudocode
+
+```
+SAMPLE (generate a new point):
+    x = draw noise from N(0,1)                 # start at pure static, t = T
+    for t = T, T-1, ..., 1:
+        eps_hat = denoiser(x, t)               # guess the noise
+        x0_hat  = (x - sqrt(1-alpha_bar_t)*eps_hat) / sqrt(alpha_bar_t)   # estimate clean
+        mean    = a_t * x0_hat + b_t * x       # step partway toward it
+        if t > 1:
+            x = mean + sigma_t * draw N(0,1)   # add a little noise back
+        else:
+            x = mean                           # last step: no noise
+    return x                                   # a brand-new generated point
+```
+
+Run this loop and static turns into a sample that looks like the training data.
+""")
+
+md(r"""
+## Reverse process · Step 4 · Why add noise back? (the DDPM vs DDIM knob)
+
+Adding `sigma_t * z` each step keeps the process **random**, so different starting static gives different
+outputs (variety). If you instead set the added noise to zero, the process becomes **deterministic** — the
+same start always gives the same sample, and you can even skip most steps. That deterministic variant is
+**DDIM**, shown a few cells below. More noise back = more diversity; less = faster and more repeatable.
+""")
 code(r"""
 t_demo = 45
 x_demo = np.random.normal(size=(6, 2))
@@ -929,6 +1091,32 @@ condition is often a text prompt.
 
 **Watch out for:** the model can ignore weak conditions or overfit strong ones.
 """)
+
+md(r"""
+## Conditioning · Step 1 · What "condition" means (plain English)
+
+So far the denoiser only saw `(x_t, t)` — it generates *some* sample, but we cannot ask for a *specific*
+one. **Conditioning** adds one more input `c` describing what we want (here: a class label; in real systems:
+a text prompt). The denoiser becomes `eps_hat = denoiser(x_t, t, c)`, so its noise guess — and therefore the
+whole generated sample — depends on `c`.
+""")
+
+md(r"""
+## Conditioning · Step 2 · Same noisy point, two different guesses (by hand)
+
+The key mechanism: for the *same* noisy point, feeding a different condition changes the predicted noise. The
+**difference** between the "with label" guess and the "no label" guess is the direction the label pulls
+toward. Tiny made-up example:
+""")
+code(r"""
+eps_no_label = np.array([0.40, 0.20])    # guess with NO condition
+eps_label_1  = np.array([0.10, -0.10])   # guess when we ask for class 1
+label_pull = eps_label_1 - eps_no_label  # the direction the label adds
+log("eps with no label", eps_no_label.tolist())       # -> [0.4, 0.2]
+log("eps asking for class 1", eps_label_1.tolist())   # -> [0.1, -0.1]
+log("label pull = conditional - unconditional", label_pull.tolist())  # -> [-0.3, -0.3]
+log("reading", "asking for class 1 pushes the noise guess down-left; that reshapes the sample")
+""")
 code(r"""
 def label_embed(labels):
     labels = np.asarray(labels)
@@ -1114,6 +1302,39 @@ So `eps_guided = eps_uncond + w (eps_cond - eps_uncond)` reproduces the classifi
 the diffusion model itself** — hence "classifier-free." This is *why* we trained the model with the label
 sometimes dropped (the unconditional branch): we need `eps_uncond` at every step.
 """)
+
+md(r"""
+## Classifier-free guidance · Step by step: turn one knob `w`
+
+Read the formula `eps_guided = eps_uncond + w * (eps_cond - eps_uncond)` as: **start at the no-prompt guess,
+then step `w` times along the "label pull" toward the prompt.**
+
+- `w = 0`: ignore the prompt entirely (`eps_guided = eps_uncond`).
+- `w = 1`: exactly the conditional guess.
+- `w > 1`: *overshoot* past the conditional guess — stronger prompt adherence, but risk of artifacts.
+
+Hand-trace with `eps_uncond = [0.4, 0.2]` and `eps_cond = [0.1, -0.1]` (so the pull is `[-0.3, -0.3]`):
+""")
+code(r"""
+eps_uncond_g = np.array([0.4, 0.2])
+eps_cond_g   = np.array([0.1, -0.1])
+pull = eps_cond_g - eps_uncond_g          # [-0.3, -0.3]
+for w in [0, 1, 3, 7]:
+    eps_guided = eps_uncond_g + w * pull
+    log(f"w={w} guided eps", np.round(eps_guided, 2).tolist())
+# w=0 -> [0.4,0.2]; w=1 -> [0.1,-0.1]; w=3 -> [-0.5,-0.7]; w=7 -> [-1.7,-1.9] (big overshoot)
+log("takeaway", "higher w = harder prompt push, but w=7 shoots far past the conditional guess")
+""")
+
+md(r"""
+## Classifier-free guidance · the tradeoff to remember
+
+- **High `w`** (e.g. 8-12): strong prompt adherence, but oversaturation, artifacts, and less variety.
+- **Low `w`** (e.g. 2-4): diverse and natural, but the prompt may be only loosely followed.
+
+Below we generate both toy classes across several `w` and watch the classes separate more (fidelity up)
+while each cloud tightens (diversity down).
+""")
 code(r"""
 x_guided_demo = np.array([[0.0, 0.0]])
 t_guided_demo = 35
@@ -1209,6 +1430,35 @@ Our toy point is a tiny stand-in for an image. In real systems:
 
 **Watch out for:** prompts can be ambiguous; video adds temporal consistency problems; these models
 can reflect biases in their training data.
+""")
+
+md(r"""
+## Text-to-image · Step by step (end to end)
+
+Putting every part together, here is how a real prompt becomes a picture. Each numbered step maps to a part
+of this notebook:
+
+1. **Encode the prompt.** A text encoder turns "a red bicycle" into vectors `c` (our toy used a class label).
+2. **Start from static.** Draw a pure-noise *latent* `x_T` (our toy: a random 2D point).
+3. **Denoise in a loop, with guidance.** For `t = T..1`: predict `eps_uncond` and `eps_cond`, combine with
+   CFG, take one reverse step (Parts E + G).
+4. **Decode.** A VAE decoder turns the finished latent into full-resolution pixels.
+
+```
+TEXT-TO-IMAGE:
+    c = text_encoder(prompt)
+    x = draw noise latent from N(0,1)
+    for t = T..1:
+        eps_uncond = denoiser(x, t, empty_prompt)
+        eps_cond   = denoiser(x, t, c)
+        eps        = eps_uncond + w*(eps_cond - eps_uncond)    # CFG (Part G)
+        x          = reverse_step(x, eps, t)                   # Part E
+    image = vae_decoder(x)                                     # latent -> pixels
+    return image
+```
+
+**Video** does the same but the latent has an extra time axis (many frames at once), plus attention across
+frames so motion stays consistent. Below: the toy-to-real mapping, then the VAE/latent compute win.
 """)
 code(r"""
 log("toy x_t", "2 numbers")
