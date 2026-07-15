@@ -1518,6 +1518,171 @@ plt.ylabel("values per denoising step"); plt.grid(True, axis="y", alpha=0.25); p
 """)
 
 md(r"""
+## Latent diffusion · Toy example: the VAE round-trip (encode → latent → decode)
+
+The cell above showed one latent *number*. Here is the full **round-trip on a real multi-pixel "image":**
+compress it to a few latent numbers (**encode**), then rebuild the pixels (**decode**). Our toy "images" are
+`8x8 = 64` pixels that are secretly built from just **3** underlying patterns (a horizontal gradient, a
+vertical gradient, and a centered blob). So the honest latent is only **3 numbers** — a ~21x squeeze — and
+decoding rebuilds the image exactly.
+""")
+code(r"""
+vae_grid = 8
+vae_yy, vae_xx = np.mgrid[0:vae_grid, 0:vae_grid] / (vae_grid - 1)     # pixel coords in 0..1
+vae_p1 = (vae_xx - 0.5)                                                # horizontal gradient pattern
+vae_p2 = (vae_yy - 0.5)                                                # vertical gradient pattern
+vae_p3 = np.exp(-(((vae_xx - 0.5)**2 + (vae_yy - 0.5)**2) / 0.05))     # centered blob pattern
+vae_basis_raw = np.stack([vae_p1.ravel(), vae_p2.ravel(), vae_p3.ravel()])   # (3, 64)
+vae_Q, _ = np.linalg.qr(vae_basis_raw.T)     # orthonormal columns (64, 3)
+vae_B = vae_Q.T                              # (3, 64) orthonormal rows = our latent basis
+
+def vae_encode(img_vec):     # 64 pixels -> 3-number latent
+    return vae_B @ img_vec
+def vae_decode(latent):      # 3-number latent -> 64 pixels
+    return latent @ vae_B
+
+vae_true_latent = np.array([0.8, -0.5, 1.2])
+vae_img     = vae_decode(vae_true_latent)    # build a 64-pixel image from a known latent
+vae_latent  = vae_encode(vae_img)            # ENCODE: 64 -> 3
+vae_img_rec = vae_decode(vae_latent)         # DECODE: 3 -> 64
+vae_err = float(np.abs(vae_img - vae_img_rec).max())
+
+log("image size (pixels)", int(vae_img.size))                                   # -> 64
+log("latent size (numbers)", int(vae_latent.size))                              # -> 3
+log("compression", f"{vae_img.size/vae_latent.size:.0f}x fewer numbers")        # -> 21x
+log("recovered latent", np.round(vae_latent, 3).tolist())                       # -> [0.8, -0.5, 1.2]
+log("max reconstruction error", round(vae_err, 12))                             # -> ~0
+assert vae_err < 1e-9
+
+fig, ax = plt.subplots(1, 3, figsize=(11, 3.2))
+ax[0].imshow(vae_img.reshape(vae_grid, vae_grid), cmap="magma"); ax[0].set_title("original image\n(64 pixels)")
+ax[1].bar([0, 1, 2], vae_latent, color="tab:blue"); ax[1].set_title("latent\n(3 numbers)"); ax[1].set_xticks([0,1,2])
+ax[2].imshow(vae_img_rec.reshape(vae_grid, vae_grid), cmap="magma"); ax[2].set_title("decoded image\n(back to 64 pixels)")
+for a in (ax[0], ax[2]):
+    a.set_xticks([]); a.set_yticks([])
+plt.tight_layout(); plt.show()
+""")
+
+md(r"""
+## Latent diffusion · Toy example: the "variational" smoothness
+
+"Variational" means the encoder gives a *mean* `mu` and a small *spread* `sigma`, and we sample
+`z = mu + sigma*eps`. The KL regularizer makes this latent space **smooth**: latents that sit close together
+decode to images that look close together. Below we jiggle the latent by different `eps` and watch the
+decoded image change *gradually* rather than jumping — the smoothness that lets diffusion wander through
+latent space and always decode to something sensible.
+""")
+code(r"""
+vae_mu = vae_latent
+vae_sigma = 0.35
+vae_eps_list = [-1.5, -0.5, 0.0, 0.5, 1.5]
+
+fig, ax = plt.subplots(1, len(vae_eps_list), figsize=(13, 2.9))
+for j, e in enumerate(vae_eps_list):
+    z = vae_mu + vae_sigma * np.array([e, 0.7*e, -0.5*e])   # perturb the 3-number latent
+    img_z = vae_decode(z)
+    log(f"eps={e}", {"z": np.round(z, 2).tolist()})
+    ax[j].imshow(img_z.reshape(vae_grid, vae_grid), cmap="magma")
+    ax[j].set_title(f"eps={e}", fontsize=9); ax[j].set_xticks([]); ax[j].set_yticks([])
+plt.suptitle("Nearby latents (z = mu + sigma*eps) decode to smoothly-varying images", y=1.06)
+plt.tight_layout(); plt.show()
+""")
+
+md(r"""
+## Latent diffusion · Toy example: diffusion noises the LATENT, not the pixels
+
+The payoff: the whole forward/reverse loop runs on the **3 latent numbers**, and we decode to pixels only
+**once** at the very end. Here we apply the same forward shortcut (`sqrt(ab)*latent + sqrt(1-ab)*noise`) to
+the 3-number latent and decode the result — so you can see what a "noised latent" looks like in pixel space.
+""")
+code(r"""
+vae_ab = 0.5                                  # alpha_bar for this demo
+vae_noise = np.array([0.6, -0.9, 0.4])
+vae_noised_latent = np.sqrt(vae_ab) * vae_true_latent + np.sqrt(1 - vae_ab) * vae_noise   # forward shortcut, in latent
+vae_noised_img = vae_decode(vae_noised_latent)
+
+log("clean latent", np.round(vae_true_latent, 3).tolist())              # -> [0.8, -0.5, 1.2]
+log("noised latent (ab=0.5)", np.round(vae_noised_latent, 3).tolist())
+log("work happens on 3 numbers; decode to 64 pixels ONCE", "that is the latent-diffusion compute win")
+
+fig, ax = plt.subplots(1, 2, figsize=(7, 3.4))
+ax[0].imshow(vae_img.reshape(vae_grid, vae_grid), cmap="magma"); ax[0].set_title("clean (decoded)")
+ax[1].imshow(vae_noised_img.reshape(vae_grid, vae_grid), cmap="magma"); ax[1].set_title("noised latent (decoded)")
+for a in ax:
+    a.set_xticks([]); a.set_yticks([])
+plt.tight_layout(); plt.show()
+""")
+
+md(r"""
+## Video diffusion · Toy example: frames over time & temporal consistency
+
+A video is just **many frames in a row**. The naive idea — generate each frame on its own — fails: because
+each frame draws its own random noise, the object **jumps around and flickers**. The fix is to let each
+frame **see its neighbors** (attention across the time axis) so motion stays smooth. Toy: an object should
+glide left-to-right across 8 frames. We compare independent frames against a simple temporal-smoothing
+stand-in for temporal attention, and measure the frame-to-frame jitter.
+""")
+code(r"""
+n_frames = 8
+frame_idx = np.arange(n_frames)
+pos_true = np.linspace(-0.8, 0.8, n_frames)                        # object glides smoothly L -> R
+vid_rng = np.random.RandomState(5)
+pos_indep = pos_true + vid_rng.normal(0, 0.35, size=n_frames)      # each frame generated INDEPENDENTLY -> jitter
+
+pos_temporal = pos_indep.copy()                                    # temporal 'attention' stand-in:
+for i in range(n_frames):                                          # each frame = avg of itself + neighbors
+    lo, hi = max(0, i - 1), min(n_frames, i + 2)
+    pos_temporal[i] = pos_indep[lo:hi].mean()
+
+jitter = lambda p: float(np.mean(np.abs(np.diff(p))))
+log("jitter, true smooth motion", round(jitter(pos_true), 3))
+log("jitter, independent frames", round(jitter(pos_indep), 3))    # -> largest (flicker)
+log("jitter, temporal attention", round(jitter(pos_temporal), 3)) # -> smaller (smoothed)
+assert jitter(pos_temporal) < jitter(pos_indep)
+
+plt.plot(frame_idx, pos_true, "o-", label="true (smooth motion)")
+plt.plot(frame_idx, pos_indep, "x--", label="independent frames (flicker)")
+plt.plot(frame_idx, pos_temporal, "s-", label="temporal attention (smoothed)")
+plt.title("Object position across frames: independent flickers, temporal stays smooth")
+plt.xlabel("frame"); plt.ylabel("object x-position"); plt.legend(); plt.grid(True, alpha=0.25); plt.show()
+""")
+code(r"""
+# filmstrip: same 8 frames drawn as a dot moving left->right
+fig, ax = plt.subplots(2, n_frames, figsize=(14, 3.0))
+for i in range(n_frames):
+    ax[0, i].scatter(pos_indep[i], 0, s=170, c="tab:red")
+    ax[1, i].scatter(pos_temporal[i], 0, s=170, c="tab:green")
+    for r in (0, 1):
+        ax[r, i].set_xlim(-1.2, 1.2); ax[r, i].set_ylim(-1, 1)
+        ax[r, i].set_xticks([]); ax[r, i].set_yticks([])
+    ax[0, i].set_title(f"f{i}", fontsize=8)
+ax[0, 0].set_ylabel("independent", fontsize=9)
+ax[1, 0].set_ylabel("temporal", fontsize=9)
+plt.suptitle("Filmstrip: red dot jumps (flicker); green dot glides (consistent)", y=1.04)
+plt.tight_layout(); plt.show()
+""")
+
+md(r"""
+## Video diffusion · how real systems do it (and what to watch out for)
+
+Real video diffusion keeps the *same* denoising loop, but the latent gains a **time axis** — all frames are
+denoised together — plus **temporal attention** so frame `i` attends to frames `i-1` and `i+1`:
+
+```
+VIDEO DIFFUSION (sketch):
+    x = noise latent of shape (frames, H, W, C)      # a whole clip of static at once
+    for t = T..1:
+        eps = denoiser(x, t, prompt)                 # attends WITHIN each frame AND ACROSS frames
+        x   = reverse_step(x, eps, t)
+    video = vae_decoder(x)                            # decode every frame to pixels
+```
+
+**Watch out for:** (1) **temporal consistency** — without cross-frame attention you get flicker, morphing
+objects, and identity drift; (2) **compute** — a clip is `frames x` more data than one image, so cost and
+memory dominate. That is why long, coherent video is the hard part.
+""")
+
+md(r"""
 ---
 # Recap · The whole module as one chain
 
