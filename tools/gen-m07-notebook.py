@@ -1084,6 +1084,99 @@ plt.show()
 """)
 md("▶ What you'll see: the final DeepFM probability comes from adding three parts: memorized linear effects, FM pair interactions, and a deep score.")
 
+md(r"""
+## ✍️ Toy 26 · LambdaMART = LambdaRank gradients + boosted trees (MART)
+
+The CTR models above score each ad on its own. **LambdaMART learns to RANK** a query's documents by
+*boosting trees* — but instead of fitting each tree to an ordinary residual, it fits the tree to a
+special gradient called the **lambda**. Two halves:
+
+- **MART** = Multiple Additive Regression Trees (gradient boosting with limited-depth trees).
+- **Lambda** = for every pair where doc *i* is more relevant than doc *j*, a force pushes *i* up and
+  *j* down, and that force is **weighted by `|ΔNDCG|`** — how much the ranking metric would change if
+  you swapped *i* and *j*. Swaps near the top (or between very different grades) get big forces; swaps
+  at the bottom get tiny ones. That metric-awareness is the whole point.
+
+We start with a deliberately WRONG ranking and watch the lambdas repair it. Each tree here is
+**depth-2** (not a single stump) — a stump has only one split and could not separate the top two docs.
+""")
+code(r"""
+t26_rng = np.random.default_rng(0)                                    # -> convention seed (toy is deterministic)
+t26_rel = np.array([2, 3, 1, 0])                                      # -> graded relevance; d1 is MOST relevant
+t26_x   = np.array([0.5, 0.9, 0.3, 0.1])                              # -> one feature per doc (aligned with relevance)
+t26_docs = ["d0", "d1", "d2", "d3"]
+t26_gain = 2.0 ** t26_rel - 1                                         # -> DCG gain 2^rel-1  # -> [3, 7, 1, 0]
+print("gains (2^rel-1):", t26_gain.astype(int).tolist())             # -> [3, 7, 1, 0]
+
+def t26_dcg(order):                                                   # DCG of a doc ordering (rank starts at 1)
+    return sum(t26_gain[d] / np.log2(p + 2) for p, d in enumerate(order))
+t26_ideal = list(np.argsort(-t26_rel))                               # -> perfect order by relevance  # -> [1,0,2,3]
+t26_IDCG = t26_dcg(t26_ideal)                                        # -> normalizer  # -> 9.3928
+def t26_ndcg(s):                                                     # NDCG given model scores s
+    order = list(np.argsort(-s, kind="stable")); return t26_dcg(order) / t26_IDCG, order
+print("ideal order:", [t26_docs[d] for d in t26_ideal], " IDCG:", round(t26_IDCG, 4))  # -> ['d1','d0','d2','d3'] 9.3928
+
+def t26_tree(x, target, depth=2):                                    # tiny regression tree (<=4 leaves)
+    pred = np.zeros(len(x))
+    def rec(idx, d):
+        if d == 0 or len(idx) <= 1 or len(set(x[idx])) == 1:
+            pred[idx] = target[idx].mean(); return                    # leaf = mean lambda here
+        xs = sorted(set(x[idx])); best = None
+        for t in [(xs[k] + xs[k + 1]) / 2 for k in range(len(xs) - 1)]:
+            L = idx[x[idx] <= t]; R = idx[x[idx] > t]
+            sse = ((target[L] - target[L].mean()) ** 2).sum() + ((target[R] - target[R].mean()) ** 2).sum()
+            if best is None or sse < best[0]: best = (sse, t, L, R)
+        rec(best[2], d - 1); rec(best[3], d - 1)
+    rec(np.arange(len(x)), depth); return pred
+
+t26_sigma, t26_lr, t26_rounds = 1.0, 0.3, 5                          # -> RankNet steepness, shrinkage, #trees
+t26_s = np.zeros(4)                                                  # -> scores start at 0 (a tie)
+t26_n0, t26_o0 = t26_ndcg(t26_s)
+print("start ranking:", [t26_docs[d] for d in t26_o0], " NDCG:", round(t26_n0, 4))  # -> ['d0','d1','d2','d3'] 0.8428 (WRONG)
+t26_ndcg_hist = [t26_n0]; t26_score_hist = [t26_s.copy()]; t26_lam1 = None
+
+for t26_round in range(1, t26_rounds + 1):
+    _, t26_order = t26_ndcg(t26_s)
+    t26_pos = {d: p for p, d in enumerate(t26_order)}                # current 0-based position of each doc
+    t26_lam = np.zeros(4)                                            # per-doc lambda accumulator
+    for t26_i in range(4):
+        for t26_j in range(4):
+            if t26_rel[t26_i] > t26_rel[t26_j]:                      # only pairs where i is more relevant
+                t26_rho = 1.0 / (1.0 + np.exp(t26_sigma * (t26_s[t26_i] - t26_s[t26_j])))  # -> big when WRONG
+                t26_dndcg = abs(t26_gain[t26_i] - t26_gain[t26_j]) * abs(
+                    1 / np.log2(t26_pos[t26_i] + 2) - 1 / np.log2(t26_pos[t26_j] + 2)) / t26_IDCG  # -> swap impact
+                t26_lij = t26_sigma * t26_rho * t26_dndcg            # -> the pairwise force
+                t26_lam[t26_i] += t26_lij; t26_lam[t26_j] -= t26_lij  # push i up, j down
+    if t26_round == 1: t26_lam1 = t26_lam.copy()                     # keep round-1 forces for the plot
+    t26_pred = t26_tree(t26_x, t26_lam, depth=2)                     # MART: fit a tree to the lambdas
+    t26_s = t26_s + t26_lr * t26_pred                                # add shrunk tree to the score
+    t26_nk, t26_ok = t26_ndcg(t26_s)
+    print(f"round {t26_round}: lambda={np.round(t26_lam,3).tolist()} "
+          f"-> ranking {[t26_docs[d] for d in t26_ok]} NDCG={t26_nk:.4f}")
+    t26_ndcg_hist.append(t26_nk); t26_score_hist.append(t26_s.copy())
+
+t26_final_ndcg, t26_final_order = t26_ndcg(t26_s)
+print("final ranking:", [t26_docs[d] for d in t26_final_order],
+      " NDCG:", round(t26_ndcg_hist[0], 3), "->", round(t26_final_ndcg, 3))  # -> ['d1','d0','d2','d3'] 0.843 -> 1.0
+assert t26_final_order == t26_ideal                                 # recovered the ideal ranking
+assert t26_final_ndcg > t26_ndcg_hist[0]                            # NDCG improved
+
+t26_sh = np.array(t26_score_hist)
+fig, ax = plt.subplots(1, 3, figsize=(13.5, 3.6))
+ax[0].plot(t26_ndcg_hist, "-o", color=GREEN); ax[0].axhline(1, ls="--", color="black")
+ax[0].set_title("Toy 26: NDCG 0.84 -> 1.0"); ax[0].set_xlabel("round"); ax[0].set_ylabel("NDCG")
+for t26_i in range(4):
+    ax[1].plot(t26_sh[:, t26_i], "-o", label=f"{t26_docs[t26_i]} (rel {t26_rel[t26_i]})")
+ax[1].set_title("scores separate by relevance"); ax[1].set_xlabel("round"); ax[1].legend(fontsize=8)
+ax[2].bar(t26_docs, t26_lam1, color=[GREEN if v > 0 else RED for v in t26_lam1]); ax[2].axhline(0, color="black")
+ax[2].set_title("round-1 lambda forces\n(green=up, red=down)")
+plt.tight_layout(); plt.show()
+""")
+md("▶ What you'll see: the wrong start ranking `[d0,d1,d2,d3]` (NDCG 0.84) is repaired to the ideal "
+   "`[d1,d0,d2,d3]` (NDCG 1.0) in one round, because each doc's lambda already points the right way; "
+   "later rounds widen the margins. The `d2>d3` pair gets a tiny force (swapping the bottom two barely "
+   "moves NDCG), while top pairs get large ones — that `|ΔNDCG|` weighting is the LambdaRank insight.")
+
 # =================================================================== EXPLORE
 md(r"""
 ## Step 2a · Look at each feature's shape
