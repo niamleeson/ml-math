@@ -3,6 +3,7 @@
 // -> visualization (code) -> practice prompts (markdown + empty code cells).
 // Run: node tools/gen-notebooks.js
 const fs = require("fs"), path = require("path");
+const formatNotebooks = require("./nbfmt-run");
 const ROOT = path.resolve(__dirname, "..");
 
 // --- load the lesson registries with the same shims the validation scripts use ---
@@ -107,6 +108,7 @@ function dataPreviewCells(code) {
 }
 
 let written = 0, skipped = 0;
+const writtenPaths = [];
 const outDir = path.join(ROOT, "notebooks");
 fs.mkdirSync(outDir, { recursive: true });
 
@@ -180,7 +182,9 @@ L.forEach(l => {
     } catch (e) { /* unreadable/old file — fall through and regenerate it */ }
   }
   fs.writeFileSync(outPath, JSON.stringify(nb, null, 1));
+  writtenPaths.push(outPath);
   written++;
 });
+formatNotebooks(writtenPaths);
 console.log("wrote", written, "notebooks to notebooks/  (lessons:", L.length + ")");
 if (skipped) console.log("skipped", skipped, "hand-enhanced notebooks (metadata.enhanced_walkthrough)");

@@ -21,7 +21,13 @@ import json, os
 
 cells = []
 def md(t):   cells.append({"cell_type": "markdown", "metadata": {}, "source": t.strip("\n").splitlines(keepends=True)})
-def code(s): cells.append({"cell_type": "code", "metadata": {}, "execution_count": None, "outputs": [], "source": s.strip("\n").splitlines(keepends=True)})
+import os as _os, sys as _sys
+_sys.path.insert(0, _os.path.dirname(_os.path.abspath(__file__)))
+try:
+    from nbfmt import format_source as _fmt_src
+except Exception:
+    def _fmt_src(s): return s
+def code(s): cells.append({"cell_type": "code", "metadata": {}, "execution_count": None, "outputs": [], "source": _fmt_src(s).strip("\n").splitlines(keepends=True)})
 
 # ------------------------------------------------------------------- intro
 md(r"""

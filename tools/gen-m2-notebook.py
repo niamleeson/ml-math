@@ -10,6 +10,12 @@ matplotlib) so it runs top-to-bottom with zero installs.
 Run:  python3 tools/gen-m2-notebook.py
 """
 import json, os
+import sys as _sys
+_sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+try:
+    from nbfmt import format_source as _fmt_src
+except Exception:
+    def _fmt_src(s): return s
 
 cells = []
 
@@ -19,7 +25,7 @@ def md(text):
 
 def code(src):
     cells.append({"cell_type": "code", "metadata": {}, "execution_count": None,
-                  "outputs": [], "source": src.strip("\n").splitlines(keepends=True)})
+                  "outputs": [], "source": _fmt_src(src).strip("\n").splitlines(keepends=True)})
 
 # ----------------------------------------------------------------------------- intro
 md(r"""

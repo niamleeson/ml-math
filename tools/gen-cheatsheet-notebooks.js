@@ -6,6 +6,7 @@
 "use strict";
 const fs = require("fs");
 const path = require("path");
+const formatNotebooks = require("./nbfmt-run");
 const ROOT = path.resolve(__dirname, "..");
 const SRC = path.join(ROOT, "topics", "lessons");
 const NB_DIR = path.join(ROOT, "topics", "notebooks");
@@ -61,6 +62,7 @@ function discoverLessonFiles(dir) {
 }
 
 let made = 0;
+const written = [];
 for (const { section, name } of discoverLessonFiles(SRC)) {
   const md = fs.readFileSync(path.join(SRC, section, name), "utf8");
   if (!md.includes("```python")) continue; // numeric lessons: no notebook
@@ -70,8 +72,11 @@ for (const { section, name } of discoverLessonFiles(SRC)) {
   const outDir = path.join(NB_DIR, section);
   if (!fs.existsSync(outDir)) fs.mkdirSync(outDir, { recursive: true });
   const outName = name.replace(/\.md$/, ".ipynb");
-  fs.writeFileSync(path.join(outDir, outName), JSON.stringify(nb, null, 1));
+  const outPath = path.join(outDir, outName);
+  fs.writeFileSync(outPath, JSON.stringify(nb, null, 1));
+  written.push(outPath);
   made++;
   console.log(`  ${section ? section + "/" : ""}${outName}  —  ${nb.cells.length} cells (${codeCells} code)`);
 }
+formatNotebooks(written);
 console.log(`generated ${made} notebooks in topics/notebooks/<section>/`);

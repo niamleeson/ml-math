@@ -9,6 +9,7 @@
 //   node tools/build-notebook-lessons.js 15.1 15.2       # build only matching files
 const fs = require("fs");
 const path = require("path");
+const formatNotebooks = require("./nbfmt-run");
 
 const ROOT = path.resolve(__dirname, "..");
 const SRC = path.join(ROOT, "notebooks", "lessons");
@@ -61,13 +62,16 @@ const files = fs.readdirSync(SRC)
   .sort();
 
 let n = 0;
+const written = [];
 for (const f of files) {
   const md = fs.readFileSync(path.join(SRC, f), "utf8");
   const nb = mdToNotebook(md, firstH1(md));
   const out = path.join(OUT, f.replace(/\.md$/, ".ipynb"));
   fs.writeFileSync(out, JSON.stringify(nb, null, 1));
+  written.push(out);
   const codeCells = nb.cells.filter((c) => c.cell_type === "code").length;
   console.log(`wrote ${path.relative(ROOT, out)}  (${nb.cells.length} cells, ${codeCells} code)`);
   n++;
 }
+formatNotebooks(written);
 console.log(`\nbuilt ${n} notebook(s)`);
