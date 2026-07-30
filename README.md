@@ -31,6 +31,10 @@ Every lesson has the same beginner-friendly shape:
 
 Features: collapsible sidebar, search, prev/next navigation, and **progress is saved in your browser** (click "Mark complete").
 
+**🔬 Eval Labs** (`eval-labs.html`): rigged evaluation labs — each is a Colab notebook whose
+metric looks great and is lying. A sealed in-notebook grader knows the planted flaws; find them,
+fix them, report the honest number, and paste the completion code back into the page.
+
 ## Structure
 ```
 index.html              the app engine (layout, sidebar, renderer, MathJax)
