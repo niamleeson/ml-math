@@ -341,6 +341,9 @@
     border: 1px solid var(--border); transition: color .15s, border-color .15s;
   }
   .colab-btn:hover { color: var(--ink); border-color: var(--accent); }
+  .course-part { margin: -6px 0 10px; font-size: 12px; font-weight: 600; letter-spacing: .4px;
+    text-transform: uppercase; color: var(--ink-dim); }
+  .card.course-sec { border-left: 3px solid var(--accent); }
   .card.playbook { border-left: 3px solid var(--accent-2); }
   .card.playbook h3 { color: var(--accent-2); }
   .card.checklist { border-left: 3px solid var(--accent-2); background: color-mix(in srgb, var(--accent-2) 6%, var(--panel)); }
@@ -749,6 +752,7 @@
   // Order the (merged) groups appear in the sidebar:
   window.MODULE_ORDER = [
     "AI Cheat Sheet",
+    "Rigorous Courses · Diffusion Models",
     "Foundations & Linear Algebra",
     "Probability & Statistics",
     "Practical Statistics",
@@ -836,6 +840,21 @@
 <script src="lessons/09-classical-b.js"></script>
 <script src="lessons/10-modern-a.js"></script>
 <script src="lessons/10-modern-b.js"></script>
+
+<!-- Rigorous Courses · Diffusion Models — a 12-part zero-prerequisite course (template: "course").
+     Each part has a hand-authored companion notebook under notebooks/<lesson-id>.ipynb. -->
+<script src="lessons/course-diffusion-01.js"></script>
+<script src="lessons/course-diffusion-02.js"></script>
+<script src="lessons/course-diffusion-03.js"></script>
+<script src="lessons/course-diffusion-04.js"></script>
+<script src="lessons/course-diffusion-05.js"></script>
+<script src="lessons/course-diffusion-06.js"></script>
+<script src="lessons/course-diffusion-07.js"></script>
+<script src="lessons/course-diffusion-08.js"></script>
+<script src="lessons/course-diffusion-09.js"></script>
+<script src="lessons/course-diffusion-10.js"></script>
+<script src="lessons/course-diffusion-11.js"></script>
+<script src="lessons/course-diffusion-12.js"></script>
 
 <!-- Book companions: lessons follow each book's own chapter structure (template: "book").
      Per-chapter fragment <script> tags are added per book as each book is generated. -->
@@ -1527,10 +1546,11 @@ const App = (function () {
     if (i !== -1 && cap !== -1 && i < cap) return "Course";
     return null;
   }
-  // Under the "Papers" parent, drop the redundant "Papers · " prefix from a
-  // child's label so it reads e.g. "Papers › Foundations & Optimization".
+  // Under a parent group, drop the redundant "<Parent> · " prefix from a child's
+  // label so it reads e.g. "Papers › Foundations & Optimization" or
+  // "Rigorous Courses › Diffusion Models".
   function navLabel(name, sgName) {
-    return sgName === "Papers" ? name.replace(/^Papers\s*·\s*/, "") : name;
+    return sgName && name.startsWith(sgName + " · ") ? name.slice(sgName.length + 3) : name;
   }
 
   function renderSidebar() {
@@ -1898,6 +1918,28 @@ const App = (function () {
       navRow(id, prev, next);
   }
 
+  // ---- Rigorous-course template (template: "course") ----
+  // A course part leads with theory: goal -> free-form rigorous sections -> symbol
+  // reference -> recall -> fully-worked practice. Each part has a hand-authored
+  // companion notebook under notebooks/<id>.ipynb (the Colab button).
+  function renderCourse(l, id, prev, next) {
+    const partBadge = l.part
+      ? `<p class="course-part">Part ${l.part} of ${l.partTotal || 12}</p>` : "";
+    const body = (l.sections || []).map(s => section("course-sec", "", s.h, s.body)).join("");
+    return `<div class="crumbs">${l.module}</div>` +
+      `<h2 class="lesson-title">${l.title}</h2>` +
+      (l.tagline ? `<p class="lesson-sub">${l.tagline}</p>` : "") +
+      partBadge +
+      prereqLinks(l.prereqs) +
+      colabBtn(id) +
+      section("objective", "🎯", "What you'll be able to do", l.goal) +
+      body +
+      symbolsTable(l.symbols) +
+      recallBlock(l.recall) +
+      practiceBlock(l.practice) +
+      navRow(id, prev, next);
+  }
+
   // ===== Math track: our own 5-section spec. Structure is enforced here, not by the author. =====
   // Shared monochrome-textbook body (the 5 sections). Used by the Math track
   // (renderMath) so its pages cannot drift.
@@ -2047,6 +2089,7 @@ const App = (function () {
     else if (l.type === "capstone") { html = renderCapstone(l, id, prev, next); }
     else if (l.paper) { html = renderPaper(l, id, prev, next); }
     else if (l.template === "pytorch") { html = renderPyTorch(l, id, prev, next); }
+    else if (l.template === "course") { html = renderCourse(l, id, prev, next); }
     else if (l.template === "book") { html = renderBook(l, id, prev, next); }
     else if (l.template === "math") { html = renderMath(l, id, prev, next); }
     else if (l.template === "allml") { html = window.renderAllMLLesson(l, prev, next, byId); }
