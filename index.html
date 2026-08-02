@@ -27,7 +27,35 @@
 
 <!-- MathJax (renders the $...$ and $$...$$ formulas). Needs internet the first time. -->
 <script>
+  // MathJax renders to SVG, so a formula is vector paths, not selectable text. Stamp every
+  // rendered formula with the TeX it came from, so tools (and the Ask-Claude widget) can quote
+  // the source rather than the picture. Wrapping typesetPromise once means EVERY call site —
+  // lesson render, practice reveals, code output, and anything added later — is covered.
+  window.__stampTeX = function () {
+    try {
+      const doc = window.MathJax && MathJax.startup && MathJax.startup.document;
+      if (!doc || !doc.math) return;
+      for (const item of doc.math) {
+        const root = item.typesetRoot;
+        if (root && item.math && !root.dataset.tex) {
+          root.dataset.tex = item.math;
+          root.dataset.display = item.display ? "1" : "";
+        }
+      }
+    } catch (e) {}
+  };
   window.MathJax = {
+    startup: {
+      pageReady() {
+        return MathJax.startup.defaultPageReady().then(function () {
+          window.__stampTeX();
+          const orig = MathJax.typesetPromise.bind(MathJax);
+          MathJax.typesetPromise = function () {
+            return orig.apply(null, arguments).then(function (r) { window.__stampTeX(); return r; });
+          };
+        });
+      }
+    },
     tex: {
       inlineMath: [['$', '$'], ['\\(', '\\)']], displayMath: [['$$', '$$'], ['\\[', '\\]']], processEscapes: true,
       // Macros from the Nakkiran et al. "Step-by-Step Diffusion" preamble, so that reproduced
@@ -2329,7 +2357,11 @@ const App = (function () {
     });
   }
 
-  function typeset(el) { if (el && window.MathJax && MathJax.typesetPromise) MathJax.typesetPromise([el]); }
+  // typesetPromise is wrapped at startup to stamp each formula with its source TeX, so every
+  // call here — and anywhere else — is covered without repeating the .then().
+  function typeset(el) {
+    if (el && window.MathJax && MathJax.typesetPromise) return MathJax.typesetPromise([el]);
+  }
   function toggleWT(btn) { const wt = btn.parentElement; wt.classList.toggle("open"); }
   function vizView(btn, mode) {
     const card = btn.closest(".card.viz");
@@ -2458,8 +2490,56 @@ window.CodeRunner = CodeRunner;
       fileHint: (lesson && lesson._src) || null,
       lessonId: id || null,
       section: h ? h.textContent.trim() : null,
-      quote: range.toString().replace(/\s+/g, " ").trim(),
+      quote: quoteOf(range),
     };
+  }
+
+  // The rendered page shows SVG glyphs; the lesson file contains TeX. Quote the TeX, so what
+  // Claude receives matches what it has to edit — and so the server can find it on disk.
+  function quoteOf(range) {
+    const frag = range.cloneContents();
+    frag.querySelectorAll("mjx-container[data-tex]").forEach(m => {
+      const tex = m.dataset.tex;
+      const d = m.dataset.display ? "$$" : "$";
+      m.replaceWith(document.createTextNode(" " + d + tex + d + " "));
+    });
+    // a formula only partly covered by the drag still contributes its glyph text; drop the
+    // leftovers so we never quote half a picture
+    frag.querySelectorAll("mjx-container").forEach(m => m.remove());
+    return frag.textContent.replace(/\s+/g, " ").trim();
+  }
+
+  // Nothing rendered to a canvas, an SVG or an <img> can be selected with a drag, so clicking
+  // is the only way to ask about it. Each kind reports the best textual handle it has.
+  function visualAt(target) {
+    if (!target || !target.closest) return null;
+
+    const mj = target.closest("mjx-container[data-tex]");
+    if (mj) {
+      const d = mj.dataset.display ? "$$" : "$";
+      return { el: mj, quote: d + mj.dataset.tex + d };
+    }
+    // Chart canvases carry data-viz="<lessonId>::<index>" into the CODEVIZ spec.
+    const cv = target.closest("canvas[data-viz]");
+    if (cv) {
+      const parts = (cv.dataset.viz || "").split("::");
+      const v = window.CODEVIZ && CODEVIZ[parts[0]];
+      const spec = v && v.charts && v.charts[+parts[1]];
+      const title = (spec && (spec.title || spec.type)) || "chart";
+      return { el: cv, quote: "[chart] " + title };
+    }
+    // Demo canvases have no spec; fall back to the card heading above them.
+    const demo = target.closest("canvas, .card.viz, figure");
+    if (demo) {
+      const card = demo.closest(".card, figure");
+      const cap = card && card.querySelector("figcaption, .vizcap, h3");
+      const img = demo.tagName === "IMG" ? demo : (card && card.querySelector("img"));
+      const label = (cap && cap.textContent.trim()) || (img && img.getAttribute("alt")) || "figure";
+      return { el: demo, quote: "[figure] " + label.slice(0, 160) };
+    }
+    const im = target.closest("img");
+    if (im) return { el: im, quote: "[figure] " + (im.getAttribute("alt") || im.getAttribute("src") || "image") };
+    return null;
   }
 
   function showButton(rect) {
@@ -2475,6 +2555,16 @@ window.CodeRunner = CodeRunner;
     if (panel.contains(e.target) || e.target === btn) return;
     setTimeout(() => {
       const sel = window.getSelection();
+      // Clicking a formula, chart or figure counts as selecting it — a drag can't.
+      const vis = visualAt(e.target);
+      if (vis && (!sel || sel.isCollapsed)) {
+        const range = document.createRange();
+        range.selectNode(vis.el);
+        pending = locate(range);
+        pending.quote = vis.quote;
+        showButton(vis.el.getBoundingClientRect());
+        return;
+      }
       if (!sel || sel.isCollapsed || !sel.rangeCount) { btn.style.display = "none"; return; }
       const range = sel.getRangeAt(0);
       const content = document.getElementById("content");

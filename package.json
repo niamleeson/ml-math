@@ -6,7 +6,8 @@
   "scripts": {
     "dev": "node tools/tutor-server.js",
     "shots": "node tools/screenshot.js",
-    "demo-check": "node tools/demo-harness.js lessons/00-foundations.js lessons/01-probability.js lessons/02-ml.js lessons/03-deeplearning.js lessons/04-ai.js"
+    "demo-check": "node tools/demo-harness.js lessons/00-foundations.js lessons/01-probability.js lessons/02-ml.js lessons/03-deeplearning.js lessons/04-ai.js",
+    "check-math": "node tools/check-math-stamps.js"
   },
   "devDependencies": {
     "puppeteer-core": "^23.11.1"
