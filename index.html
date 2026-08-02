@@ -28,7 +28,27 @@
 <!-- MathJax (renders the $...$ and $$...$$ formulas). Needs internet the first time. -->
 <script>
   window.MathJax = {
-    tex: { inlineMath: [['$', '$'], ['\\(', '\\)']], displayMath: [['$$', '$$'], ['\\[', '\\]']], processEscapes: true },
+    tex: {
+      inlineMath: [['$', '$'], ['\\(', '\\)']], displayMath: [['$$', '$$'], ['\\[', '\\]']], processEscapes: true,
+      // Macros from the Nakkiran et al. "Step-by-Step Diffusion" preamble, so that reproduced
+      // content can carry the paper's LaTeX verbatim instead of being rewritten by hand.
+      macros: {
+        R: '\\mathbb{R}', N: '\\mathbb{N}', Z: '\\mathbb{Z}', Q: '\\mathbb{Q}', F: '\\mathbb{F}',
+        E: '\\mathop{\\mathbb{E}}', eps: '\\varepsilon', epsilon: '\\varepsilon',
+        half: '\\tfrac{1}{2}', dt: '{\\Delta t}', x: '\\times', nullset: '\\emptyset',
+        bar: ['\\overline{#1}', 1], hat: ['\\widehat{#1}', 1], wt: ['\\widetilde{#1}', 1],
+        set: ['\\{#1\\}', 1], flowto: ['\\overset{#1}{\\hookrightarrow}', 1],
+        goto: ['\\overset{#1}{\\longrightarrow}', 1],
+        cA: '\\mathcal{A}', cD: '\\mathcal{D}', cF: '\\mathcal{F}', cH: '\\mathcal{H}',
+        cN: '\\mathcal{N}', cO: '\\mathcal{O}', cX: '\\mathcal{X}', cY: '\\mathcal{Y}',
+        cZ: '\\mathcal{Z}',
+        vtxo: 'v_t^{[x_0]}', vxo: 'v^{[x_0]}', rflow: '\\mathrm{RunFlow}',
+        // defined inline in the paper's later sections
+        pddim: 'p^{\\textrm{ddim}}', rG: '{G_t}', ssig: '{\\sigma^2}',
+        va: 'v_t^{[a]}', vb: 'v_t^{[b]}', vxn: 'v_t^{[x_0]}',
+        argmin: '\\operatorname*{arg\\,min}', argmax: '\\operatorname*{arg\\,max}'
+      }
+    },
     svg: { fontCache: 'global' },
     options: { skipHtmlTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code'] }
   };
@@ -830,6 +850,7 @@
   window.MODULE_ORDER = [
     "AI Cheat Sheet",
     "Rigorous Courses · Diffusion Models",
+    "Rigorous Courses · Reproduced Papers",
     "Foundations & Linear Algebra",
     "Probability & Statistics",
     "Practical Statistics",
@@ -932,6 +953,10 @@
 <script src="lessons/course-diffusion-10.js"></script>
 <script src="lessons/course-diffusion-11.js"></script>
 <script src="lessons/course-diffusion-12.js"></script>
+
+<!-- Rigorous Courses · Reproduced Papers — outside work reproduced under its own licence.
+     Generated from the arXiv LaTeX source; see the header of the file. -->
+<script src="lessons/course-sbs-diffusion.js"></script>
 
 <!-- Book companions: lessons follow each book's own chapter structure (template: "book").
      Per-chapter fragment <script> tags are added per book as each book is generated. -->

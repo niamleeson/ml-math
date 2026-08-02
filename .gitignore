@@ -8,6 +8,8 @@ pt-tensors-new-template.png
 # …but keep the committed favicon assets
 !favicon-32.png
 !apple-touch-icon.png
+# …and the figures shipped with reproduced lesson content
+!figs/**/*.png
 
 # Ask-Claude question queue written by tools/tutor-server.js (local, per-session)
 .claude/ask-queue.jsonl
