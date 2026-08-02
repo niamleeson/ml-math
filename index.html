@@ -45,6 +45,10 @@
         vtxo: 'v_t^{[x_0]}', vxo: 'v^{[x_0]}', rflow: '\\mathrm{RunFlow}',
         // defined inline in the paper's later sections
         pddim: 'p^{\\textrm{ddim}}', rG: '{G_t}', ssig: '{\\sigma^2}',
+        // the paper's in-equation margin annotations, rendered as a trailing note
+        mathnote: ['\\quad{\\small\\textrm{(#1)}}', 1], Tab: ['#1#2', 2],
+        // the paper colours terms inside underbraces to pair them with their expansions
+        mathcolor: ['{\\color{#1}{#2}}', 2],
         va: 'v_t^{[a]}', vb: 'v_t^{[b]}', vxn: 'v_t^{[x_0]}',
         argmin: '\\operatorname*{arg\\,min}', argmax: '\\operatorname*{arg\\,max}'
       }
