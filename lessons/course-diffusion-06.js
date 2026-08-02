@@ -31,7 +31,7 @@
           <li><b>Shrink it a little.</b> Multiply it by $\\sqrt{1-\\beta_t}$, a number a hair below 1. For $\\beta_t = 0.1$ the multiplier is $\\sqrt{0.9} \\approx 0.9487$.</li>
           <li><b>Add a small dose of fresh noise.</b> Draw a fresh Gaussian number with mean 0 and variance $\\beta_t$ and add it on. For $\\beta_t = 0.1$ the typical size of that dose is $\\sqrt{0.1} \\approx 0.3162$.</li>
         </ol>
-        <p>The number $\\beta_t$ is the <b>noise dose</b> at step $t$: how much fresh noise variance step $t$ adds. It is small — in the standard setup it ranges from $0.0001$ up to $0.02$. The full list $\\beta_1, \\dots, \\beta_T$ is called the <b>noise schedule</b>, and it is chosen once, before training, and never learned. The forward process has no knobs to tune. In the language of part 4, this is a Markov chain: the recipe reads only the current $x_{t-1}$ and ignores all earlier history. Written as a probability statement, one step is:</p>
+        <p>The number $\\beta_t$ is the <b>noise dose</b> at step $t$: how much fresh noise variance step $t$ adds. It is small — in the standard setup it ranges from $0.0001$ up to $0.02$. The full list $\\beta_1, \\dots, \\beta_T$ ($T$ being the total number of noising steps, from part 1's story) is called the <b>noise schedule</b>, and it is chosen once, before training, and never learned. The forward process has no knobs to tune. In the language of part 4, this is a Markov chain: the recipe reads only the current $x_{t-1}$ and ignores all earlier history. Written as a probability statement, one step is:</p>
         <div class="formula-box">$$ q(x_t \\mid x_{t-1}) = \\mathcal{N}\\big(x_t;\\ \\sqrt{1-\\beta_t}\\, x_{t-1},\\ \\beta_t \\mathbf{I}\\big) $$</div>
         <p><b>Read it out loud:</b> given the data at step $t-1$, the data at step $t$ is a Gaussian draw centered at a slightly shrunken copy of $x_{t-1}$, with a small variance $\\beta_t$ in every coordinate.</p>
         <p>Recall from part 3 (or the refresher in <a onclick="App.open('prob-normal')">the normal distribution</a>) that a draw from $\\mathcal{N}(\\mu, \\sigma^2)$ can always be written as $\\mu + \\sigma z$ with $z$ a standard Gaussian draw. Applying that reparameterization here turns the probability statement into a line of code:</p>
@@ -69,7 +69,7 @@
         <p>Plain reading: after three doses, about half of the original signal's variance is still there. Memorize these numbers — $\\bar\\alpha = (0.9,\\ 0.72,\\ 0.504)$. They will reappear in every hand calculation through part 9.</p>` },
 
       { h: "The shortcut: jumping straight to step t",
-        body: `<p>Training will need noisy versions of images at random steps, millions of times. Looping $t$ steps for every training example would be painfully slow. Luckily, the chain has a closed form: you can jump from $x_0$ straight to $x_t$ in one draw. We will derive it by composing two steps and then note that the same argument repeats forever.</p>
+        body: `<p>Training will need noisy versions of images at random steps, millions of times. Looping $t$ steps for every training example would be painfully slow. Luckily, the chain has a closed form: you can jump from the clean data point $x_0$ straight to its noised version $x_t$ in one draw. We will derive it by composing two steps and then note that the same argument repeats forever.</p>
         <p>Write out the first two steps of the chain using the $\\alpha$ notation:</p>
         <p>$x_1 = \\sqrt{\\alpha_1}\\, x_0 + \\sqrt{1-\\alpha_1}\\,\\epsilon_1$ and $x_2 = \\sqrt{\\alpha_2}\\, x_1 + \\sqrt{1-\\alpha_2}\\,\\epsilon_2$, where $\\epsilon_1$ and $\\epsilon_2$ are independent standard Gaussian draws — step 2's dose is drawn fresh, with no memory of step 1's. Now, one operation at a time:</p>
         <ol>
@@ -102,7 +102,7 @@
         </ol>
         <p><b>Road B — the closed form, one jump.</b> Mean: $\\sqrt{\\bar\\alpha_2}\\, x_0 = \\sqrt{0.72} \\times 2 = 0.8485 \\times 2 = 1.6971$. Variance: $1 - \\bar\\alpha_2 = 1 - 0.72 = 0.28$.</p>
         <p>Both roads give $q(x_2 \\mid x_0 = 2) = \\mathcal{N}(1.6971,\\ 0.28)$, agreeing to every decimal we computed. The shortcut is not an approximation — it is the same distribution, reached without the loop.</p>
-        <p>One more concrete drill: draw an actual sample. Suppose the random draw comes out $\\epsilon = 1.0$. Then $x_2 = 1.6971 + \\sqrt{0.28} \\times 1.0 = 1.6971 + 0.5292 = 2.2263$. A different $\\epsilon$ gives a different $x_2$; the formula pins down the recipe, not the outcome. The notebook runs this check with 5,000 samples down both roads and the histograms lie on top of each other.</p>` },
+        <p>One more concrete drill: draw an actual sample. Suppose the random draw comes out $\\epsilon = 1.0$. Then $x_2 = 1.6971 + \\sqrt{0.28} \\times 1.0$; carrying five decimals, $1.69706 + 0.52915 = 2.22621$, which rounds to $2.2262$. A different $\\epsilon$ gives a different $x_2$; the formula pins down the recipe, not the outcome. The notebook redoes these $T = 3$ numbers exactly (deterministic mean-and-variance tracking), and runs the same two-roads check with 5,000 samples on the full $T = 200$ schedule — the histograms lie on top of each other.</p>` },
 
       { h: "Schedules: choosing how fast to destroy",
         body: `<p>Everything so far works for any list of doses. Which list should we use? The DDPM paper's choice — the <b>linear schedule</b> — ramps the doses evenly from $\\beta_1 = 10^{-4}$ up to $\\beta_T = 0.02$ over $T = 1000$ steps. Early steps barely whisper noise; late steps pour it on. What matters for us downstream is the curve of $\\bar\\alpha_t$: near 1 for a long opening stretch, then sliding down toward 0.</p>
@@ -148,7 +148,8 @@
       { sym: "$\\mathcal{N}(x;\\, \\mu, \\sigma^2)$", desc: "bell curve with center $\\mu$ and spread (variance) $\\sigma^2$" },
       { sym: "$\\mathbf{I}$", desc: "isotropic noise marker — every coordinate gets its own independent unit-variance dose" },
       { sym: "$\\mathrm{Var}(X)$", desc: "the variance — the typical squared spread of $X$ (part 2)" },
-      { sym: "$\\mathrm{SNR}(t) = \\bar\\alpha_t / (1-\\bar\\alpha_t)$", desc: "signal-to-noise ratio at step $t$ — surviving signal variance per unit of noise variance" }
+      { sym: "$\\mathrm{SNR}(t) = \\bar\\alpha_t / (1-\\bar\\alpha_t)$", desc: "signal-to-noise ratio at step $t$ — surviving signal variance per unit of noise variance" },
+      { sym: "$\\mathbb{E}[\\cdot]$", desc: "the long-run average (expectation), from part 2" }
     ],
     recall: [
       "In one plain-English sentence, what does the forward kernel do to an image at step $t$?",

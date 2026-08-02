@@ -144,7 +144,7 @@
         </ol>
         <div class="formula-box">$$ \\log p_\\theta(x) \\;=\\; \\mathrm{ELBO}(q, \\theta; x) \\;+\\; D_{\\mathrm{KL}}\\big(q(z \\mid x) \\,\\big\\|\\, p_\\theta(z \\mid x)\\big) $$</div>
         <p><b>Read it out loud:</b> the true log-likelihood equals the ELBO plus exactly one KL term — the mismatch from your guess about the hidden cause to the model's true posterior belief about it. This is an identity, not an inequality: the gap between ceiling and floor <b>is</b> that KL. Three consequences fall out at once. Since KL $\\ge 0$, the ELBO can never exceed $\\log p_\\theta(x)$ — the Jensen result, re-proved. The bound is <b>tight</b> (gap zero) exactly when $q$ equals the true posterior $p_\\theta(z \\mid x)$, because KL is zero only between equal rules. And raising the ELBO at a fixed $\\log p_\\theta(x)$ can only mean the KL shrank — your guess moved toward the truth.</p>
-        <p>Numbers, on the mixture toy with $x = 0.5$. The ceiling is $\\log p(x) = -2.6102$. Take the uniform guess $q(z{=}1 \\mid x) = 0.5$: working through the ELBO sum gives $-3.0439$, so the gap is $-2.6102 - (-3.0439) = 0.4338$. Separately, the KL from $(0.5, 0.5)$ to the true posterior $(0.881, 0.119)$ is $0.5\\ln\\frac{0.5}{0.881} + 0.5\\ln\\frac{0.5}{0.119} = 0.4338$. Identical, to four decimals — the notebook shows the gap curve and the KL curve lie exactly on top of each other for <b>every</b> possible guess.</p>
+        <p>Numbers, on the mixture toy with $x = 0.5$. The ceiling is $\\log p(x) = -2.6102$. Take the uniform guess $q(z{=}1 \\mid x) = 0.5$: working through the ELBO sum gives $-3.04394$, so the gap is $-2.61016 - (-3.04394) = 0.43378$, which rounds to $0.4338$. Separately, the KL from $(0.5, 0.5)$ to the true posterior $(0.8808, 0.1192)$ is $0.5\\ln\\frac{0.5}{0.8808} + 0.5\\ln\\frac{0.5}{0.1192} = 0.4338$. Identical, to four decimals — the notebook shows the gap curve and the KL curve lie exactly on top of each other for <b>every</b> possible guess.</p>
         <p>Why optimize a floor at all? Because it is computable where the ceiling is not; because it is safe — the true value is guaranteed to be at least the floor you certified; and because its gap is not junk but a meaningful KL, so improving the floor means learning something real about the hidden causes. A VAE (see <a onclick="App.open('mod-vae')">the VAE lesson</a>) trains a network to produce $q$ and pushes this same floor up. Diffusion, in part 8, makes a bolder move: it <b>fixes</b> $q$ to be the forward noising chain from part 4 — nothing about $q$ is learned — and the ELBO then splits into a sum of per-step Gaussian KLs, each of which this part's equal-variance formula turns into a squared error.</p>` },
 
       { h: "Sanity checks",
@@ -156,7 +156,7 @@
           <li><b>Sign of the special case.</b> $\\frac{(\\mu_1-\\mu_2)^2}{2\\sigma^2}$ is a square over a positive number: never negative, and zero exactly when the centers agree — matching KL's first two properties by inspection.</li>
           <li><b>Asymmetry is real.</b> $\\mathcal{N}(0,1)$ vs $\\mathcal{N}(1,4)$: forward direction $0.443$ nats, reverse $1.307$ nats. Order matters; KL is not a distance.</li>
           <li><b>Jensen with numbers.</b> $X \\in \\{1, 9\\}$ equally: $\\mathbb{E}[\\log X] = 1.099 \\le \\log \\mathbb{E}[X] = 1.609$. The slack is real and the inequality points the right way.</li>
-          <li><b>ELBO endpoints.</b> On the mixture toy, the best guess (the true posterior $0.881$) makes the gap $0.0000$; the uniform guess pays $0.4338$ nats; and as the guess approaches certainty on the <b>wrong</b> coin face, the floor dives — confident wrong beliefs are punished without limit.</li>
+          <li><b>ELBO endpoints.</b> On the mixture toy, the best guess (the true posterior $0.881$) makes the gap $0.0000$; the uniform guess pays $0.4338$ nats; and as the guess approaches certainty on the <b>wrong</b> coin face, the floor drops to about $-4.74$ — a gap of about $2.13$ nats, which is exactly $-\\ln(0.1192)$, the log of the posterior weight the wrong face actually has. Note the penalty is large but <b>capped</b>: $D_{\\mathrm{KL}}(q \\,\\|\\, p)$ only blows up when $q$ puts weight where $p$ has <b>none</b>, and here both faces keep some posterior weight. (That unbounded blow-up is the reverse direction's specialty — the asymmetry again.)</li>
         </ul>` },
 
       { h: "What you can do now",
@@ -178,7 +178,9 @@
       { sym: "$p_\\theta(z \\mid x)$", desc: "the true posterior: the model's exact updated belief about $z$ after seeing $x$ (usually uncomputable in big models)" },
       { sym: "$\\mathrm{ELBO}(q, \\theta; x)$", desc: "the evidence lower bound: a computable floor under $\\log p_\\theta(x)$; the gap to the ceiling is exactly $D_{\\mathrm{KL}}(q \\,\\|\\, p_\\theta(z \\mid x))$" },
       { sym: "$\\mathbb{E}_{z \\sim q}[\\cdot]$", desc: "the average of the bracketed quantity when $z$ is drawn from $q$" },
-      { sym: "$\\mathcal{N}(x;\\, \\mu, \\sigma^2)$", desc: "recall from part 3: the bell-curve density with center $\\mu$ and spread $\\sigma^2$, evaluated at $x$" }
+      { sym: "$\\mathcal{N}(x;\\, \\mu, \\sigma^2)$", desc: "recall from part 3: the bell-curve density with center $\\mu$ and spread $\\sigma^2$, evaluated at $x$" },
+      { sym: "$n$", desc: "the number of data points in the dataset" },
+      { sym: "$X$", desc: "a generic positive random quantity — the placeholder in Jensen's inequality" }
     ],
     recall: [
       "What does the likelihood $L(\\theta)$ measure, and which of the two ingredients (data, knobs) is held fixed while the other varies?",

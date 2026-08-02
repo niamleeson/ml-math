@@ -24,7 +24,7 @@
       {
         h: "Where we are",
         body: `<p>Part 1 gave us the picture. An image is a list of numbers, so it is one point in a huge space. A dataset is a cloud of such points. Realistic images live in a few crowded regions of that space, and almost all of the space is empty static. And <b>generating</b> means producing a brand-new point by following the cloud's rule — the rule that says which regions are likely and which are not. That phrase, "the cloud's rule," was deliberately informal. We used it, we drew pictures of it, but we never said what kind of mathematical object it is.</p>
-        <p>This part fixes that. The cloud's rule is a <b>probability distribution</b>, and this part builds, from zero, every probability tool the rest of the course stands on. Nothing here is filler — each tool has a scheduled job later. Conditional probability is the grammar of the noising recipe $q(x_t \\mid x_{t-1})$ in part 6. Bayes' rule is the machine that flips forward noising into reverse denoising in part 7. The variance rules are the entire bookkeeping of the forward process, including the strange-looking $\\sqrt{1-\\beta_t}$ factor. Expectation is the outer shell of the training loss in part 9. And Monte-Carlo averaging is the reason training on small random batches works at all in part 10. We start with dice and tickets — small enough to count by hand — because every rule we prove on a six-row table holds unchanged for the 784-dimensional image clouds of part 1.</p>`
+        <p>This part fixes that. The cloud's rule is a <b>probability distribution</b>, and this part builds, from zero, every probability tool the rest of the course stands on. Nothing here is filler — each tool has a scheduled job later. Conditional probability is the grammar of the noising recipe $q(x_t \\mid x_{t-1})$ in part 6. Bayes' rule is the machine that flips forward noising into reverse denoising in part 7. The variance rules are the entire bookkeeping of the forward process, including the strange-looking $\\sqrt{1-\\beta_t}$ factor (here $\\beta_t$ is the small noise dose that step $t$ adds — part 6 defines it properly; you only need to know it is a number between 0 and 1). Expectation is the outer shell of the training loss in part 9. And Monte-Carlo averaging is the reason training on small random batches works at all in part 10. We start with dice and tickets — small enough to count by hand — because every rule we prove on a six-row table holds unchanged for the 784-dimensional image clouds of part 1.</p>`
       },
       {
         h: "Random variables: numbers with a spread",
@@ -155,7 +155,7 @@
         </ol>
         <div class="formula-box">$$\\mathrm{Var}(X + Y) = \\mathrm{Var}(X) + \\mathrm{Var}(Y) \\qquad \\text{when } X, Y \\text{ are independent}$$</div>
         <p><b>Read it out loud:</b> for independent random variables, spreads — measured as variances, not standard deviations — add up. And the derivation tells you exactly what you are owed when independence fails: the correction term $2\\,\\mathrm{Cov}(X, Y)$. Our dependent ticket table demonstrates the failure with real numbers. Direct computation over the six cells gives $\\mathbb{E}[(X+Y)^2] = 7.10$, so $\\mathrm{Var}(X+Y) = 7.10 - 2.50^2 = 0.85$. But $\\mathrm{Var}(X) + \\mathrm{Var}(Y) = 0.24 + 0.69 = 0.93$. The shortfall is $-0.08$ — and indeed $\\mathrm{Cov}(X,Y) = \\mathbb{E}[XY] - \\mu_X\\mu_Y = 1.10 - 1.14 = -0.04$, so $2\\,\\mathrm{Cov} = -0.08$ accounts for it to the last decimal.</p>
-        <p>Why this is the course's workhorse: in part 6, every noising step adds <b>fresh, independent</b> noise to the image. Tracking how much total noise has accumulated by step $t$ — including why the recipe multiplies by the odd factor $\\sqrt{1-\\beta_t}$ — is this addition rule applied over and over, plus the scaling rule you proved above. When you meet that algebra, it will already be an old friend.</p>`
+        <p>Why this is the course's workhorse: in part 6, every noising step adds <b>fresh, independent</b> noise to the image. Tracking how much total noise has accumulated by step $t$ — including why the recipe multiplies by the odd factor $\\sqrt{1-\\beta_t}$, where $\\beta_t$ is step $t$'s small noise dose (part 6's headline symbol) — is this addition rule applied over and over, plus the scaling rule you proved above. When you meet that algebra, it will already be an old friend.</p>`
       },
       {
         h: "Estimating expectations by sampling",
@@ -204,7 +204,9 @@
       { sym: "$\\mu$", desc: "shorthand for $\\mathbb{E}[X]$, the mean" },
       { sym: "$\\mathrm{Var}(X)$", desc: "the variance — the average squared distance between $X$ and its mean; its square root (the standard deviation) is the typical distance in original units" },
       { sym: "$\\mathrm{Cov}(X, Y)$", desc: "the covariance — the average of both deviations multiplied, $\\mathbb{E}[(X-\\mu_X)(Y-\\mu_Y)]$; zero for independent variables" },
-      { sym: "$\\bar{X}_n$", desc: "the average of $n$ independent samples — the Monte-Carlo estimate of $\\mathbb{E}[X]$" }
+      { sym: "$\\bar{X}_n$", desc: "the average of $n$ independent samples — the Monte-Carlo estimate of $\\mathbb{E}[X]$" },
+      { sym: "$\\beta_t$", desc: "previewed here, owned by part 6: the small noise dose that noising step $t$ adds" },
+      { sym: "$q(x_t \\mid x_{t-1})$", desc: "previewed here, owned by part 6: the fixed noising recipe, one step of the forward process" }
     ],
     recall: [
       "What two rules must the numbers in a probability table (PMF) obey?",
