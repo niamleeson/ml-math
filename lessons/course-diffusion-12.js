@@ -54,7 +54,7 @@
           <li><b>Do:</b> take the log: $\\log q(x_t) + w\\, \\log q(y \\mid x_t) + \\text{const}$. <b>Why:</b> the log of a product is the sum of the logs, the log of a power is the power times the log (part 5), and the normalizer's log is a constant in $x_t$.</li>
           <li><b>Do:</b> take the gradient in $x_t$: $\\nabla \\log q(x_t) + w\\, \\nabla \\log q(y \\mid x_t)$. <b>Why:</b> slopes add, scaling a function by $w$ scales its slope by $w$, and the constant's slope is zero — the score never needs the normalizer, exactly as part 11 promised.</li>
           <li><b>Do:</b> substitute the rearranged Bayes identity for the tilt: $\\nabla \\log q(x_t) + w\\,\\big(\\nabla \\log q(x_t \\mid y) - \\nabla \\log q(x_t)\\big)$. <b>Why:</b> replacing a quantity by something proved equal to it changes nothing.</li>
-          <li><b>Do:</b> convert every score into a noise guess by multiplying the whole equation by $-\\sqrt{1-\\bar\\alpha_t}$. <b>Why:</b> part 11's bridge, $\\nabla_{x_t} \\log q = -\\epsilon_\\theta^{*}/\\sqrt{1-\\bar\\alpha_t}$, holds for the unconditional density (estimated by the null-token call) and, rerunning part 11's derivation on the label-$y$ sub-population, for the conditional density too (estimated by the labeled call); multiplying both sides of a true equation by the same factor keeps it true.</li>
+          <li><b>Do:</b> convert every score into a noise guess by multiplying the whole equation by $-\\sqrt{1-\\bar\\alpha_t}$. <b>Why:</b> part 11's bridge, $\\nabla_{x_t} \\log q = -\\epsilon_\\theta^{*}/\\sqrt{1-\\bar\\alpha_t}$ (where $\\bar\\alpha_t$ is, recall, the fraction of the original signal surviving to step $t$), holds for the unconditional density (estimated by the null-token call) and, rerunning part 11's derivation on the label-$y$ sub-population, for the conditional density too (estimated by the labeled call); multiplying both sides of a true equation by the same factor keeps it true.</li>
         </ol>
         <p>Writing $\\epsilon_y = \\epsilon_\\theta(x_t, t, y)$ and $\\epsilon_\\varnothing = \\epsilon_\\theta(x_t, t, \\varnothing)$ for the two calls, the result is the update this part owns — the formula promised in part 1's roadmap:</p>
         <div class="formula-box">$$\\tilde\\epsilon \\;=\\; \\epsilon_\\varnothing \\;+\\; w\\,\\big(\\epsilon_y - \\epsilon_\\varnothing\\big)$$</div>
@@ -125,7 +125,8 @@
       { sym: "$w$", desc: "the guidance scale: how hard we push toward the condition; 0 = ignore it, 1 = plain conditional, 7 = a common default" },
       { sym: "$\\tilde\\epsilon$", desc: "the guided noise guess $\\epsilon_\\varnothing + w(\\epsilon_y - \\epsilon_\\varnothing)$, handed to the sampler in place of the plain guess" },
       { sym: "$E,\\ D$", desc: "the autoencoder's encoder (image to latent) and decoder (latent to image); PCA in our miniature" },
-      { sym: "$z_0,\\ z_t$", desc: "a latent (the encoded data point) and its noised version — the diffusion now runs on these; not to be confused with the sampler's fresh kick $z$ from Algorithm 2" }
+      { sym: "$z_0,\\ z_t$", desc: "a latent (the encoded data point) and its noised version — the diffusion now runs on these; not to be confused with the sampler's fresh kick $z$ from Algorithm 2" },
+      { sym: "$\\epsilon$", desc: "fresh standard Gaussian noise, from part 6's one-line sampler" }
     ],
     recall: [
       "State conditional generation in one line of math and one plain sentence. What plays the role of $y$ for our ring, and what plays it in Stable Diffusion?",

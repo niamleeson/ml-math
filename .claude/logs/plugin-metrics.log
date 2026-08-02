@@ -6,3 +6,7 @@
 [2026-07-31 22:55:06] [OK] [dataviz] Metric produced for PostToolUse: dataviz
 [2026-07-31 22:55:06] [OK] [artifact-design] Metric produced for PostToolUse: artifact-design
 [2026-07-31 22:55:06] [OK] [artifact-design] Metric produced for PreToolUse: artifact-design
+[2026-08-02 00:35:27] [INFO] [claude-in-chrome] PreToolUse skill=claude-in-chrome
+[2026-08-02 00:35:27] [INFO] [claude-in-chrome] PostToolUse skill=claude-in-chrome
+[2026-08-02 00:35:37] [OK] [claude-in-chrome] Metric produced for PreToolUse: claude-in-chrome
+[2026-08-02 00:35:37] [OK] [claude-in-chrome] Metric produced for PostToolUse: claude-in-chrome

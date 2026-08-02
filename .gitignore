@@ -1,4 +1,5 @@
 node_modules/
+.yarn/
 screenshots/
 .DS_Store
 .playwright-mcp/
@@ -7,6 +8,10 @@ pt-tensors-new-template.png
 # …but keep the committed favicon assets
 !favicon-32.png
 !apple-touch-icon.png
+
+# Ask-Claude question queue written by tools/tutor-server.js (local, per-session)
+.claude/ask-queue.jsonl
+.claude/ask-done.jsonl
 
 # Cached torchvision datasets (local verification only)
 notebooks/data/

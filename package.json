@@ -4,6 +4,7 @@
   "version": "1.0.0",
   "description": "Interactive lessons for the maths of ML, DL & AI",
   "scripts": {
+    "dev": "node tools/tutor-server.js",
     "shots": "node tools/screenshot.js",
     "demo-check": "node tools/demo-harness.js lessons/00-foundations.js lessons/01-probability.js lessons/02-ml.js lessons/03-deeplearning.js lessons/04-ai.js"
   },

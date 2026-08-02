@@ -702,6 +702,70 @@
   #content ol.mnum { list-style: decimal; padding-left: 24px; margin: 8px 0; }
   #content ul.mbul { list-style: disc; padding-left: 24px; margin: 8px 0; }
   #content ol.mnum > li, #content ul.mbul > li { margin: 4px 0; padding: 0; }
+
+  /* ===== Ask-Claude tool: highlight a passage, queue a question, watch the page update ===== */
+  #askBtn {
+    position: fixed; z-index: 60; display: none;
+    font-family: var(--font-sans); font-size: 13px; padding: 6px 11px;
+    background: var(--accent); color: #fff; border: 0; border-radius: 6px;
+    box-shadow: 0 3px 12px rgba(0,0,0,.28); cursor: pointer; white-space: nowrap;
+  }
+  #askPanel {
+    position: fixed; z-index: 61; right: 24px; bottom: 24px; width: 380px; max-width: calc(100vw - 32px);
+    display: none; flex-direction: column; gap: 10px; padding: 16px;
+    background: var(--bg); border: 1px solid var(--border); border-radius: 10px;
+    box-shadow: 0 12px 40px rgba(0,0,0,.3); font-family: var(--font-sans);
+  }
+  #askPanel.open { display: flex; }
+  #askPanel .ask-head { display: flex; justify-content: space-between; align-items: center; font-size: 13px; color: var(--ink-dim); }
+  #askPanel .ask-close { background: none; border: 0; color: var(--ink-dim); font-size: 18px; cursor: pointer; line-height: 1; }
+  #askPanel .ask-where { font-size: 12px; color: var(--ink-dim); word-break: break-all; }
+  #askPanel .ask-quote {
+    font-size: 13px; max-height: 96px; overflow-y: auto; padding: 8px 10px;
+    border-left: 3px solid var(--accent); background: var(--bg-alt, rgba(127,127,127,.08)); color: var(--ink);
+  }
+  #askPanel textarea {
+    font-family: var(--font-sans); font-size: 14px; padding: 8px 10px; min-height: 74px; resize: vertical;
+    border: 1px solid var(--border); border-radius: 6px; background: var(--bg); color: var(--ink);
+  }
+  #askPanel .ask-row { display: flex; gap: 8px; align-items: center; justify-content: space-between; }
+  #askPanel .ask-send { font-size: 13px; padding: 7px 14px; background: var(--accent); color: #fff; border: 0; border-radius: 6px; cursor: pointer; }
+  #askPanel .ask-send:disabled { opacity: .5; cursor: default; }
+  #askPanel .ask-hint { font-size: 11px; color: var(--ink-dim); }
+  /* Progress dock: what Claude is doing with your questions, right now. */
+  #askDock {
+    position: fixed; z-index: 59; right: 24px; bottom: 24px; width: 330px; max-width: calc(100vw - 32px);
+    display: none; flex-direction: column; gap: 8px; font-family: var(--font-sans);
+  }
+  #askDock.show { display: flex; }
+  #askPanel.open ~ #askDock { bottom: 320px; }        /* get out of the ask panel's way */
+  #askDock .job {
+    display: flex; gap: 10px; align-items: flex-start; padding: 10px 12px;
+    background: var(--bg); border: 1px solid var(--border); border-left-width: 3px; border-radius: 8px;
+    box-shadow: 0 6px 20px rgba(0,0,0,.18); font-size: 12.5px; color: var(--ink);
+  }
+  #askDock .job.queued  { border-left-color: var(--ink-dim); }
+  #askDock .job.working { border-left-color: var(--accent); }
+  #askDock .job.done    { border-left-color: #2e9e5b; }
+  #askDock .job.failed  { border-left-color: #c8483c; }
+  #askDock .job.fading  { opacity: 0; transition: opacity .8s ease; }
+  #askDock .job .ic { flex: 0 0 auto; font-size: 14px; line-height: 1.3; }
+  #askDock .job .tx { flex: 1 1 auto; min-width: 0; }
+  #askDock .job .st { font-weight: 600; }
+  #askDock .job .qt {
+    color: var(--ink-dim); margin-top: 2px;
+    display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+  }
+  #askDock .job .hint { color: var(--ink-dim); margin-top: 3px; font-size: 11.5px; }
+  #askDock .spin { display: inline-block; animation: askspin 1s linear infinite; }
+  @keyframes askspin { to { transform: rotate(360deg); } }
+
+  #askToast {
+    position: fixed; z-index: 62; left: 50%; bottom: 28px; transform: translateX(-50%);
+    display: none; padding: 9px 16px; border-radius: 20px; font-family: var(--font-sans); font-size: 13px;
+    background: rgba(20,20,20,.92); color: #fff; box-shadow: 0 4px 18px rgba(0,0,0,.3);
+  }
+  #askToast.show { display: block; }
 </style>
 </head>
 <body>
@@ -730,6 +794,19 @@
 <!-- Global lesson registry. Each lessons/*.js file pushes into this. -->
 <script>
   window.LESSONS = [];
+  // Stamp each lesson with the file it was pushed from, so the "Ask Claude" tool can name
+  // the file to edit. document.currentScript is the lessons/*.js currently executing.
+  (function () {
+    const push = window.LESSONS.push.bind(window.LESSONS);
+    window.LESSONS.push = function (...ls) {
+      const src = document.currentScript && document.currentScript.src;
+      if (src) {
+        const rel = decodeURIComponent(src).split("/").slice(-2).join("/");
+        ls.forEach(l => { if (l && !l._src) l._src = rel; });
+      }
+      return push(...ls);
+    };
+  })();
   // Derivation / proof / intuition text, keyed by lesson id. Filled by lessons/derivations-*.js.
   window.DERIVATIONS = {};
   // Practice problems (array per lesson id). Filled by lessons/practice-*.js.
@@ -2293,6 +2370,228 @@ const CodeRunner = (function () {
   return { run, copy };
 })();
 window.CodeRunner = CodeRunner;
+</script>
+
+<!-- ===== Ask Claude: highlight a passage → queue a question → the page updates itself. =====
+     Needs `node tools/tutor-server.js` (see README). Straight from file:// it still works,
+     but falls back to putting the prompt on the clipboard. -->
+<button id="askBtn" title="Ask Claude about the highlighted text (⌘⇧A)">✦ Ask Claude</button>
+<div id="askPanel">
+  <div class="ask-head"><span>✦ Ask Claude about this passage</span><button class="ask-close" title="Close">×</button></div>
+  <div class="ask-where"></div>
+  <div class="ask-quote"></div>
+  <textarea placeholder="What should I explain, expand, or fix? (blank = &quot;explain this in more detail&quot;)"></textarea>
+  <div class="ask-row">
+    <span class="ask-hint">⌘↵ to send</span>
+    <button class="ask-send">Send to Claude</button>
+  </div>
+</div>
+<div id="askDock"></div>
+<div id="askToast"></div>
+<script>
+(function () {
+  const btn    = document.getElementById("askBtn");
+  const panel  = document.getElementById("askPanel");
+  const toastEl= document.getElementById("askToast");
+  const whereEl= panel.querySelector(".ask-where");
+  const quoteEl= panel.querySelector(".ask-quote");
+  const textEl = panel.querySelector("textarea");
+  const sendEl = panel.querySelector(".ask-send");
+  const live   = location.protocol === "http:" || location.protocol === "https:";
+  let pending  = null;   // {file, lessonId, section, quote}
+
+  function toast(msg, ms = 2200) {
+    toastEl.textContent = msg;
+    toastEl.classList.add("show");
+    clearTimeout(toast._t);
+    toast._t = setTimeout(() => toastEl.classList.remove("show"), ms);
+  }
+
+  // Where in the corpus is this selection? Lesson id comes from the hash, the file from the
+  // _src stamped at push time, the section from the enclosing card's heading.
+  function locate(range) {
+    const id = location.hash.replace("#", "");
+    const lesson = (window.LESSONS || []).find(l => l.id === id);
+    let node = range.startContainer;
+    if (node.nodeType === 3) node = node.parentElement;
+    // Which section am I in? The last heading before this point — true for every template,
+    // present or future, with no class list to keep in sync as new lesson types get added.
+    const content = document.getElementById("content");
+    let h = null;
+    for (const cand of content.querySelectorAll("h2, h3, h4, h5, .book-h")) {
+      if (!(cand.compareDocumentPosition(node) & Node.DOCUMENT_POSITION_FOLLOWING)) break;
+      h = cand;
+    }
+    // fileHint is only the file that *pushed* the lesson. Plenty of prose is merged in from
+    // other files (derivations-*, walkthroughs-*, all-ml-content-part-*, …), so the server
+    // locates the real one by searching lessons/ for the quote. This is a starting guess.
+    return {
+      fileHint: (lesson && lesson._src) || null,
+      lessonId: id || null,
+      section: h ? h.textContent.trim() : null,
+      quote: range.toString().replace(/\s+/g, " ").trim(),
+    };
+  }
+
+  function showButton(rect) {
+    btn.style.display = "block";
+    // Clamp into the viewport: a selection can start off-screen (e.g. select-all + ⌘⇧A).
+    const top = Math.min(window.innerHeight - 44, Math.max(8, rect.top - 38));
+    const left = Math.min(window.innerWidth - btn.offsetWidth - 12, Math.max(8, rect.left));
+    btn.style.top = top + "px";
+    btn.style.left = left + "px";
+  }
+
+  document.addEventListener("mouseup", e => {
+    if (panel.contains(e.target) || e.target === btn) return;
+    setTimeout(() => {
+      const sel = window.getSelection();
+      if (!sel || sel.isCollapsed || !sel.rangeCount) { btn.style.display = "none"; return; }
+      const range = sel.getRangeAt(0);
+      const content = document.getElementById("content");
+      if (!content.contains(range.commonAncestorContainer)) { btn.style.display = "none"; return; }
+      const text = range.toString().trim();
+      if (text.length < 3) { btn.style.display = "none"; return; }
+      pending = locate(range);
+      showButton(range.getBoundingClientRect());
+    }, 0);
+  });
+
+  document.addEventListener("scroll", () => { btn.style.display = "none"; }, true);
+
+  function openPanel() {
+    if (!pending) return;
+    btn.style.display = "none";
+    whereEl.textContent = [pending.lessonId, pending.section].filter(Boolean).join("  ·  ");
+    quoteEl.textContent = pending.quote;
+    textEl.value = "";
+    panel.classList.add("open");
+    textEl.focus();
+  }
+  function closePanel() { panel.classList.remove("open"); }
+
+  btn.addEventListener("click", openPanel);
+  panel.querySelector(".ask-close").addEventListener("click", closePanel);
+
+  document.addEventListener("keydown", e => {
+    if (e.key === "Escape") { closePanel(); btn.style.display = "none"; }
+    // ⌘⇧A / Ctrl+Shift+A opens the panel for the current selection
+    if ((e.metaKey || e.ctrlKey) && e.shiftKey && e.key.toLowerCase() === "a") {
+      const sel = window.getSelection();
+      if (sel && !sel.isCollapsed && sel.rangeCount) { pending = locate(sel.getRangeAt(0)); openPanel(); e.preventDefault(); }
+    }
+    if ((e.metaKey || e.ctrlKey) && e.key === "Enter" && panel.classList.contains("open")) send();
+  });
+
+  function asPrompt(p) {
+    return [
+      `Lesson: ${p.lessonId || "?"}${p.section ? `  §"${p.section}"` : ""}`,
+      `File hint (verify — prose is often merged in from another file): ${p.fileHint || "unknown"}`,
+      `Quoted: "${p.quote}"`,
+      `Ask: ${p.question}`,
+    ].join("\n");
+  }
+
+  async function send() {
+    if (!pending) return;
+    const payload = { ...pending, question: textEl.value.trim() || "Explain this in more detail." };
+    sendEl.disabled = true;
+    try {
+      if (!live) throw new Error("no server");
+      const res = await fetch("/ask", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      if (!res.ok) throw new Error(await res.text());
+      await res.json();
+      closePanel();                      // the dock takes over from here
+    } catch (err) {
+      // No server (or it's down): hand the user a ready-to-paste prompt instead of failing.
+      try {
+        await navigator.clipboard.writeText(asPrompt(payload));
+        toast("No server running — prompt copied to clipboard. Paste it into Claude Code.", 4000);
+        closePanel();
+      } catch { toast("Could not queue or copy: " + err.message, 4000); }
+    } finally {
+      sendEl.disabled = false;
+      window.getSelection().removeAllRanges();
+    }
+  }
+  sendEl.addEventListener("click", send);
+
+  // ---- progress dock: what Claude is doing with your questions, right now ----
+  const dock = document.getElementById("askDock");
+  const STATE = {
+    queued:  { ic: "◷", label: "Queued" },
+    working: { ic: "◐", label: "Claude is working", spin: true },
+    done:    { ic: "✓", label: "Lesson updated" },
+    failed:  { ic: "✗", label: "Failed" },
+  };
+  let jobs = [];
+  const faded = new Set();
+
+  function since(iso) {
+    if (!iso) return "";
+    const s = Math.max(0, Math.round((Date.now() - Date.parse(iso)) / 1000));
+    return s < 60 ? `${s}s` : `${Math.floor(s / 60)}m ${s % 60}s`;
+  }
+
+  function renderDock() {
+    const show = jobs.filter(j => !faded.has(j.id));
+    dock.classList.toggle("show", show.length > 0);
+    dock.innerHTML = show.map(j => {
+      const st = STATE[j.status] || STATE.queued;
+      let hint = "";
+      if (j.status === "working") hint = `<div class="hint">${since(j.startedAt)} · ${esc(j.step || j.file || "thinking…")}</div>`;
+      else if (j.status === "failed") hint = `<div class="hint">${esc(j.error || "see the server terminal")}</div>`;
+      else if (j.status === "queued" && j.worker === false)
+        hint = `<div class="hint">no worker running — start one with <b>/loop 60s /tutor-inbox</b></div>`;
+      else if (j.status === "queued") hint = `<div class="hint">waiting for the worker ahead of it</div>`;
+      return `<div class="job ${j.status}">
+        <div class="ic"><span class="${st.spin ? "spin" : ""}">${st.ic}</span></div>
+        <div class="tx"><div class="st">${st.label}</div>
+          <div class="qt">“${esc((j.quote || "").slice(0, 90))}”</div>${hint}</div>
+      </div>`;
+    }).join("");
+  }
+  function esc(s) { return String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c])); }
+
+  function setJobs(list) {
+    jobs = Array.isArray(list) ? list : [];
+    // A finished job stays up briefly so you actually see it land, then clears itself.
+    for (const j of jobs) {
+      if (j.status === "done" && !faded.has(j.id)) {
+        setTimeout(() => { faded.add(j.id); renderDock(); }, 6000);
+      }
+    }
+    renderDock();
+  }
+  setInterval(() => { if (jobs.some(j => j.status === "working")) renderDock(); }, 1000);
+
+  // ---- live reload: the server pings when Claude edits a lesson file ----
+  if (live && window.EventSource) {
+    const main = document.getElementById("main");
+    const KEY = "tutor:scroll";
+    // Put the reader back where they were, so a rewritten paragraph appears in place.
+    window.addEventListener("DOMContentLoaded", () => {
+      const saved = sessionStorage.getItem(KEY);
+      if (saved === null) return;
+      sessionStorage.removeItem(KEY);
+      // after App.boot has rendered the lesson
+      setTimeout(() => { if (main) main.scrollTop = Number(saved); }, 60);
+    });
+    const es = new EventSource("/events");
+    es.addEventListener("reload", () => {
+      if (main) sessionStorage.setItem(KEY, String(main.scrollTop));
+      setTimeout(() => location.reload(), 350);
+    });
+    // The dock's state lives in the queue file; the server pushes it on every change,
+    // and once on connect so a reloaded tab picks up where it left off.
+    es.addEventListener("queue", e => { try { setJobs(JSON.parse(e.data)); } catch {} });
+    fetch("/queue").then(r => r.json()).then(setJobs).catch(() => {});
+  }
+})();
 </script>
 </body>
 </html>

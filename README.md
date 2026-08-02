@@ -35,6 +35,27 @@ Features: collapsible sidebar, search, prev/next navigation, and **progress is s
 metric looks great and is lying. A sealed in-notebook grader knows the planted flaws; find them,
 fix them, report the honest number, and paste the completion code back into the page.
 
+## ✦ Ask Claude about a passage (live editing loop)
+Highlight anything in a lesson and have Claude Code rewrite it while you watch.
+Full docs: **[ASK-CLAUDE.md](ASK-CLAUDE.md)**.
+
+```bash
+yarn run dev           # → http://localhost:8080
+```
+
+Open **http://localhost:8080** (not the file directly). Each question is acted on immediately by a
+headless Claude Code run, with a progress dock in the corner — no second terminal needed.
+
+1. Highlight a sentence in any lesson → a small **✦ Ask Claude** button appears (or press ⌘⇧A).
+2. Type what you want — "expand this", "why is this true?", "this step lost me" — and hit **Send** (⌘↵).
+3. A card appears in the progress dock: ◷ Queued → ◐ Claude is working → ✓ Lesson updated.
+   The server finds which file the quoted prose actually lives in by searching `lessons/` for it.
+4. Claude edits that `.js` file; the server sees the change and reloads your tab **at the same
+   lesson and scroll position**, so the paragraph rewrites itself in front of you.
+
+Opening `index.html` from `file://` still works as before — with no server, the Ask button falls
+back to copying a ready-to-paste prompt to your clipboard.
+
 ## Structure
 ```
 index.html              the app engine (layout, sidebar, renderer, MathJax)
