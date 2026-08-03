@@ -72,12 +72,16 @@
         cZ: '\\mathcal{Z}',
         vtxo: 'v_t^{[x_0]}', vxo: 'v^{[x_0]}', rflow: '\\mathrm{RunFlow}',
         // defined inline in the paper's later sections
-        pddim: 'p^{\\textrm{ddim}}', rG: '{G_t}', ssig: '{\\sigma^2}',
-        // the paper's in-equation margin annotations, rendered as a trailing note
-        mathnote: ['\\quad{\\small\\textrm{(#1)}}', 1], Tab: ['#1#2', 2],
+        // Transcribed verbatim from the paper's preamble. Do not guess at these: an earlier
+        // guess of Tab as "#1#2" turned \Tab{x_1}{x_0}_t into x_1x_0_t — a double subscript,
+        // in 34 places.
+        pddim: 'p^{\\textrm{ddim}}', rG: '{G_t}[x_0]', ssig: '{\\sigma^2}',
+        Tab: ['v^{[#1,#2]}', 2],
+        // \mathnote is a tufte margin note; there is no margin here, so it trails the equation
+        mathnote: ['\\quad{\\small\\textrm{(#1)}}', 1],
         // the paper colours terms inside underbraces to pair them with their expansions
         mathcolor: ['{\\color{#1}{#2}}', 2],
-        va: 'v_t^{[a]}', vb: 'v_t^{[b]}', vxn: 'v_t^{[x_0]}',
+        va: 'v_t^{[a]}', vb: 'v_t[b]', vxn: 'v_t[x_0]',
         argmin: '\\operatorname*{arg\\,min}', argmax: '\\operatorname*{arg\\,max}'
       }
     },
@@ -2648,7 +2652,18 @@ window.CodeRunner = CodeRunner;
     failed:  { ic: "✗", label: "Failed" },
   };
   let jobs = [];
-  const faded = new Set();
+  // Dismissal has to be sticky, not time-based: the card clears itself after a few seconds, but
+  // the server still reports the completion for a short while so the post-edit reload can show
+  // it. Without a memory of what has already been dismissed, refreshing in that gap brings the
+  // card back. Remember ids across reloads instead.
+  const DKEY = "tutor:dismissed";
+  const faded = new Set(function () {
+    try { return JSON.parse(localStorage.getItem(DKEY)) || []; } catch (e) { return []; }
+  }());
+  function dismiss(id) {
+    faded.add(id);
+    try { localStorage.setItem(DKEY, JSON.stringify([...faded].slice(-100))); } catch (e) {}
+  }
 
   function since(iso) {
     if (!iso) return "";
@@ -2658,6 +2673,11 @@ window.CodeRunner = CodeRunner;
 
   function renderDock() {
     const show = jobs.filter(j => !faded.has(j.id));
+    // Small bounded render log. The dock's lifetime is only ~6s, which is shorter than a page
+    // load, so "why didn't my card show?" is otherwise impossible to observe after the fact.
+    const dl = (window.__dockLog = window.__dockLog || []);
+    dl.push({ at: Math.round(performance.now()), jobs: jobs.length, dismissed: faded.size, showing: show.length });
+    if (dl.length > 50) dl.shift();
     dock.classList.toggle("show", show.length > 0);
     dock.innerHTML = show.map(j => {
       const st = STATE[j.status] || STATE.queued;
@@ -2678,10 +2698,11 @@ window.CodeRunner = CodeRunner;
 
   function setJobs(list) {
     jobs = Array.isArray(list) ? list : [];
-    // A finished job stays up briefly so you actually see it land, then clears itself.
+    // A finished job stays up briefly so you actually see it land, then clears itself — and
+    // stays dismissed, however many times the page is reloaded afterwards.
     for (const j of jobs) {
       if (j.status === "done" && !faded.has(j.id)) {
-        setTimeout(() => { faded.add(j.id); renderDock(); }, 6000);
+        setTimeout(() => { dismiss(j.id); renderDock(); }, 6000);
       }
     }
     renderDock();

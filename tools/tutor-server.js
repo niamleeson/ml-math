@@ -139,13 +139,18 @@ function setStatus(id, status, extra = {}) {
   e.status = status;
   Object.assign(e, extra);
   writeQueue(entries);
-  broadcast("queue", activeEntries());
+  broadcast("queue", activeEntries(true));
 }
 
 // Only what the page should still be showing: anything unfinished, plus recently
 // finished ones so the reader sees the ✓ land before it fades.
-function activeEntries() {
-  const cutoff = Date.now() - 10 * 60 * 1000;
+// Completed work is shown on two different clocks:
+//   live push (a status actually changed) — 10 min, so the tab watching sees the ✓ land;
+//   fresh load (page fetch / SSE connect) — 20 s, because an edit reloads the tab and the tab
+//     must still show the ✓ it was waiting for, while a manual refresh later must NOT redisplay
+//     "Lesson updated" for work that finished long ago.
+function activeEntries(livePush) {
+  const cutoff = Date.now() - (livePush ? 10 * 60 * 1000 : 20 * 1000);
   return readQueue()
     .filter(e => e.status !== "done" || Date.parse(e.finishedAt || e.ts) > cutoff)
     .slice(-8)
@@ -171,6 +176,7 @@ let lastStep = null;        // most recent tool call, shown live in the page's d
 let restarts = 0;
 let shuttingDown = false;
 let deadline = null;        // timer for the request in flight
+let toolCalls = 0;          // tool calls in the current request, for the summary line
 
 const PRIMER = [
   "You are the worker behind this repo's ✦ Ask Claude tool. A reader highlights a passage in a",
@@ -222,16 +228,45 @@ function drainWorkerLines() {
   }
 }
 
+// A short, readable summary of what a tool call is about to do.
+function describeTool(c) {
+  const i = c.input || {};
+  const base = p => String(p).split("/").pop();
+  switch (c.name) {
+    case "Read":  return `Read ${base(i.file_path || "?")}${i.offset ? ` @${i.offset}` : ""}`;
+    case "Edit":  return `Edit ${base(i.file_path || "?")}  ${(i.old_string || "").length}ch → ${(i.new_string || "").length}ch`;
+    case "Grep":  return `Grep ${JSON.stringify(String(i.pattern || "").slice(0, 50))}${i.path ? " in " + base(i.path) : ""}`;
+    case "Glob":  return `Glob ${i.pattern || "?"}`;
+    default:      return c.name + (i.file_path ? " " + base(i.file_path) : "");
+  }
+}
+
 function handleWorkerEvent(ev) {
-  // Live activity, so the dock can say what it is doing rather than just "working".
+  // Narrate the worker's tool calls and commentary, so a slow request isn't a black box.
   if (ev.type === "assistant" && ev.message && Array.isArray(ev.message.content)) {
     for (const c of ev.message.content) {
+      if (c.type === "text" && c.text && c.text.trim() && !priming) {
+        const line = c.text.trim().replace(/\s+/g, " ");
+        if (line.length > 3) log(`   💬 ${line.slice(0, 160)}${line.length > 160 ? "…" : ""}`);
+        continue;
+      }
       if (c.type !== "tool_use") continue;
+      toolCalls++;
+      if (!priming) log(`   · ${describeTool(c)}`);
       const f = c.input && (c.input.file_path || c.input.path || c.input.pattern);
       const step = `${c.name}${f ? " " + String(f).split("/").pop() : ""}`;
       if (step !== lastStep && current) {
         lastStep = step;
         setStatus(current, "working", { step });
+      }
+    }
+  }
+  // Surface tool failures — otherwise a denied or errored tool looks like silence.
+  if (ev.type === "user" && ev.message && Array.isArray(ev.message.content) && !priming) {
+    for (const c of ev.message.content) {
+      if (c.type === "tool_result" && c.is_error) {
+        const t = (typeof c.content === "string" ? c.content : JSON.stringify(c.content) || "").replace(/\s+/g, " ");
+        log(`   ⚠ tool error: ${t.slice(0, 140)}`);
       }
     }
   }
@@ -243,8 +278,20 @@ function handleWorkerEvent(ev) {
   }
   if (!current) return;
   const id = current; current = null; lastStep = null;
-  if (ev.is_error) finish(id, false, String(ev.result || "worker reported an error").slice(-400));
-  else finish(id, true, String(ev.result || "").trim().slice(-400));
+  // The CLI reports its own accounting on the result event; pass it through.
+  const u = ev.usage || {};
+  const k = n => (n >= 1000 ? (n / 1000).toFixed(1) + "k" : String(n || 0));
+  const stats = [
+    ev.duration_ms ? (ev.duration_ms / 1000).toFixed(1) + "s" : null,
+    toolCalls ? toolCalls + " tool call" + (toolCalls === 1 ? "" : "s") : null,
+    ev.num_turns ? ev.num_turns + " turns" : null,
+    (u.input_tokens || u.output_tokens)
+      ? `${k(u.input_tokens)} in / ${k(u.output_tokens)} out` : null,
+    typeof ev.total_cost_usd === "number" ? "$" + ev.total_cost_usd.toFixed(3) : null,
+  ].filter(Boolean).join(" · ");
+  toolCalls = 0;
+  if (ev.is_error) finish(id, false, String(ev.result || "worker reported an error").slice(-400), stats);
+  else finish(id, true, String(ev.result || "").trim().slice(-400), stats);
 }
 
 function onWorkerClose(code) {
@@ -321,14 +368,15 @@ function pump() {
   }, REQUEST_TIMEOUT_MS);
 }
 
-function finish(id, ok, note) {
+function finish(id, ok, note, stats) {
   clearTimeout(deadline); deadline = null;
   if (ok) {
     setStatus(id, "done", { finishedAt: new Date().toISOString(), step: null, note });
-    log(`worker ✓ ${id}${note ? " — " + note.split("\n")[0].slice(0, 90) : ""}`);
+    log(`worker ✓ ${id}${stats ? "  (" + stats + ")" : ""}`);
+    if (note) log(`   → ${note.split("\n")[0].slice(0, 150)}`);
   } else {
     setStatus(id, "failed", { finishedAt: new Date().toISOString(), step: null, error: note });
-    log(`worker ✗ ${id}: ${note}`);
+    log(`worker ✗ ${id}${stats ? "  (" + stats + ")" : ""}: ${note}`);
   }
   restarts = 0;                  // it completed something, so it isn't in a crash loop
   pump();
@@ -369,7 +417,7 @@ function watch() {
     let qt = null;
     fs.watch(QUEUE, () => {
       clearTimeout(qt);
-      qt = setTimeout(() => broadcast("queue", activeEntries()), 120);
+      qt = setTimeout(() => broadcast("queue", activeEntries(true)), 120);
     });
   } catch (e) {
     log(`could not watch the queue file: ${e.message}`);
@@ -442,8 +490,14 @@ async function handleAsk(req, res) {
 
   fs.mkdirSync(path.dirname(QUEUE), { recursive: true });
   fs.appendFileSync(QUEUE, JSON.stringify(entry) + "\n");
-  log(`queued ${entry.id} · ${entry.file || "unlocated"}${entry.resolved ? "" : " (unresolved)"} · "${entry.quote.slice(0, 50)}…"`);
-  broadcast("queue", activeEntries());
+  const trim = (s, n) => { s = String(s).replace(/\s+/g, " "); return s.length > n ? s.slice(0, n) + "…" : s; };
+  log(`queued ${entry.id}`);
+  log(`   lesson  ${entry.lessonId || "?"}${entry.section ? `  §"${trim(entry.section, 50)}"` : ""}`);
+  log(`   file    ${entry.file || "unlocated"}${entry.resolved ? "" : `  (unresolved${loc.why ? ": " + loc.why : ""})`}`);
+  if (entry.candidates) log(`   also in ${entry.candidates.join(", ")}`);
+  log(`   quote   "${trim(entry.quote, 100)}"`);
+  log(`   ask     ${trim(entry.question, 120)}`);
+  broadcast("queue", activeEntries(true));
   enqueueWork(entry.id);                // acted on now, not on the next poll
   send(res, 200, JSON.stringify({ ok: true, id: entry.id }), MIME[".json"]);
 }
