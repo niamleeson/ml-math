@@ -9,26 +9,28 @@ them comes from the notebook, so you can defend any of them by re-running a cell
 
 **Before you start:**
 - Run the notebook end to end once, so every output is populated. Don't run it live from scratch —
-  the HNSW build is 8 seconds and the OPQ cell is 25, and dead air kills a talk.
+  the HNSW build alone is 8 seconds, and dead air kills a talk.
 - Have a whiteboard or iPad ready. Three drawings carry this talk and none of them are slides.
 - **The measured numbers were taken on an M-series laptop.** On Colab they'll be roughly 2–3×
   slower across the board. Say this once if anyone asks — the *ratios* are what matter and those hold.
+
+**The talk is four techniques.** kNN, ANN, IVF-PQ, HNSW. Everything else is scaffolding — the
+recall metric, the ledger, and the filtering warning at the end. If you're running short, cut
+from the ledger, never from the four.
 
 **Timing map**
 
 | Time | Section | Minutes |
 |---|---|---|
 | 0:00 | Open — the problem | 3 |
-| 0:03 | 1. Exact kNN | 6 |
-| 0:09 | 2. Recall — the bargain | 4 |
-| 0:13 | 3. IVF | 9 |
-| 0:22 | 4. PQ | 10 |
-| 0:32 | 5. Rerank | 5 |
-| 0:37 | 6. HNSW | 10 |
-| 0:47 | 7. The ledger | 4 |
-| 0:51 | 8. Filtering — the real gotcha | 4 |
-| 0:55 | Close | 2 |
-| 0:57 | Q&A | 3+ |
+| 0:03 | **1. Exact kNN** | 7 |
+| 0:10 | **2. ANN** — the bargain, and recall@k | 5 |
+| 0:15 | **3. IVF-PQ** — 3a IVF (9) · 3b PQ (10) · 3c combined + rerank (5) | 24 |
+| 0:39 | **4. HNSW** | 11 |
+| 0:50 | 5. The ledger | 4 |
+| 0:54 | 6. Filtering — the real gotcha | 4 |
+| 0:58 | Close | 2 |
+| 1:00 | Q&A | — |
 
 ---
 
@@ -43,9 +45,18 @@ geometry problem: given a query vector, find the closest vectors in my database.
 
 Today I want to take you from the dumbest possible way to do that to what production systems
 actually run, and at every step I want to answer one specific question: **what did this technique
-buy me, and what did it cost?** Not how it works — what it's *for*. There are four ideas total,
-they compose, and by the end you'll be able to look at a vector database's config page and know
-what every knob does.
+buy me, and what did it cost?** Not how it works — what it's *for*.
+
+**There are exactly four techniques, and that's the whole talk:**
+
+1. **kNN** — exact search. Correct, simple, and it stops scaling.
+2. **ANN** — the idea of trading a little correctness for a lot of speed.
+3. **IVF-PQ** — partition the space, then compress what's in it.
+4. **HNSW** — build a graph and walk it.
+
+They're in the order they were invented, and each one exists because of a problem with the one
+before it. By the end you'll be able to look at a vector database's config page and know what
+every knob does.
 
 One housekeeping note. Everything I'm about to claim, I measured. There's a notebook —
 I'll share the link — and every table and chart in this talk comes out of it. If you don't
@@ -64,7 +75,7 @@ Swap in whatever your team actually works on — job postings, member profiles, 
 numbers barely change.
 
 The one number to hold onto: 200,000 tickets times 256 dimensions times 4 bytes per float is
-**205 megabytes** of raw vectors. Remember that, because in about twenty minutes I'm going to make
+**205 megabytes** of raw vectors. Remember that, because in about twenty-five minutes I'm going to make
 it six.
 
 One last piece of vocabulary, and then we start. You'll see three distance metrics in this world:
@@ -157,7 +168,7 @@ entire field exists. So we have to give something up.
 
 ---
 
-# 0:09 — 2. Recall: the bargain
+# 0:10 — 2. ANN: the bargain
 
 What we give up is *being exactly right*, and we give up a surprisingly small amount of it.
 
@@ -199,7 +210,21 @@ answer.** The first two combine, which is why "IVF-PQ" is one word.
 
 ---
 
-# 0:13 — 3. IVF: skip the data that was never going to win
+# 0:15 — 3. IVF-PQ
+
+Third technique, and it's the one with a compound name because **it is literally two ideas bolted
+together.** I'm going to teach them separately, measure each one alone, and then combine them —
+that's the only way this ever makes sense.
+
+- **IVF** partitions the space so you scan a slice of it. It buys **time**.
+- **PQ** compresses each vector so comparisons are cheap. It buys **memory**.
+
+They're independent. You can run either alone. Nearly everyone runs both, which is why you'll only
+ever see them written as one word.
+
+---
+
+## 0:15 — 3a. IVF: skip the data that was never going to win
 
 First idea: partitioning. The technique is called IVF — Inverted File Index.
 
@@ -286,7 +311,7 @@ scheduled, operational work — put it on the roadmap when you adopt this, not a
 
 ---
 
-# 0:22 — 4. PQ: thirty-two times less memory
+## 0:24 — 3b. PQ: thirty-two times less memory
 
 So IVF made us fast but left us fat. 205 megabytes, and that's for a corpus most of us would call
 small. Second idea: compression. Product Quantization.
@@ -406,9 +431,17 @@ keeps the error meaningfully lower than quantizing both sides.
 
 ---
 
-# 0:32 — 5. Rerank: the best three lines in the talk
+## 0:34 — 3c. IVF-PQ combined, and the rerank that saves it
 
-Okay. We're fast, we're small, and our recall is 0.39, which is useless. Let's fix it.
+So let's actually combine them. **IVF-PQ is "go to the right shelves, and read compressed
+summaries once you're there."** IVF picks the buckets, PQ makes scanning them cheap. That's the
+index that real billion-scale systems ship, and it's a two-line change from what we already have.
+
+[Show the IVF-PQ build cell.]
+
+And it's fast — **0.092 milliseconds** — and tiny. And its recall is **0.485**, which is useless.
+
+So we're fast, we're small, and we're wrong. Let's fix the wrong part.
 
 **Retrieve the top 100 by cheap PQ distance. Load those 100 full vectors. Rescore them exactly.
 Return the true top 10 of those.**
@@ -446,14 +479,9 @@ Usually the right answer.
 **In RAM.** faiss has `IndexRefineFlat` which does exactly this. Fastest option — and **you just
 gave back the entire 32× saving.** Sometimes that's the correct call. Just know that you made it.
 
-**Or encode better and skip reranking.** There's a variant called **OPQ** — a learned rotation
-applied before quantization that decorrelates the dimensions so the chunks quantize more cleanly.
-It's free at query time; you just pay for it at build time.
-
-[Show the OPQ cell.]
-
-I measured it: plain PQ at 32 bytes gets **0.388**, OPQ at the identical 32 bytes gets **0.505**.
-**Twelve points of recall for free** — same memory, same query cost, just a smarter encoder.
+**In practice it's SSD**, and the arithmetic is comfortable: a hundred vectors at a kilobyte each
+is a few hundred kilobytes per query. You keep the 32× win that made you pick IVF-PQ in the first
+place, and you spend a little I/O for it.
 
 I'm telling you about the catch on purpose. When you present this to your own team and somebody
 asks "wait, doesn't reranking need the vectors you deleted?" — you want to have already said it.
@@ -461,7 +489,7 @@ asks "wait, doesn't reranking need the vectors you deleted?" — you want to hav
 
 ---
 
-# 0:37 — 6. HNSW: walk the graph
+# 0:39 — 4. HNSW: walk the graph
 
 Last idea, and it's a completely different philosophy. Don't partition. Don't compress. Build a
 graph and walk it.
@@ -568,7 +596,7 @@ system can build and serve at the same time, because eventually you'll need to.
 
 ---
 
-# 0:47 — 7. The ledger
+# 0:50 — 5. The ledger
 
 Let me put all of it on one scoreboard. Same problem, same machine, all measured.
 
@@ -599,9 +627,11 @@ in this talk was a way to push a point up and to the right on this plot.**
   every major system for a reason.
 - **RAM is your constraint, or you're past a hundred million vectors** — **IVF-PQ, with reranking.**
   Non-negotiable on the reranking.
-- **Both problems at once** — HNSW plus PQ, or IVF-HNSW, or look at **DiskANN**, which is the
-  modern answer for billion-scale on SSD.
 - **And always** — keep exact search around as the ruler.
+
+**That's the entire decision tree.** Two indexes, and you pick by asking which resource you're
+short of: if it's RAM, IVF-PQ; if it's latency or recall, HNSW. There are exotic hybrids out
+there, and you don't need them until one of these two demonstrably fails you.
 
 One more, and it's the one I'd actually lead with in a design review: **if you're already on
 Postgres, `pgvector` gives you HNSW in the database you already run.** It'll take you into the tens
@@ -609,7 +639,7 @@ of millions of rows. One less system to operate beats a marginally better index 
 
 ---
 
-# 0:51 — 8. The gotcha that actually decides your architecture
+# 0:54 — 6. The gotcha that actually decides your architecture
 
 I have four minutes left and I want to spend them on the thing that will actually bite you,
 because everything I've shown you assumed the query is *just* a vector.
@@ -663,12 +693,15 @@ of what I'm leaving out:
 
 ---
 
-# 0:55 — Close
+# 0:58 — Close
 
-Four ideas. That's all this was.
+Four techniques. That's all this was.
 
-**Partition** so you scan less. **Compress** so each comparison is cheap. **Rerank** so compression
-doesn't cost you quality. **Or build a graph** and walk it in log time.
+**kNN** — exact, correct, and linear, which is what kills it. **ANN** — the bargain: trade a little
+recall for a lot of speed, and measure exactly how much you traded. **IVF-PQ** — partition so you
+scan less, compress so each scan is cheap, rerank so the compression doesn't cost you quality.
+**HNSW** — skip the partitioning and the compression entirely, build a graph, and walk it in
+logarithmic time.
 
 Three things I'd like you to actually leave with:
 
@@ -693,7 +726,7 @@ Questions.
 
 ---
 
-# 0:57 — Q&A: the ones you'll actually get
+# 1:00 — Q&A: the ones you'll actually get
 
 **"Why not just use Postgres?"**
 You can, and often should. `pgvector` supports both IVFFlat and HNSW and is fine into the tens of
@@ -714,7 +747,7 @@ to tune an index, and you get recall 1.0. Worth pricing before you assume you ne
 **"What about LSH — locality-sensitive hashing?"**
 Historically important, largely superseded by graph methods on the recall-versus-speed curve. It
 still shows up where you need the hash itself — dedup, sketching, streaming. For top-k retrieval,
-HNSW beats it.
+HNSW beats it, which is why I left it out of the four.
 
 **"How do I pick `nlist` / `M` / `efConstruction`?"**
 Start at `nlist ≈ sqrt(N)`, `M = 16`, `efConstruction = 200`. Then tune only `nprobe` or `efSearch`
