@@ -13,6 +13,9 @@ them comes from the notebook, so you can defend any of them by re-running a cell
 - Have a whiteboard or iPad ready. Three drawings carry this talk and none of them are slides.
 - **The measured numbers were taken on an M-series laptop.** On Colab they'll be roughly 2–3×
   slower across the board. Say this once if anyone asks — the *ratios* are what matter and those hold.
+- Latencies shift a few percent between runs; **recalls are seeded and reproduce exactly.** The
+  figures here match the deck (`talks/vector-search-talk.pptx`) — both come from the same run. If you
+  re-run the notebook and want to re-quote, regenerate the deck with `talks/deck/build_deck.py`.
 
 **The talk is four techniques.** kNN, ANN, IVF-PQ, HNSW. Everything else is scaffolding — the
 recall metric, the ledger, and the filtering warning at the end. If you're running short, cut
@@ -130,8 +133,8 @@ So — where does this fall over?
 
 [Show the timing cell output.]
 
-On our 200,000 tickets, one query takes **3.4 milliseconds**. To sustain 200 queries a second
-that's **0.7 of a CPU core.**
+On our 200,000 tickets, one query takes **4.0 milliseconds**. To sustain 200 queries a second
+that's **0.8 of a CPU core.**
 
 [Pause. Let that sit for a beat — it's deliberately anticlimactic.]
 
@@ -143,12 +146,12 @@ Here's where it breaks. Look at the projection.
 
 | Corpus | Per query | Cores at 200 QPS |
 |---|---|---|
-| 200,000 | 3.4 ms | 0.7 |
-| 2,000,000 | 34 ms | **6.9** |
-| 20,000,000 | 343 ms | **68.7** |
+| 200,000 | 4.0 ms | 0.8 |
+| 2,000,000 | 40 ms | **7.9** |
+| 20,000,000 | 396 ms | **79.2** |
 
 **The cost is exactly linear.** Ten times the tickets, ten times the bill. At twenty million
-you're burning something like seventy cores continuously — a meaningful chunk of a rack — to
+you're burning something like eighty cores continuously — a meaningful chunk of a rack — to
 answer a question that ought to fit on a laptop. And you blew the 50ms p99 somewhere around two
 million.
 
@@ -248,18 +251,18 @@ This is the most important table in the section. `nprobe` is the dial — how ma
 
 | nprobe | scanned | % of corpus | ms/query | recall@10 |
 |---|---|---|---|---|
-| 1 | 391 | 0.2% | 0.012 | 0.592 |
-| 2 | 781 | 0.4% | 0.020 | 0.817 |
-| **4** | **1,562** | **0.8%** | **0.036** | **0.958** |
-| 8 | 3,125 | 1.6% | 0.064 | 0.999 |
-| 16 | 6,250 | 3.1% | 0.123 | 1.000 |
-| 64 | 25,000 | 12.5% | 0.492 | 1.000 |
-| 512 | 200,000 | 100% | 3.719 | 1.000 |
+| 1 | 391 | 0.2% | 0.022 | 0.592 |
+| 2 | 781 | 0.4% | 0.019 | 0.817 |
+| **4** | **1,562** | **0.8%** | **0.034** | **0.958** |
+| 8 | 3,125 | 1.6% | 0.063 | 0.999 |
+| 16 | 6,250 | 3.1% | 0.122 | 1.000 |
+| 64 | 25,000 | 12.5% | 0.603 | 1.000 |
+| 512 | 200,000 | 100% | 3.729 | 1.000 |
 
 [Give them a few seconds to actually read it. Then point at row 3.]
 
 Look at the `nprobe=4` row. We scanned **eight tenths of one percent** of the corpus and got
-**96% of the right answers**, in **0.036 milliseconds** instead of 3.4. That's roughly a
+**96% of the right answers**, in **0.034 milliseconds** instead of 4.0. That's more than a
 **hundredfold speedup** for four points of recall.
 
 Two things I want you to take from this table.
@@ -272,7 +275,7 @@ owns latency and whoever owns quality.
 **Second, and this is the general shape of every knob in this talk:** recall climbs fast and then
 flattens, while cost keeps climbing linearly and never flattens. Going from 1 to 4 buys you
 **37 points** of recall for three hundredths of a millisecond. Going from 64 to 512 buys you
-**zero** and costs you 3.2 milliseconds. **Almost all of the value is in the first few probes.**
+**zero** and costs you 3.1 milliseconds. **Almost all of the value is in the first few probes.**
 
 [Show the two-panel chart.]
 
@@ -439,7 +442,7 @@ index that real billion-scale systems ship, and it's a two-line change from what
 
 [Show the IVF-PQ build cell.]
 
-And it's fast — **0.092 milliseconds** — and tiny. And its recall is **0.485**, which is useless.
+And it's fast — **0.093 milliseconds** — and tiny. And its recall is **0.485**, which is useless.
 
 So we're fast, we're small, and we're wrong. Let's fix the wrong part.
 
@@ -452,15 +455,15 @@ That's it. A hundred exact distance computations is nothing.
 
 | candidates | ms/query | recall@10 | gain |
 |---|---|---|---|
-| — (no rerank) | 0.092 | 0.485 | — |
+| — (no rerank) | 0.093 | 0.485 | — |
 | 20 | 0.100 | 0.691 | +0.206 |
 | 50 | 0.112 | 0.903 | +0.418 |
-| **100** | **0.128** | **0.971** | **+0.486** |
+| **100** | **0.127** | **0.971** | **+0.486** |
 | 200 | 0.161 | 0.996 | +0.512 |
 
 [Land on this hard.]
 
-**Recall went from 0.485 to 0.971. That's forty-nine points, for thirty-six microseconds.**
+**Recall went from 0.485 to 0.971. That's forty-nine points, for 35 microseconds.**
 
 If this room takes home exactly one implementation detail, make it this one. It is the highest
 effort-to-payoff ratio in the entire stack, and it is **the single most common missing piece in
@@ -534,11 +537,11 @@ and OpenSearch. If you've used a vector database, you've used HNSW.
 
 | efSearch | ms/query | recall@10 | plausible use case |
 |---|---|---|---|
-| 10 | 0.031 | 0.739 | type-ahead |
-| 50 | 0.088 | 0.961 | standard search |
-| 100 | 0.146 | 0.989 | |
-| 200 | 0.236 | 0.997 | RAG / agent context |
-| 400 | 0.438 | 0.999 | offline eval |
+| 10 | 0.033 | 0.749 | type-ahead |
+| 50 | 0.091 | 0.963 | standard search |
+| 100 | 0.147 | 0.988 | |
+| 200 | 0.238 | 0.998 | RAG / agent context |
+| 400 | 0.448 | 0.999 | offline eval |
 
 **Same index. Same box. No rebuild. It's a per-request parameter.**
 
@@ -568,16 +571,16 @@ curve as you grow.**
 
 | Corpus | Exact | HNSW | speedup |
 |---|---|---|---|
-| 12,500 | 0.15 ms | 0.049 ms | 3× |
-| 25,000 | 0.46 ms | 0.063 ms | 7× |
-| 50,000 | 0.95 ms | 0.088 ms | 11× |
-| 100,000 | 1.83 ms | 0.116 ms | 16× |
-| 200,000 | 3.48 ms | 0.141 ms | **25×** |
+| 12,500 | 0.16 ms | 0.042 ms | 4× |
+| 25,000 | 0.45 ms | 0.065 ms | 7× |
+| 50,000 | 0.97 ms | 0.100 ms | 10× |
+| 100,000 | 1.86 ms | 0.117 ms | 16× |
+| 200,000 | 3.44 ms | 0.153 ms | **22×** |
 
-**The corpus grew 16×. Exact search got 22.6× slower. HNSW got 2.9× slower.**
+**The corpus grew 16×. Exact search got 22.0× slower. HNSW got 3.6× slower.**
 
 That's the whole pitch in one line. And notice the top row — at twelve thousand vectors HNSW is
-only 3× faster, which circles right back to where we started: **at small N, don't bother.** The
+only 4× faster, which circles right back to where we started: **at small N, don't bother.** The
 data agrees with the advice.
 
 **Where does HNSW's value run out? Three places, and they're serious.**
@@ -604,11 +607,11 @@ Let me put all of it on one scoreboard. Same problem, same machine, all measured
 
 | Step | ms/query | speedup | memory | recall@10 | What it bought |
 |---|---|---|---|---|---|
-| Exact (numpy) | 3.433 | 1× | 204.8 MB | 1.000 | correctness + ground truth |
-| **+ IVF** (nprobe=16) | 0.137 | 27× | 204.8 MB | 1.000 | 32× less data scanned |
-| **+ PQ** (IVF-PQ) | 0.092 | 37× | **6.4 MB** | 0.485 | 32× less memory |
-| **+ rerank** (top-100) | 0.128 | 27× | **6.4 MB** | 0.971 | recall bought back, ~free |
-| **HNSW** (efSearch=100) | 0.146 | 24× | 230.4 MB | 0.989 | best recall/latency — for RAM |
+| Exact (numpy) | 3.959 | 1× | 204.8 MB | 1.000 | correctness + ground truth |
+| **+ IVF** (nprobe=16) | 0.122 | 32× | 204.8 MB | 1.000 | 32× less data scanned |
+| **+ PQ** (IVF-PQ) | 0.093 | 43× | **6.4 MB** | 0.485 | 32× less memory |
+| **+ rerank** (top-100) | 0.127 | 31× | **6.4 MB** | 0.971 | recall bought back, ~free |
+| **HNSW** (efSearch=100) | 0.147 | 27× | 230.4 MB | 0.988 | best recall/latency — for RAM |
 
 Read the memory column and the recall column together. That's the entire engineering trade in this
 field: **the bottom two rows are the same speed and nearly the same quality, and one of them uses
@@ -708,7 +711,7 @@ Three things I'd like you to actually leave with:
 **One.** Under a hundred thousand vectors, the answer is three lines of numpy. Check your row count
 before you check out a vector database.
 
-**Two.** If you use PQ, rerank. Point-four-eight-five to point-nine-seven-one for thirty-six
+**Two.** If you use PQ, rerank. Point-four-eight-five to point-nine-seven-one for 35
 microseconds. It is the cheapest quality win in this entire field and it is routinely missing.
 
 **Three.** Recall degrades **silently**. There's no exception, no alert, no 500 — just quietly
