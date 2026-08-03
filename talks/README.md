@@ -34,6 +34,12 @@ python deck/build_deck.py     # reads numbers.json, writes the .pptx
 
 `capture_figs.py` takes ~70s and needs `faiss-cpu`, `matplotlib`, `python-pptx`, `pillow`.
 
+**Run the three in that order on a fresh clone.** `deck/figs/*.png` are build artifacts and are
+*not* committed — the repo ignores `*.png` — so `build_deck.py` will fail until `capture_figs.py`
+and `fig_voronoi.py` have produced them. (The images are already embedded in the committed
+`.pptx`, so you only need this to rebuild.) `deck/figs/numbers.json` *is* committed, so you can
+read every measured value without re-running anything.
+
 **If you re-run, the transcript's latency figures will drift a few percent** (recalls are
 seeded and reproduce exactly). Re-quote from the fresh `figs/numbers.json` so the deck and
 transcript stay in agreement.
